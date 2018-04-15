@@ -27,12 +27,13 @@ export class EventBus<T = IEvent> implements IEventBus<T> {
 		return executor.execStopOnFail();
 	}
 
-	on(eventType: Constructable<T>, callback: EventSubscriptionCallback<T>): void {
+	on<T1 extends T>(eventType: Constructable<T1>, callback: EventSubscriptionCallback<T1> ): void {
 		var callbacksSet = this.subscriptions.get(eventType as Constructable<T>);
 
 		if(!callbacksSet) callbacksSet = new Set();
 
-		callbacksSet.add(callback);
+
+		callbacksSet.add(callback as EventSubscriptionCallback<T>);
 
 		this.subscriptions.set(eventType as Constructable<T>, callbacksSet);
 	}

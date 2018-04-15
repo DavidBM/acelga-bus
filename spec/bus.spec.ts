@@ -1,4 +1,4 @@
-import {Bus, Event, IMiddleware} from '@src/index'; 
+import {Bus, IEvent, IMiddleware} from '@src/index'; 
 
 describe('Bus', () => {
 	var bus: Bus;
@@ -158,6 +158,8 @@ class CustomEventNumber {
 	}
 }
 
+export class Event implements IEvent {};
+
 enum Operation {
 	Add,
 	Multiply,
@@ -177,6 +179,7 @@ const CustomMiddleware: (number: number, operation: Operation) => IMiddleware<Cu
 		case Operation.Substract:
 			return Promise.resolve(new CustomEventNumber(event.data - number));
 		case Operation.Void:
+			//This one will stop the execution. No events will be dispatched and no more middlewares will be called. 
 			return Promise.resolve();
 		default:
 			return Promise.resolve(new CustomEventNumber(event.data));
