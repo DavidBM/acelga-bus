@@ -1,0 +1,58 @@
+{
+  "name": "acelga-bus",
+  "version": "0.0.1",
+  "description": " An extensible typescript message bus with support for middlewares ",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/jest --coverage",
+    "test:watch": "./node_modules/.bin/jest --watchAll",
+    "build": "./node_modules/.bin/tsc",
+    "clean": "rm -rf dist coverage",
+    "cleanfull": "rm -rf node_modules dist coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DavidBM/acelga-bus.git"
+  },
+  "keywords": [
+    "typescript",
+    "bus",
+    "message",
+    "middleware",
+    "rabbitmq",
+    "kafka",
+    "asyncrhonous",
+    "ddd",
+    "event-sourcng",
+    "event"
+  ],
+  "author": "David Bonet Montes <webbonet@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/DavidBM/acelga-bus/issues"
+  },
+  "homepage": "https://github.com/DavidBM/acelga-bus#readme",
+  "devDependencies": {
+    "@types/jest": "^22.2.3",
+    "jest": "^22.4.3",
+    "source-map-support": "^0.5.4",
+    "typescript": "^2.8.1"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "<rootDir>/test-processor.js"
+    },
+    "testMatch": [
+      "<rootDir>/spec/**/*.+(ts|tsx|js)"
+    ],
+    "moduleNameMapper": {
+      "@src/(.*)": "<rootDir>/src/$1"
+    }
+  },
+  "dependencies": {}
+}
