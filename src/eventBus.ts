@@ -3,25 +3,27 @@ import {
 	IEvent, 
 	EventSubscriptionCallback, 
 	EventSubscriptionCallbackReturnType, 
-	IEventBus
+	IEventBus,
+	IMiddleware,
+	EventCallbacksSet
 } from './interfaces';
 
 import {Executor} from './executor';
 
-
 export class EventBus<T = IEvent> implements IEventBus<T> {
-	subscriptions: WeakMap<Constructable<T>, Set<EventSubscriptionCallback<T>>>
+	subscriptions: WeakMap<Constructable<T>, EventCallbacksSet<T>> = new WeakMap();
+	middlewares: IMiddleware<T>[] = [];
 
-	constructor() {
-		this.subscriptions = new WeakMap();
-	}
+	async publish(event: T): Promise<any> {
+		let callbacks = this.subscriptions.get(event.constructor as Constructable<T>);
 
-	publish(event: T): Promise<any> {
-		const callbacks = this.subscriptions.get(event.constructor as Constructable<T>);
+		if(!callbacks) return Promise.resolve();
 
-		if(!callbacks) return Promise.resolve()
+		const resultingEvent = await this.executeMiddlewares(event);
 
-		const executor = new Executor<T>(event, ...callbacks);
+		if(!resultingEvent) return Promise.resolve();
+
+		const executor = new Executor<T>(resultingEvent, ...callbacks);
 
 		return executor.execStopOnFail();
 	}
@@ -34,5 +36,24 @@ export class EventBus<T = IEvent> implements IEventBus<T> {
 		callbacksSet.add(callback);
 
 		this.subscriptions.set(eventType as Constructable<T>, callbacksSet);
+	}
+
+	addStartMiddleware(middleware: IMiddleware<T>): void{
+		this.middlewares.unshift(middleware);
+	}
+
+	addEndMiddleware(middleware: IMiddleware<T>){
+		this.middlewares.push(middleware);
+	}
+
+	async executeMiddlewares(event: T): Promise<T | void> {
+		let resultingEvent: T | void = event;
+
+		for (let middleware of this.middlewares) {
+			resultingEvent = await middleware(resultingEvent);
+			if(!resultingEvent) break;
+		}
+
+		return Promise.resolve(resultingEvent);
 	}
 }
