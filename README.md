@@ -1,7 +1,7 @@
 # acelga-bus
 An extensible typescript message bus with support for middlewares
 
-<img src="resources/pipe.png">
+<img src="img/acelga.png">
 
 This bus enforces you to use the types and interfaces you define, avoiding errors and problems. 
 
