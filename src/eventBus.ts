@@ -2,7 +2,6 @@ import {
 	Constructable,
 	IEvent, 
 	EventSubscriptionCallback, 
-	EventSubscriptionCallbackReturnType, 
 	IEventBus,
 	IMiddleware,
 	EventCallbacksSet

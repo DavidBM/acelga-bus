@@ -9,7 +9,7 @@ describe('Bus', () => {
 
 	it("should exist", () => {
 		expect(bus instanceof Bus).toBeTruthy();
-	})
+	});
 
 	it("should send and receive messages", (done) => {
 		var event = new Event();
@@ -20,6 +20,27 @@ describe('Bus', () => {
 		});
 
 		bus.publish(event);
+	});
+
+	it("should send and receive messages to all subscrivers", (done) => {
+		var event = new Event();
+
+		const fn1 = jest.fn((e) => expect(e).toBeInstanceOf(Event));
+		const fn2 = jest.fn((e) => expect(e).toBeInstanceOf(Event));
+		const fn3 = jest.fn((e) => expect(e).toBeInstanceOf(Event));
+
+		bus.on(Event, fn1);
+		bus.on(Event, fn2);
+		bus.on(Event, fn3);
+
+		bus.publish(event);
+
+		setTimeout(() => {
+			expect(fn1.mock.calls.length).toBe(1);
+			expect(fn2.mock.calls.length).toBe(1);
+			expect(fn3.mock.calls.length).toBe(1);
+			done();
+		}, 0);
 	});
 
 	it("should send and receive messages to the correct destination (inherited classes)", (done) => {
@@ -45,6 +66,27 @@ describe('Bus', () => {
 			expect(e).toBeInstanceOf(Event2);
 			done();
 		});
+
+		bus.publish(event);
+		bus.publish(event2);
+	});
+
+	it("should send and receive messages to the correct destination (no callbacks)", (done) => {
+		const bus = new Bus<{}>();
+		var event = new Event();
+		class Event2 {};
+		class Event3 {};
+		var event2 = new Event2;
+		var event3 = new Event3;
+
+		var fn = jest.fn();
+
+		bus.on(Event3, fn);
+
+		setTimeout(() => {
+			expect(fn.mock.calls.length).toBe(0);
+			done();
+		}, 5);
 
 		bus.publish(event);
 		bus.publish(event2);
