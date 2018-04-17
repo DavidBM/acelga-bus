@@ -1,10 +1,26 @@
-import {Bus, IEvent, IMiddleware} from '@src/index'; 
+import {Bus, IEvent, IMiddleware, Publisher} from '@src/index'; 
+import {Operation, CustomEventNumber, CustomEventOperationMiddleware, EmptyEvent} from './utils';
 
 describe('Bus', () => {
 	var bus: Bus;
+	var add2: IMiddleware<CustomEventNumber>;
+	var half: IMiddleware<CustomEventNumber>;
+	var sub2: IMiddleware<CustomEventNumber>;
+	var mul5: IMiddleware<CustomEventNumber>;
+	var sub1: IMiddleware<CustomEventNumber>;
+	var add3: IMiddleware<CustomEventNumber>;
+	var end: IMiddleware<CustomEventNumber>;
 
 	beforeAll(() => {
 		bus = new Bus();
+		add2 = CustomEventOperationMiddleware(2, Operation.Add);
+		half = CustomEventOperationMiddleware(2, Operation.Divide);
+		sub2 = CustomEventOperationMiddleware(2, Operation.Substract);
+		mul5 = CustomEventOperationMiddleware(5, Operation.Multiply);
+		sub1 = CustomEventOperationMiddleware(1, Operation.Substract);
+		add3 = CustomEventOperationMiddleware(3, Operation.Add);
+		end  = CustomEventOperationMiddleware(1, Operation.Void);
+
 	});
 
 	it("should exist", () => {
@@ -12,9 +28,9 @@ describe('Bus', () => {
 	});
 
 	it("should send and receive messages", (done) => {
-		var event = new Event();
+		var event = new EmptyEvent();
 
-		bus.on(Event, (e) => {
+		bus.on(EmptyEvent, (e) => {
 			expect(e).toEqual(event);
 			done();
 		});
@@ -23,15 +39,15 @@ describe('Bus', () => {
 	});
 
 	it("should send and receive messages to all subscrivers", (done) => {
-		var event = new Event();
+		var event = new EmptyEvent();
 
-		const fn1 = jest.fn((e) => expect(e).toBeInstanceOf(Event));
-		const fn2 = jest.fn((e) => expect(e).toBeInstanceOf(Event));
-		const fn3 = jest.fn((e) => expect(e).toBeInstanceOf(Event));
+		const fn1 = jest.fn((e) => expect(e).toBeInstanceOf(EmptyEvent));
+		const fn2 = jest.fn((e) => expect(e).toBeInstanceOf(EmptyEvent));
+		const fn3 = jest.fn((e) => expect(e).toBeInstanceOf(EmptyEvent));
 
-		bus.on(Event, fn1);
-		bus.on(Event, fn2);
-		bus.on(Event, fn3);
+		bus.on(EmptyEvent, fn1);
+		bus.on(EmptyEvent, fn2);
+		bus.on(EmptyEvent, fn3);
 
 		bus.publish(event);
 
@@ -44,8 +60,8 @@ describe('Bus', () => {
 	});
 
 	it("should send and receive messages to the correct destination (inherited classes)", (done) => {
-		var event = new Event();
-		class Event2 extends Event {};
+		var event = new EmptyEvent();
+		class Event2 extends EmptyEvent {};
 		var event2 = new Event2;
 
 		bus.on(Event2, (e) => {
@@ -58,7 +74,7 @@ describe('Bus', () => {
 	});
 
 	it("should send and receive messages to the correct destination (independen classes)", (done) => {
-		var event = new Event();
+		var event = new EmptyEvent();
 		class Event2 {};
 		var event2 = new Event2;
 
@@ -73,7 +89,7 @@ describe('Bus', () => {
 
 	it("should send and receive messages to the correct destination (no callbacks)", (done) => {
 		const bus = new Bus<{}>();
-		var event = new Event();
+		var event = new EmptyEvent();
 		class Event2 {};
 		class Event3 {};
 		var event2 = new Event2;
@@ -96,7 +112,7 @@ describe('Bus', () => {
 		it("should apply the middlewares only one time", (done) => {
 			const bus = new Bus<CustomEventNumber>();
 			const event = new CustomEventNumber(1);
-			bus.addEndMiddleware(CustomMiddleware(2, Operation.Add));
+			bus.pushMiddleware(add2);
 
 			bus.on(CustomEventNumber, (event) => {
 				expect(event.data).toBe(3);
@@ -110,11 +126,11 @@ describe('Bus', () => {
 			const bus = new Bus<CustomEventNumber>();
 			const event = new CustomEventNumber(2);
 
-			bus.addEndMiddleware(CustomMiddleware(2, Operation.Divide));
-			bus.addStartMiddleware(CustomMiddleware(2, Operation.Substract));
-			bus.addStartMiddleware(CustomMiddleware(5, Operation.Multiply));
-			bus.addEndMiddleware(CustomMiddleware(1, Operation.Substract));
-			bus.addStartMiddleware(CustomMiddleware(3, Operation.Add));
+			bus.unshiftMiddleware(half);
+			bus.pushMiddleware(sub2);
+			bus.pushMiddleware(mul5);
+			bus.unshiftMiddleware(sub1);
+			bus.pushMiddleware(add3);
 
 			bus.on(CustomEventNumber, (event) => {
 				//(((2) + 3) * 5 - 2) / 2 - 1 = 10.5
@@ -129,12 +145,12 @@ describe('Bus', () => {
 			const bus = new Bus<CustomEventNumber>();
 			const event = new CustomEventNumber(2);
 
-			bus.addEndMiddleware(CustomMiddleware(2, Operation.Divide));
-			bus.addStartMiddleware(CustomMiddleware(5, Operation.Multiply));
+			bus.unshiftMiddleware(half);
+			bus.pushMiddleware(mul5);
 			//Void makes the middleware to return nothign.
-			bus.addEndMiddleware(CustomMiddleware(1, Operation.Void));
-			bus.addEndMiddleware(CustomMiddleware(1, Operation.Substract));
-			bus.addStartMiddleware(CustomMiddleware(3, Operation.Add));
+			bus.unshiftMiddleware(end);
+			bus.unshiftMiddleware(sub1);
+			bus.pushMiddleware(add3);
 
 			const fn = jest.fn();
 
@@ -149,39 +165,34 @@ describe('Bus', () => {
 		})
 	});
 
+	describe("Publisher", () => {
+		it("should allow to have different sets of middlewares in every publisher", (done) => {
+			const bus = new Bus<CustomEventNumber>();
+			const pubA = bus.createPublisher();
+			const pubB = bus.createPublisher();
+			const event = new CustomEventNumber(4);
+
+			bus.unshiftMiddleware(half);
+			pubA.pushMiddleware(sub2);
+			pubA.pushMiddleware(half);
+
+			pubB.unshiftMiddleware(add2);
+			pubB.pushMiddleware(mul5);
+
+			const handler = jest.fn((event) => Promise.resolve());
+
+			bus.on(CustomEventNumber, handler);
+
+			bus.publish(event);
+			pubA.publish(event);
+			pubB.publish(event);
+
+			setTimeout(() => {
+				expect(handler.mock.calls.filter(call => call[0].data === 2).length).toBe(1);
+				expect(handler.mock.calls.filter(call => call[0].data === 1).length).toBe(1);
+				expect(handler.mock.calls.filter(call => call[0].data === 30).length).toBe(1);
+				done();
+			}, 5);
+		});
+	});
 });
-
-class CustomEventNumber {
-	data: number;
-	constructor(data: number = 0) {
-		this.data = data;
-	}
-}
-
-export class Event implements IEvent {};
-
-enum Operation {
-	Add,
-	Multiply,
-	Divide,
-	Substract,
-	Void
-};
-
-const CustomMiddleware: (number: number, operation: Operation) => IMiddleware<CustomEventNumber> = (number, operation) => (event) => {
-	switch (operation) {
-		case Operation.Add:
-			return Promise.resolve(new CustomEventNumber(event.data + number));
-		case Operation.Multiply:
-			return Promise.resolve(new CustomEventNumber(event.data * number));
-		case Operation.Divide:
-			return Promise.resolve(new CustomEventNumber(event.data / number));
-		case Operation.Substract:
-			return Promise.resolve(new CustomEventNumber(event.data - number));
-		case Operation.Void:
-			//This one will stop the execution. No events will be dispatched and no more middlewares will be called. 
-			return Promise.resolve();
-		default:
-			return Promise.resolve(new CustomEventNumber(event.data));
-	}
-}

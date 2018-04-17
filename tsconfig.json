@@ -4,6 +4,7 @@
     "declaration": false,
     "noImplicitAny": true,
     "removeComments": true,
+    "strict": true,
     "inlineSources": true,
     "strictFunctionTypes": true,
     "declaration": true,

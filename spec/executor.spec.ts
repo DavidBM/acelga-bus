@@ -1,6 +1,5 @@
 import 'jest';
 import {Executor} from	'@src/executor';
-import {Event} from	'@src/index';
 
 describe("Executor", () => {
 	it("Should execute all functions and then finish", (done) => {

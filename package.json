@@ -4,8 +4,9 @@
   "description": " An extensible typescript message bus with support for middlewares ",
   "main": "src/index.ts",
   "scripts": {
-    "test": "./node_modules/.bin/jest --coverage",
-    "test:watch": "./node_modules/.bin/jest --watchAll",
+    "test": "./node_modules/.bin/jest --coverage --coverageReporters=text",
+    "test:watch": "./node_modules/.bin/jest --watchAll --coverage --coverageReporters=text",
+    "test:coverage": "./node_modules/.bin/jest --watchAll --coverage --coverageReporters=text",
     "build": "./node_modules/.bin/tsc",
     "clean": "rm -rf dist coverage",
     "cleanfull": "rm -rf node_modules dist coverage"
@@ -49,7 +50,10 @@
       "^.+\\.(ts|tsx)$": "ts-jest"
     },
     "testMatch": [
-      "<rootDir>/spec/**/*.+(ts|tsx|js)"
+      "<rootDir>/spec/**/*.+(spec.)(ts|tsx|js)"
+    ],
+    "collectCoverageFrom": [
+      "<rootDir>/src/**/*"
     ],
     "moduleNameMapper": {
       "@src/(.*)": "<rootDir>/src/$1"
