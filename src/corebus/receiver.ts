@@ -27,6 +27,7 @@ export class Receiver<T = IEvent> {
 	public async trigger(event: T): Promise<void> {
 		//We force the type, removing the void from the return of the middleware chain
 		//because it "guarantees" that if it is a post middleware, it will return something.
+		//TODO: fix types of middlewareChain.ts for avoiding this casting
 		const result = await this.middlewareChain.execute(event) as {item: T};
 
 		let callbacks = this.subscriptions.get(event.constructor as Constructable<T>);
