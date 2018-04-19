@@ -9,7 +9,7 @@ export enum Operation {
 	Void
 };
 
-export const OperationMiddleware = (number: number, operation: Operation) => (event: number) => {
+export const OperationMiddleware: (number: number, operation: Operation) => IMiddleware<number> = (number: number, operation: Operation) => (event: number) => {
 	switch (operation) {
 		case Operation.Add:
 			return Promise.resolve(event + number);

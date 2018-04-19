@@ -1,12 +1,13 @@
-import {MiddlewareChain} from '@src/middlewareChain';
+import {MiddlewareChain} from '@src/corebus/middlewareChain';
 import {Operation, OperationMiddleware} from './utils';
+import {IMiddleware} from '@src/index';
 
 describe("MiddlewareChain", () => {
-	var chain: MiddlewareChain;
-	var add3: Function;
-	var sub1: Function;
-	var half: Function;
-	var end: Function;
+	var chain: MiddlewareChain<IMiddleware<number>, number>;
+	var add3: IMiddleware<number>;
+	var sub1: IMiddleware<number>;
+	var half: IMiddleware<number>;
+	var end: IMiddleware<number>;
 
 	beforeEach(() => {
 		chain = new MiddlewareChain();
@@ -40,6 +41,20 @@ describe("MiddlewareChain", () => {
 		chain.execute(29)
 		.then(result => {
 			expect(result.item).toBe(8.5);
+			done();
+		});
+	});
+
+	it("should stop executing if a middleware return undefined", (done) => {
+		chain.push(add3);
+		chain.unshift(half);
+		chain.unshift(sub1);
+		chain.push(end);
+		chain.push(half);
+
+		chain.execute(29)
+		.then(result => {
+			expect(typeof result.item).toBe('undefined');
 			done();
 		});
 	});

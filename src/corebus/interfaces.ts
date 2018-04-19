@@ -45,3 +45,7 @@ export interface IEventFactory<T = IEvent> {
 export interface IMiddleware<T = IEvent> {
 	(event: T): Promise<T | void>;
 }
+
+export interface IPostMiddleware<T = IEvent> {
+	(event: T): Promise<T>;
+}

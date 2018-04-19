@@ -1,5 +1,5 @@
 import 'jest';
-import {Executor} from	'@src/executor';
+import {Executor} from	'@src/corebus/executor';
 
 describe("Executor", () => {
 	it("Should execute all functions and then finish", (done) => {

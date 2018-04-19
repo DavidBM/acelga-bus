@@ -195,4 +195,33 @@ describe('Bus', () => {
 			}, 5);
 		});
 	});
+
+	describe("Receiver", () => {
+		it("should allow to have different sets of middlewares in every receiver", (done) => {
+			const bus = new Bus<CustomEventNumber>();
+			const recA = bus.createReceiver();
+			const recB = bus.createReceiver();
+			const event = new CustomEventNumber(4);
+
+			recA.pushMiddleware((n) => Promise.resolve(new CustomEventNumber(n.data - 2)));
+			recA.pushMiddleware((n) => Promise.resolve(new CustomEventNumber(n.data / 2)));
+
+			recB.unshiftMiddleware((n) => Promise.resolve(new CustomEventNumber(n.data + 2)));
+			recB.pushMiddleware((n) => Promise.resolve(new CustomEventNumber(n.data * 5)));
+
+			const handler = jest.fn((event) => Promise.resolve());
+
+			recA.on(CustomEventNumber, handler);
+			recB.on(CustomEventNumber, handler);
+
+			bus.publish(event);
+
+			setTimeout(() => {
+				console.log(handler.mock.calls);
+				expect(handler.mock.calls.filter(call => call[0].data === 1).length).toBe(1);
+				expect(handler.mock.calls.filter(call => call[0].data === 30).length).toBe(1);
+				done();
+			}, 5);
+		});
+	});
 });
