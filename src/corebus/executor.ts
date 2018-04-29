@@ -1,4 +1,3 @@
-import {IEvent} from './interfaces'
 import {EventSubscriptionCallback} from './interfaces'
 
 export class Executor<T> {

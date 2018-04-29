@@ -10,12 +10,12 @@ export class Publisher<T = {}> {
 		this.handler = handler;
 	}
 
-	async publish(item: T): Promise<void> {
+	public async publish(item: T): Promise<void> {
 		const result = await this.middlewareChain.execute(item);
 
-		if(!result || !result.finish || !result.item) return Promise.resolve();
+		if(!result) return Promise.resolve();
 
-		return this.handler(result.item, item);	
+		return this.handler(result, item);	
 	}
 
 	cleanMiddlewares() {

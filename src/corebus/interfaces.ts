@@ -22,15 +22,14 @@ export interface Serializable {
 EventBus interfaces
 */
 
-export interface IEvent {};
 
 export type EventSubscriptionCallbackReturnType = Promise<void|Error> | void;
 
-export type EventSubscriptionCallback<T = IEvent> = (event: T) => EventSubscriptionCallbackReturnType; 
+export type EventSubscriptionCallback<T = {}> = (event: T) => EventSubscriptionCallbackReturnType; 
 
 export type EventCallbacksSet<T> = Set<EventSubscriptionCallback<T>>;
 
-export interface IEventBus<T = IEvent> {
+export interface IEventBus<T = {}> {
 	subscriptions: WeakMap<Constructable<T>, Set<EventSubscriptionCallback<T>>>
 	publish(event: T): Promise<(void|Error)[]|void>
 	on(event: Constructable<T>, callback: EventSubscriptionCallback<T>): void
@@ -42,10 +41,6 @@ export interface IEventFactory<T = IEvent> {
 }
 */
 
-export interface IMiddleware<T = IEvent> {
-	(event: T): Promise<T | void>;
-}
-
-export interface IPostMiddleware<T = IEvent> {
-	(event: T): Promise<T>;
+export interface IMiddleware<T = {}> {
+	(event: T): Promise<T | void> | T | void;
 }

@@ -1,6 +1,5 @@
 import {
 	Constructable,
-	IEvent, 
 	EventSubscriptionCallback, 
 	IEventBus,
 	IMiddleware,
@@ -11,7 +10,7 @@ import {Executor} from './executor';
 import {Publisher} from './publisher';
 import {Receiver} from './receiver';
 
-export class EventBus<T = IEvent> implements IEventBus<T> {
+export class EventBus<T = {}> implements IEventBus<T> {
 	subscriptions: WeakMap<Constructable<T>, EventCallbacksSet<T>> = new WeakMap();
 	middlewares: IMiddleware<T>[] = [];
 	defaultPublisher: Publisher<T> = this.createPublisher();
@@ -19,7 +18,7 @@ export class EventBus<T = IEvent> implements IEventBus<T> {
 	receivers: Set<Receiver<T>> = new Set([this.defaultReceiver]);
 
 	public createPublisher(): Publisher<T> {
-		return new Publisher((item: T) => this.distributeEvent(item));
+		return new Publisher((item: T) => this.deliver(item));
 	}
 
 	public createReceiver(): Receiver<T> {
@@ -28,7 +27,7 @@ export class EventBus<T = IEvent> implements IEventBus<T> {
 		return receiver;
 	}
 
-	private distributeEvent(event: T): Promise<void> {
+	private deliver(event: T): Promise<void> {
 		const promises: Promise<void>[] = [];
 		this.receivers.forEach(receiver => promises.push(receiver.trigger(event)));
 

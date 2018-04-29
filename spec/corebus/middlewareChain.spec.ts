@@ -40,7 +40,35 @@ describe("MiddlewareChain", () => {
 
 		chain.execute(29)
 		.then(result => {
-			expect(result.item).toBe(8.5);
+			expect(result).toBe(8.5);
+			done();
+		});
+	});
+
+	it("should execute the synchronous and asynchronous middlewares", (done) => {
+		chain.push(add3);
+		chain.unshift(n => n / 2);
+		chain.unshift(n => n - 1);
+		chain.push(half);
+
+		chain.execute(29)
+		.then(result => {
+			expect(result).toBe(8.5);
+			done();
+		});
+	});
+
+	it("should allow to remove a middleware", (done) => {
+		chain.push(add3);
+		chain.unshift(half);
+		chain.unshift(sub1);
+		chain.push(half);
+		
+		chain.remove(sub1);
+
+		chain.execute(29)
+		.then(result => {
+			expect(result).toBe(8.75);
 			done();
 		});
 	});
@@ -54,7 +82,7 @@ describe("MiddlewareChain", () => {
 
 		chain.execute(29)
 		.then(result => {
-			expect(typeof result.item).toBe('undefined');
+			expect(typeof result).toBe('undefined');
 			done();
 		});
 	});
@@ -63,12 +91,26 @@ describe("MiddlewareChain", () => {
 		chain.push(add3);
 		chain.unshift(half);
 		chain.unshift(sub1);
+		chain.push(() => {});
+		chain.push(half);
+
+		chain.execute(29)
+		.then(result => {
+			expect(typeof result).toBe('undefined');
+			done();
+		});
+	});
+
+	it("should stop executing if a middleware return Promise<undefined>", (done) => {
+		chain.push(add3);
+		chain.unshift(half);
+		chain.unshift(sub1);
 		chain.push(end);
 		chain.push(half);
 
 		chain.execute(29)
 		.then(result => {
-			expect(typeof result.item).toBe('undefined');
+			expect(typeof result).toBe('undefined');
 			done();
 		});
 	});

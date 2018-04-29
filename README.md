@@ -18,7 +18,9 @@ This bus enforces you to use the types and interfaces you define, avoiding error
 <!-- /MarkdownTOC -->
 
 
-**It filter by types instead of strings.** That means that you have compile time protection against misspellings.  
+**It filter by types instead of strings.** That means that you have compile time protection against misspellings. But it means that you need to encapsulate everything withing a class. 
+
+Moreover, *it is not safe to publish primitives like numbers, null or strings* because their falsifiability property (0, NaN, "", null, undefined are false). Always send an object / class.
 
 Lets see a simple example (you can check the full example, better for experienced programmers).
 
@@ -104,12 +106,12 @@ bus.publish(new NonCompatibleEvent());
 <a id="why-middlewares"></a>
 ### Why middlewares?
 
-Because they allow to extend the buss to almost anything. And for some situation middlewares are a good tool for not repeating code.
+Because they allow to extend the buss to almost anything. In some cases middlewares are a good tool for not repeating code.
 
 <a id="possibilities-of-the-middlewares-like-connec-to-to-kafka-etc"></a>
 ### Possibilities of the middlewares (like connec to to kafka, etc)
 
-You can implement a connector to Kafka, RabbitMQ, Redis, etc. Middlewares can control the flow completely and can say when it fails or succeed and if to continue or to not. 
+You can implement a connector to Kafka, RabbitMQ, Redis, etc. Middlewares can completely control the flow of the delivery saying when it fails or succeed and if to continue or to not. 
 
 <a id="how-to-create"></a>
 ### How to create
@@ -124,7 +126,7 @@ export interface IMiddleware<T = IEvent> {
 
 You can import it with `import {IMiddleware} from 'acelga-bus';`. 
 
-- IEvent is the default interface that the Bus defaults if not generic type is provided. **You should always define it as the same interface as the Bus.**
+- IEvent is the default interface that the Bus defaults if not generic type is provided, you can provide your own base type. **You should always define it as the same interface as the Bus.**
 - `Promise<T | void>`
     - `T` if you return the Event, then the execution continues as expected.
     - `void` if you don't return anything, then the execution is stopped and the promise that `bus.publish()` returns is fulfilled.
@@ -163,7 +165,7 @@ const bus = new Bus<CustomEventNumber>();
 const event = new CustomEventNumber(25);
 
 //We can add at the beginning
-bus.addEndMiddleware(CustomMiddleware(1, Operation.Substract));
+bus.pushMiddleware(CustomMiddleware(1, Operation.Substract));
 //And at the end
 bus.addStartMiddleware(CustomMiddleware(3, Operation.Add));
 
@@ -174,15 +176,8 @@ bus.on(CustomEventNumber, (event) => {
 //This will print 27 in the console
 bus.publish(event);
 
-//This is the most basic interface of the middleware. You just need to implement the interface "IMiddleware"
-//with the same generic type as the Bus that will use it.
-const CapturingMiddleware: IMiddleware<CustomEventNumber> = (event) => {
-    //Here you can wait until the message is committed to RabbitMQ, Kafka, etc.
-    //This one will stop the execution. No events will be dispatched and no more middlewares will be called. 
-    return Promise.resolve();//Returning void finish the processing of the event
-}
-
-bus.addEndMiddleware(CapturingMiddleware);
+//This middleware will return undefined
+bus.unshiftMiddleware(CapturingMiddleware(0, false));
 
 //This won't print anything because the last added middleware returns 
 //nothing and the dispatch & process of the event is stopped

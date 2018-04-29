@@ -1,9 +1,6 @@
-import {IMiddleware, IPostMiddleware, IEvent} from './interfaces';
+import {IMiddleware} from './interfaces';
 
-export type MiddlewareResult<T = {}> = Promise<{item: T | void, finish: boolean}>;
-
-
-export class MiddlewareChain<MID extends IMiddleware<T> | IPostMiddleware<T>, T = IEvent> {
+export class MiddlewareChain<MID extends IMiddleware<T>, T> {
 	middlewares: MID[] = [];
 
 	getAll(): MID[] {
@@ -18,18 +15,18 @@ export class MiddlewareChain<MID extends IMiddleware<T> | IPostMiddleware<T>, T 
 		this.middlewares.unshift(middleware);
 	}
 
-	async execute(item: T): MiddlewareResult<T> {
+	remove(middleware: MID) {
+		this.middlewares = this.middlewares.filter(mid => mid !== middleware);
+	}
+
+	async execute(item: T): Promise<T|void> {
 		let resultingEvent: T | void = item;
-		let finish = true;
 
 		for (let middleware of this.middlewares) {
-			if(typeof resultingEvent === "undefined") {
-				finish = false;
-				break;
-			}
+			if(!resultingEvent) break;
 			resultingEvent = await middleware(resultingEvent);
 		}
 
-		return Promise.resolve({item: resultingEvent, finish});
+		return Promise.resolve(resultingEvent);
 	}
 };

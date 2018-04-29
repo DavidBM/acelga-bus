@@ -1,4 +1,4 @@
-import {Bus, IEvent, IMiddleware, Publisher} from '@src/index'; 
+import {Bus, IMiddleware, Publisher} from '@src/index'; 
 import {Operation, CustomEventNumber, CustomEventOperationMiddleware, EmptyEvent} from './utils';
 
 describe('Bus', () => {
@@ -217,7 +217,6 @@ describe('Bus', () => {
 			bus.publish(event);
 
 			setTimeout(() => {
-				console.log(handler.mock.calls);
 				expect(handler.mock.calls.filter(call => call[0].data === 1).length).toBe(1);
 				expect(handler.mock.calls.filter(call => call[0].data === 30).length).toBe(1);
 				done();

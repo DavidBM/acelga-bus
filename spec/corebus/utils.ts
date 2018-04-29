@@ -1,5 +1,4 @@
 import {IMiddleware} from '@src/index'; 
-import {IEvent} from '@src/index';
 
 export enum Operation {
 	Add,
@@ -52,4 +51,4 @@ export const CustomEventOperationMiddleware: (number: number, operation: Operati
 	}
 }
 
-export class EmptyEvent implements IEvent {};
+export class EmptyEvent {};

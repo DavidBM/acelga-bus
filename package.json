@@ -8,8 +8,10 @@
     "test:watch": "./node_modules/.bin/jest -w 10 --watchAll --coverage --coverageReporters=text",
     "test:coverage": "./node_modules/.bin/jest -w 10 --coverage",
     "build": "./node_modules/.bin/tsc",
-    "clean": "rm -rf dist coverage",
-    "cleanfull": "rm -rf node_modules dist coverage"
+    "check": "./node_modules/.bin/tsc --noEmit",
+    "cleancoverage": "rm -rf coverage",
+    "cleandist": "rm -rf node_modules dist",
+    "cleanall": "rm -rf node_modules dist coverage"
   },
   "repository": {
     "type": "git",

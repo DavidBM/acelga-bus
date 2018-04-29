@@ -1,5 +1,6 @@
 import {Publisher} from '@src/corebus/publisher';
 
+
 describe("Publisher", () => {
 	let pub: Publisher;
 	let handler = <T>(item: T) => Promise.resolve();
@@ -33,13 +34,29 @@ describe("Publisher", () => {
 		pubNumber.publish(34);
 	});
 
+	it("should not execute the handler if a middleware returns void", (done) => {
+		testAvoidHandlerCall(undefined, done);
+	});
+
+	it("should not execute the handler if a middleware returns \"\"", (done) => {
+		testAvoidHandlerCall("", done);
+	});
+
+	it("should not execute the handler if a middleware returns 0", (done) => {
+		testAvoidHandlerCall(0, done);
+	});
+
+	it("should not execute the handler if a middleware returns NaN", (done) => {
+		testAvoidHandlerCall(NaN, done);
+	});
+
 	it("it does not launch is the middleware chain don't finish", (done) => {
 		const handler = jest.fn((event: any) => Promise.resolve());
 
 		const pubNumber = new Publisher<number>(handler);
 
 		pubNumber.pushMiddleware((item: number) => Promise.resolve(item / 3));
-		pubNumber.unshiftMiddleware((item: number) => Promise.resolve(item - 2));
+		pubNumber.unshiftMiddleware((item: number) => item - 2);
 		pubNumber.unshiftMiddleware((item: number) => Promise.resolve(undefined));
 		pubNumber.pushMiddleware((item: number) => Promise.resolve(item + 1));
 
@@ -91,3 +108,21 @@ describe("Publisher", () => {
 		})
 	});
 });
+
+function testAvoidHandlerCall(value: any, done: jest.DoneCallback) {
+	const handler = jest.fn((event: any) => {
+		done.fail();
+		return Promise.resolve();
+	});
+
+	const publisher = new Publisher(handler);
+
+	publisher.pushMiddleware((item: number) => Promise.resolve());
+
+	publisher.publish(value);
+
+	setTimeout(() => {
+		expect(handler.mock.calls.length).toBe(0);
+		done();
+	}, 5);
+}
