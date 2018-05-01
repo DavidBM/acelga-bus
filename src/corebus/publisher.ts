@@ -13,7 +13,7 @@ export class Publisher<T = {}> {
 	public async publish(item: T): Promise<void> {
 		const result = await this.middlewareChain.execute(item);
 
-		if(!result) return Promise.resolve();
+		if(!result) return;
 
 		return this.handler(result, item);	
 	}

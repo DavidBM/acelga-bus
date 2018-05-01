@@ -24,12 +24,9 @@ export class Receiver<T = {}> {
 
 	public async trigger(event: T): Promise<void> {
 		const result = await this.middlewareChain.execute(event);
-
-		if(!result) return Promise.resolve();
-
 		let callbacks = this.subscriptions.get(event.constructor as Constructable<T>);
 
-		if(!callbacks) return Promise.resolve();
+		if(!result || !callbacks) return;
 
 		const executor = new Executor<T>(result, ...callbacks);
 
