@@ -1,8 +1,8 @@
 import 'jest';
 import {Executor} from	'@src/corebus/executor';
 
-describe("Executor", () => {
-	it("Should execute all functions and then finish", (done) => {
+describe('Executor', () => {
+	it('Should execute all functions and then finish', (done) => {
 		const ITEMS_QUANTITY = 3;
 		const {callbacks, item, executor} = createBaseExecutor(ITEMS_QUANTITY);
 
@@ -19,12 +19,12 @@ describe("Executor", () => {
 		});
 	});
 
-	it("Should allow to add callbacks once created", (done) => {
+	it('Should allow to add callbacks once created', (done) => {
 		const ITEMS_QUANTITY = 3;
 		const {
-			callbacks, 
-			executor, 
-			item, 
+			callbacks,
+			executor,
+			item,
 			callbackFactory
 		} = createBaseExecutor(ITEMS_QUANTITY);
 
@@ -35,7 +35,7 @@ describe("Executor", () => {
 		executor.add(fn2);
 
 		executor.execStopOnFail()
-		.then(() => {	
+		.then(() => {
 			callbacks.forEach(callback => {
 				expect(callback.mock.calls.length).toBe(1);
 			});
@@ -46,32 +46,32 @@ describe("Executor", () => {
 		});
 	});
 
-	it("Should stop in case of error", (done) => {
+	it('Should stop in case of error', (done) => {
 		const ITEMS_QUANTITY = 3;
-		const {callbacks, executor} = createBaseExecutor(ITEMS_QUANTITY, (item) => {throw new Error("artifical_error");});
+		const {callbacks, executor} = createBaseExecutor(ITEMS_QUANTITY, (item) => {throw new Error('artifical_error');});
 
 		executor.execStopOnFail()
-		.catch((e) => {		
+		.catch((e) => {
 			expect(callbacks.filter(cb => cb.mock.calls.length === 1).length).toBe(1);
 			expect(callbacks.filter(cb => cb.mock.calls.length === 0).length).toBe(2);
 
 			expect(e).toBeInstanceOf(Error);
 			expect(e.message).toBe('artifical_error');
-			done();	
+			done();
 		});
 	});
 });
 
 function createBaseExecutor(len: number, cb?: (item: string) => Promise<any>|void) {
-	const item = Math.random() + "";
+	const item = Math.random() + '';
 
-	let callbackFactory = (itemToTest:string) => jest.fn((item: string) => {
-		expect(item).toBe(itemToTest);
+	let callbackFactory = (itemToTest: string) => jest.fn((result: string) => {
+		expect(result).toBe(itemToTest);
 	});
 
-	if(cb) callbackFactory = (itemToTest:string) => jest.fn(cb);
+	if (cb) callbackFactory = (itemToTest: string) => jest.fn(cb);
 
-	const callbacks = new Array(len).fill(item).map(callbackFactory)
+	const callbacks = new Array(len).fill(item).map(callbackFactory);
 
 	const executor = new Executor<string>(item, ...callbacks);
 

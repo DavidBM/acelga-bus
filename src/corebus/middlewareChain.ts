@@ -2,68 +2,67 @@ import {IMiddleware} from './interfaces';
 
 export class MiddlewareChain<MID extends IMiddleware<T>, T> {
 	middlewares: MID[] = [];
-	alwaysLast: MID | null = null;
-	alwaysFirst: MID | null = null;
+	alwaysLast: Array<MID> = [];
+	alwaysFirst: Array<MID> = [];
 
 	getAll(): MID[] {
 		return Array.from(this.middlewares);
 	}
 
 	push(middleware: MID) {
-		if (!this.alwaysLast) return this.middlewares.push(middleware);
-
-		const lastMiddleware = this.middlewares.pop();
-		this.middlewares.push(middleware);
-
-		if (lastMiddleware)
-			this.middlewares.push(lastMiddleware);
+		const allMiddlewares = this.getCenterMiddlewares();
+		allMiddlewares.push(middleware);
+		this.rebuildMiddlewaresFromCenter(allMiddlewares);
 	}
 
-	pushAndKeepLast(middleware: MID, overwriteLast?: boolean): boolean {
-		if (this.alwaysLast && !overwriteLast){
-			return false;
+	pushAndKeepLast(middleware: MID, force?: boolean) {
+		const allMiddlewares = this.getCenterMiddlewares();
+
+		if (this.alwaysLast.length !== 0 && !force){
+			this.alwaysLast.unshift(middleware);
+			return this.rebuildMiddlewaresFromCenter(allMiddlewares);
 		}
 
-		this.alwaysLast = middleware;
-		this.push(middleware);
-		return true;
+		this.alwaysLast.push(middleware);
+		return this.rebuildMiddlewaresFromCenter(allMiddlewares);
 	}
 
 	unshift(middleware: MID) {
-		if (!this.alwaysFirst) return this.middlewares.unshift(middleware);
-
-		const firstMiddleware = this.middlewares.shift();
-		this.middlewares.unshift(middleware);
-
-		if (firstMiddleware)
-			this.middlewares.unshift(firstMiddleware);
+		const allMiddlewares = this.getCenterMiddlewares();
+		allMiddlewares.unshift(middleware);
+		this.rebuildMiddlewaresFromCenter(allMiddlewares);
 	}
 
-	unshiftAndKeepFirst(middleware: MID, overwriteFirst?: boolean): boolean {
-		if (this.alwaysFirst && !overwriteFirst){
-			return false;
+	unshiftAndKeepFirst(middleware: MID, force?: boolean) {
+		const allMiddlewares = this.getCenterMiddlewares();
+
+		if (this.alwaysFirst.length !== 0 && !force){
+			this.alwaysFirst.push(middleware);
+			return this.rebuildMiddlewaresFromCenter(allMiddlewares);
 		}
 
-		this.alwaysFirst = middleware;
-		this.unshift(middleware);
-		return true;
+		this.alwaysFirst.unshift(middleware);
+		return this.rebuildMiddlewaresFromCenter(allMiddlewares);
 	}
 
 	remove(middleware: MID) {
 		this.middlewares = this.middlewares.filter(mid => mid !== middleware);
 
-		if (this.alwaysLast === middleware){
-			this.alwaysLast = null;
+		if (this.alwaysLast.includes(middleware)){
+			this.alwaysLast = this.alwaysLast.filter(midd => midd !== middleware);
 		}
 
-		if (this.alwaysFirst === middleware){
-			this.alwaysFirst = null;
+		if (this.alwaysFirst.includes(middleware)){
+			this.alwaysFirst = this.alwaysFirst.filter(midd => midd !== middleware);
 		}
+	}
 
-		if (this.middlewares.length === 0){
-			this.alwaysFirst = null;
-			this.alwaysLast = null;
-		}
+	getCenterMiddlewares(): MID[] {
+		return this.middlewares.slice(this.alwaysFirst.length, this.middlewares.length - this.alwaysLast.length);
+	}
+
+	rebuildMiddlewaresFromCenter(center: MID[]) {
+		this.middlewares = [...this.alwaysFirst, ...center, ...this.alwaysLast];
 	}
 
 	async execute(item: T): Promise<T|void> {

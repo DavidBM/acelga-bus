@@ -7,7 +7,6 @@
         "no-unused-expression": true
     },
     "rules": {
-        "eofline": false,
         "quotemark": [
             true,
             "single"
