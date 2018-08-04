@@ -1,9 +1,9 @@
 import {MiddlewareChain} from './middlewareChain';
-import {IMiddleware} from './interfaces';
+import {IMiddleware, EventSubscriptionCallback} from './interfaces';
 
 export class Publisher<T = {}> {
 	middlewareChain: MiddlewareChain<IMiddleware<T>, T> = new MiddlewareChain();
-	listeners: Set<Function> = new Set();
+	listeners: Set<EventSubscriptionCallback> = new Set();
 	handler: (item: T, original: T) => Promise<void>;
 
 	constructor(handler: (item: T, original: T) => Promise<void>) {
@@ -13,9 +13,9 @@ export class Publisher<T = {}> {
 	public async publish(item: T): Promise<void> {
 		const result = await this.middlewareChain.execute(item);
 
-		if(!result) return;
+		if (!result) return;
 
-		return this.handler(result, item);	
+		return this.handler(result, item);
 	}
 
 	cleanMiddlewares() {
@@ -23,9 +23,9 @@ export class Publisher<T = {}> {
 	}
 
 	clone() {
-		var publisher = new Publisher(this.handler);
+		const publisher = new Publisher(this.handler);
 
-		for (let middleware of this.middlewareChain.getAll()){
+		for (const middleware of this.middlewareChain.getAll()){
 			publisher.pushMiddleware(middleware);
 		}
 

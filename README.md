@@ -11,7 +11,7 @@ This bus enforces you to use the types and interfaces you define, avoiding error
 - [Extended example](#extended-example)
 - [Middlewares!](#middlewares)
     - [Why middlewares?](#why-middlewares)
-    - [Possibilities of the middlewares \(like connec to to kafka, etc\)](#possibilities-of-the-middlewares-like-connec-to-to-kafka-etc)
+    - [Possibilities of the middlewares \(like connec to to eventstore, etc\)](#possibilities-of-the-middlewares-like-connec-to-to-eventstore-etc)
     - [How to create](#how-to-create)
     - [Code example](#code-example)
 
@@ -108,8 +108,8 @@ bus.publish(new NonCompatibleEvent());
 
 Because they allow to extend the buss to almost anything. In some cases middlewares are a good tool for not repeating code.
 
-<a id="possibilities-of-the-middlewares-like-connec-to-to-kafka-etc"></a>
-### Possibilities of the middlewares (like connec to to kafka, etc)
+<a id="possibilities-of-the-middlewares-like-connec-to-to-eventstore-etc"></a>
+### Possibilities of the middlewares (like connec to to eventstore, etc)
 
 You can implement a connector to Kafka, RabbitMQ, Redis, etc. Middlewares can completely control the flow of the delivery saying when it fails or succeed and if to continue or to not. 
 

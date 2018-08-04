@@ -1,13 +1,14 @@
-import {IMiddleware} from '@src/index'; 
+import {IMiddleware} from '@src/index';
 
 export enum Operation {
 	Add,
 	Multiply,
 	Divide,
 	Substract,
-	Void
-};
+	Void,
+}
 
+/* tslint:disable-next-line:cyclomatic-complexity */
 export const OperationMiddleware: (number: number, operation: Operation) => IMiddleware<number> = (number: number, operation: Operation) => (event: number) => {
 	switch (operation) {
 		case Operation.Add:
@@ -19,7 +20,7 @@ export const OperationMiddleware: (number: number, operation: Operation) => IMid
 		case Operation.Substract:
 			return Promise.resolve(event - number);
 		case Operation.Void:
-			//This one will stop the execution. No events will be dispatched and no more middlewares will be called. 
+			// This one will stop the execution. No events will be dispatched and no more middlewares will be called.
 			return Promise.resolve();
 		default:
 			return Promise.resolve(event);
@@ -33,6 +34,7 @@ export class CustomEventNumber {
 	}
 }
 
+/* tslint:disable-next-line:cyclomatic-complexity */
 export const CustomEventOperationMiddleware: (number: number, operation: Operation) => IMiddleware<CustomEventNumber> = (number, operation) => (event) => {
 	switch (operation) {
 		case Operation.Add:
@@ -44,11 +46,11 @@ export const CustomEventOperationMiddleware: (number: number, operation: Operati
 		case Operation.Substract:
 			return Promise.resolve(new CustomEventNumber(event.data - number));
 		case Operation.Void:
-			//This one will stop the execution. No events will be dispatched and no more middlewares will be called. 
+			// This one will stop the execution. No events will be dispatched and no more middlewares will be called.
 			return Promise.resolve();
 		default:
 			return Promise.resolve(new CustomEventNumber(event.data));
 	}
-}
+};
 
-export class EmptyEvent {};
+export class EmptyEvent {}

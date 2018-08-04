@@ -27,7 +27,9 @@
     "asyncrhonous",
     "ddd",
     "event-sourcng",
-    "event"
+    "event",
+    "eventstore",
+    "domain"
   ],
   "author": "David Bonet Montes <webbonet@gmail.com>",
   "license": "Apache-2.0",
@@ -43,6 +45,7 @@
     "typescript": "^3.0.0"
   },
   "jest": {
+    "testURL": "http://localhost",
     "moduleFileExtensions": [
       "ts",
       "tsx",

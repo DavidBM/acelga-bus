@@ -1,9 +1,9 @@
 import {
 	Constructable,
-	EventSubscriptionCallback, 
+	EventSubscriptionCallback,
 	IEventBus,
 	IMiddleware,
-	EventCallbacksSet
+	EventCallbacksSet,
 } from './interfaces';
 
 import {Executor} from './executor';

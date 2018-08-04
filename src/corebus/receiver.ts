@@ -1,8 +1,8 @@
 import {Executor} from './executor';
 import {MiddlewareChain} from './middlewareChain';
 import {
-	Constructable, 
-	EventSubscriptionCallback, 
+	Constructable,
+	EventSubscriptionCallback,
 	EventCallbacksSet,
 	IMiddleware,
 } from './interfaces';
@@ -13,9 +13,9 @@ export class Receiver<T = {}> {
 	subscriptions: Map<Constructable<T>, EventCallbacksSet<T>> = new Map();
 
 	public on<T1 extends T>(eventType: Constructable<T1>, callback: EventSubscriptionCallback<T1> ): void {
-		var callbacksSet = this.subscriptions.get(eventType as Constructable<T>);
+		let callbacksSet = this.subscriptions.get(eventType as Constructable<T>);
 
-		if(!callbacksSet) callbacksSet = new Set();
+		if (!callbacksSet) callbacksSet = new Set();
 
 		callbacksSet.add(callback as EventSubscriptionCallback<T>);
 
@@ -24,9 +24,9 @@ export class Receiver<T = {}> {
 
 	public async trigger(event: T): Promise<void> {
 		const result = await this.middlewareChain.execute(event);
-		let callbacks = this.subscriptions.get(event.constructor as Constructable<T>);
+		const callbacks = this.subscriptions.get(event.constructor as Constructable<T>);
 
-		if(!result || !callbacks) return;
+		if (!result || !callbacks) return;
 
 		const executor = new Executor<T>(result, ...callbacks);
 
@@ -35,14 +35,14 @@ export class Receiver<T = {}> {
 
 	public off<T1 extends T>(eventType: Constructable<T1>, callback?: EventSubscriptionCallback<T1> ): void {
 
-		if(!callback){
+		if (!callback){
 			this.subscriptions.delete(eventType);
 			return;
 		}
 
-		let callbacks = this.subscriptions.get(eventType as Constructable<T>);
+		const callbacks = this.subscriptions.get(eventType as Constructable<T>);
 
-		if(!callbacks) return;
+		if (!callbacks) return;
 
 		callbacks.delete(callback as EventSubscriptionCallback<T>);
 	}
