@@ -14,8 +14,8 @@ export class EventBus<T = {}> implements IEventBus<T> {
 	subscriptions: WeakMap<Constructable<T>, EventCallbacksSet<T>> = new WeakMap();
 	middlewares: IMiddleware<T>[] = [];
 	defaultPublisher: Publisher<T> = this.createPublisher();
-	defaultReceiver: Receiver<T> = new Receiver();
-	receivers: Set<Receiver<T>> = new Set([this.defaultReceiver]);
+	receivers: Set<Receiver<T>> = new Set();
+	defaultReceiver: Receiver<T> = this.createReceiver();
 
 	public createPublisher(): Publisher<T> {
 		return new Publisher((item: T) => this.deliver(item));
