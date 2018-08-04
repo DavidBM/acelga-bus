@@ -27,7 +27,7 @@ export class EventBus<T = {}> implements IEventBus<T> {
 		return receiver;
 	}
 
-	private deliver(event: T): Promise<void> {
+	protected deliver(event: T): Promise<void> {
 		const promises: Promise<void>[] = [];
 		this.receivers.forEach(receiver => promises.push(receiver.trigger(event)));
 

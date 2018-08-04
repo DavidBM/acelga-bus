@@ -65,6 +65,8 @@
     }
   },
   "dependencies": {
+    "@types/backoff": "^2.5.1",
+    "backoff": "^2.5.0",
     "geteventstore-promise": "^1.4.0"
   }
 }
