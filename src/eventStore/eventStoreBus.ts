@@ -1,7 +1,6 @@
-import {Bus} from '../index';
-import {EventStoreConnectionOptions} from './interfaces';
-
-import {eventstore} from 'geteventstore-promise';
+import {Bus, IEventBus, EventSubscriptionCallback, JsonizableInterface, Constructable} from '../index';
+import {EventStoreConnectionOptions, IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent} from './interfaces';
+import * as eventstore from 'geteventstore-promise';
 import * as backoff from 'backoff';
 /*
  Missing things here:
@@ -13,28 +12,39 @@ import * as backoff from 'backoff';
  - Remove any! Maybe creating my own interface for it?
  - TESTS
  - Actually USE THE BUS! All this code should be a middleware
+ - EventType must be serializable
 */
-class EventStoreBusConnector<T = {}> {
+class EventStoreBusConnector<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {
 
 	bus: Bus<T> = new Bus();
 	publisher = this.bus.createPublisher();
-	receiver = this.bus.createReceiver();
 	connectionOptions: EventStoreConnectionOptions;
-	lastProcessedMessage: string;
+	eventFactories: Map<string, IEventFactory<T>> = new Map();
+	backoffStrategy: backoff.Backoff;
 
 	client: any;
 	streamName: string;
+	startPosition: number = 0;
+	messagesToGet = 100;
 
-	constructor(connectionOptions: EventStoreConnectionOptions, streamName: string, lastProcessedMessage: string) {
+	constructor(connectionOptions: EventStoreConnectionOptions, streamName: string, startPosition: number = 0) {
 		this.connectionOptions = connectionOptions;
-		this.lastProcessedMessage = lastProcessedMessage;
+		this.startPosition = startPosition;
 		this.streamName = streamName;
 
 		this.client = this.connect(this.connectionOptions);
+		this.backoffStrategy = createBackoff();
 
-		const backoffStrategy = createBackoff();
+		this.declareConsumers();
+		this.backoffStrategy.backoff();
+	}
 
-		this.startConsume(backoffStrategy, this.lastProcessedMessage);
+	public async publish(event: T): Promise<void> {
+		// TODO: Serialize message and send to eventstore
+	}
+
+	public on<T1 extends T>(eventType: Constructable<T1>, callback: EventSubscriptionCallback<T1> ): void {
+		return this.bus.on(eventType, callback);
 	}
 
 	protected connect(options: EventStoreConnectionOptions): any {
@@ -48,32 +58,66 @@ class EventStoreBusConnector<T = {}> {
 		});
 	}
 
-	protected startConsume(backoffStrategy: backoff.Backoff, startPosition: string): void {
-		backoffStrategy.on('backoff', (number, delay) => {
-			this.client.getEvents(this.streamName, startPosition, 100)
-			.then((events: []) => {
-				if (events.length === 0) {
-					return backoffStrategy.backoff();
-				}
-
-				this.processEvents(events)
-				.then(() => {
-					this.startConsume(backoffStrategy, startPosition);
-				})
-				.catch((error: any) => {
-					return backoffStrategy.backoff(error);
-				});
-			})
+	private declareConsumers(): void {
+		this.backoffStrategy.on('backoff', (number, delay) => {
+			this.client.getEvents(this.streamName, this.startPosition, this.messagesToGet)
+			.then((events: Array<IDecodedSerializedEventstoreEvent>) => this.processConsumeAnswer(events))
 			.catch((error: any) => {
-				return backoffStrategy.backoff(error);
+				return this.backoffStrategy.backoff(error);
 			});
 		});
 
-		backoffStrategy.on('fail', (error: any) => {});
+		this.backoffStrategy.on('fail', (error: unknown) => {
+			this.logError(error);
+		});
 	}
 
-	protected processEvents(events: []): Promise<void> {
+	protected processConsumeAnswer(events: Array<IDecodedSerializedEventstoreEvent>) {
+		if (events.length === 0) {
+			return this.backoffStrategy.backoff();
+		}
+
+		return this.processEvents(events)
+		.then(() => {
+			this.startPosition += this.messagesToGet;
+			this.backoffStrategy.reset();
+			this.backoffStrategy.backoff();
+		})
+		.catch((error: any) => {
+			return this.backoffStrategy.backoff(error);
+		});
+	}
+
+	public addEventType(event: Constructable<T>, factory: IEventFactory<T>): void {
+		this.eventFactories.set(factory.getEventType(), factory);
+	}
+
+	protected processEvents(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
+		for (const event of events) {
+			const eventFactory = this.eventFactories.get(event.eventType);
+
+			if (!eventFactory) {
+				this.logError(new EventFactoryNotFoundError());
+				continue;
+			}
+
+			let eventObject = null;
+
+			try {
+				eventObject = eventFactory.build(event);
+			} catch (error) {
+				this.logError(error);
+				continue;
+			}
+
+			this.publisher.publish(eventObject);
+		}
+
 		return Promise.resolve();
+	}
+
+	protected logError(error: unknown): void {
+		// TODO: Implement
 	}
 }
 
@@ -83,4 +127,12 @@ function createBackoff(): backoff.Backoff {
 		initialDelay: 300,
 		maxDelay: 7000,
 	});
+}
+
+export class EventFactoryNotFoundError extends Error {
+	constructor() {
+		super();
+		this.stack = (new Error()).stack;
+		this.message = 'Event Factory not found';
+	}
 }

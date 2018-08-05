@@ -11,7 +11,6 @@ import {Publisher} from './publisher';
 import {Receiver} from './receiver';
 
 export class EventBus<T = {}> implements IEventBus<T> {
-	subscriptions: WeakMap<Constructable<T>, EventCallbacksSet<T>> = new WeakMap();
 	middlewares: IMiddleware<T>[] = [];
 	defaultPublisher: Publisher<T> = this.createPublisher();
 	receivers: Set<Receiver<T>> = new Set();

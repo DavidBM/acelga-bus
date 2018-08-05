@@ -1,4 +1,4 @@
-import {EventSubscriptionCallback} from './interfaces'
+import {EventSubscriptionCallback} from './interfaces';
 
 export class Executor<T> {
 	item: T;
@@ -11,10 +11,10 @@ export class Executor<T> {
 
 	execStopOnFail(): Promise<void>{
 		try{
-			var callbacks = this.callbacks.map(callback => callback(this.item));
+			const callbacks = this.callbacks.map(callback => callback(this.item));
 			return Promise.all(callbacks)
 			.then(() => {});
-		}catch(e){
+		}catch (e){
 			return Promise.reject(e);
 		}
 	}

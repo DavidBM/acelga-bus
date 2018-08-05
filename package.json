@@ -58,7 +58,8 @@
       "<rootDir>/spec/**/*.+(spec.)(ts|tsx|js)"
     ],
     "collectCoverageFrom": [
-      "<rootDir>/src/**/*"
+      "<rootDir>/src/**/*",
+      "!<rootDir>/src/**/*.d.ts"
     ],
     "moduleNameMapper": {
       "@src/(.*)": "<rootDir>/src/$1"

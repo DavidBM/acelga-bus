@@ -29,15 +29,8 @@ export type EventSubscriptionCallback<T = {}> = (event: T) => EventSubscriptionC
 export type EventCallbacksSet<T> = Set<EventSubscriptionCallback<T>>;
 
 export interface IEventBus<T = {}> {
-	subscriptions: WeakMap<Constructable<T>, Set<EventSubscriptionCallback<T>>>;
 	publish(event: T): Promise<(void|Error)[]|void>;
 	on(event: Constructable<T>, callback: EventSubscriptionCallback<T>): void;
 }
-/*
-export interface IEventFactory<T = IEvent> {
-	build(serializedEvent: JsonizableInterface): T;
-	getEventType(): Constructable<T>;
-}
-*/
 
 export type IMiddleware<T = {}> = (event: T) => Promise<T | void> | T | void;
