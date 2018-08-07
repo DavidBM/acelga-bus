@@ -2,6 +2,7 @@ import {Bus, IEventBus, EventSubscriptionCallback, JsonizableInterface, Construc
 import {EventStoreConnectionOptions, IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent} from './interfaces';
 import * as eventstore from 'geteventstore-promise';
 import * as backoff from 'backoff';
+import {Reflect} as 
 /*
  Missing things here:
  - The injection and ussage (in proccessEvents()) of factories
@@ -39,8 +40,10 @@ class EventStoreBusConnector<T extends IEventstoreEvent = IEventstoreEvent> impl
 		this.backoffStrategy.backoff();
 	}
 
-	public async publish(event: T): Promise<void> {
-		// TODO: Serialize message and send to eventstore
+	public async publish(event: T): Promise<any> {
+		// TODO: Serialize PROPERLY message and send to eventstore (maybe serialize with an external serializator? It needs to be object, not string)
+		const eventType = event.constructor.name;
+		return this.client.writeEvent(this.streamName, eventType, event, {eventType: eventType});
 	}
 
 	public on<T1 extends T>(eventType: Constructable<T1>, callback: EventSubscriptionCallback<T1> ): void {
@@ -89,12 +92,20 @@ class EventStoreBusConnector<T extends IEventstoreEvent = IEventstoreEvent> impl
 	}
 
 	public addEventType(event: Constructable<T>, factory: IEventFactory<T>): void {
-		this.eventFactories.set(factory.getEventType(), factory);
+		const eventType = event.constructor.name;
+		if (this.eventFactories.get(eventType)) {
+			// We throw here because this function is usually called in
+			// the instantiation of the application. We want to fail fast & hard
+			// in order to show the error to the developer.
+			throw new EventNameCollision();
+		}
+
+		this.eventFactories.set(eventType, factory);
 	}
 
 	protected processEvents(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
 		for (const event of events) {
-			const eventFactory = this.eventFactories.get(event.eventType);
+			const eventFactory = this.eventFactories.get(event.metadata.eventType); //Is this correct?
 
 			if (!eventFactory) {
 				this.logError(new EventFactoryNotFoundError());
@@ -134,5 +145,13 @@ export class EventFactoryNotFoundError extends Error {
 		super();
 		this.stack = (new Error()).stack;
 		this.message = 'Event Factory not found';
+	}
+}
+
+export class EventNameCollision extends Error {
+	constructor() {
+		super();
+		this.stack = (new Error()).stack;
+		this.message = 'The event you are trying to register seem to be registered previously. Maybe you are registerint it 2 times or you have 2 classes with the same name.';
 	}
 }

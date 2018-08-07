@@ -34,7 +34,7 @@ export class EventBus<T = {}> implements IEventBus<T> {
 		.then(() => {});
 	}
 
-	public async publish(event: T): Promise<any> {
+	public async publish(event: T): Promise<void> {
 		this.defaultPublisher.publish(event);
 	}
 

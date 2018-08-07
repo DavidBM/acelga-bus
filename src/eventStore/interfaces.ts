@@ -7,13 +7,12 @@ export interface EventStoreConnectionOptions {
 	};
 }
 
-export interface IEventstoreEvent {
-	eventType: string;
-}
+export interface IEventstoreEvent {}
 
-export interface IDecodedSerializedEventstoreEvent extends IEventstoreEvent {}
+export interface IDecodedSerializedEventstoreEvent extends IEventstoreEvent {
+	__eventType: string
+}
 
 export interface IEventFactory<T = {}> {
 	build(serializedEvent: IDecodedSerializedEventstoreEvent): T;
-	getEventType: () => string;
 }
