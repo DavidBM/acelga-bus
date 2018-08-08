@@ -33,4 +33,4 @@ export interface IEventBus<T = {}> {
 	on(event: Constructable<T>, callback: EventSubscriptionCallback<T>): void;
 }
 
-export type IMiddleware<T = {}> = (event: T) => Promise<T | void> | T | void;
+export type IMiddleware<T = {}> = (item: T) => Promise<T | void> | T | void;

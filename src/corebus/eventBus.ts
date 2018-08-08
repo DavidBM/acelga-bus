@@ -11,7 +11,6 @@ import {Publisher} from './publisher';
 import {Receiver} from './receiver';
 
 export class EventBus<T = {}> implements IEventBus<T> {
-	middlewares: IMiddleware<T>[] = [];
 	defaultPublisher: Publisher<T> = this.createPublisher();
 	receivers: Set<Receiver<T>> = new Set();
 	defaultReceiver: Receiver<T> = this.createReceiver();

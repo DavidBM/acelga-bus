@@ -39,4 +39,12 @@ export class Publisher<T = {}> {
 	unshiftMiddleware(middleware: IMiddleware<T>) {
 		this.middlewareChain.unshift(middleware);
 	}
+
+	pushMiddlewareAndKeepLast(middleware: IMiddleware<T>, force?: boolean) {
+		this.middlewareChain.pushAndKeepLast(middleware, force);
+	}
+
+	unshiftMiddlewareAndKeepFirst(middleware: IMiddleware<T>, force?: boolean) {
+		this.middlewareChain.unshiftAndKeepFirst(middleware, force);
+	}
 }

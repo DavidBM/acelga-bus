@@ -107,6 +107,32 @@ describe("Publisher", () => {
 			done();
 		})
 	});
+
+	it("should keep firstAndKeep & lastAndKeep middlewares if provided", (done) => {
+		const handler = (event: any) => {
+			expect(event).toBe(4);
+			done();
+			return Promise.resolve();
+		};
+
+		const pub = new Publisher<number>(handler);
+		pub.pushMiddlewareAndKeepLast((item: number) => Promise.resolve(item / 3));
+		pub.pushMiddleware((item: number) => Promise.resolve(item + 2));
+		pub.publish(10);
+	});
+
+	it("should keep firstAndKeep & lastAndKeep middlewares if provided", (done) => {
+		const handler = (event: any) => {
+			expect(event).toBe(5);
+			done();
+			return Promise.resolve();
+		};
+
+		const pub = new Publisher<number>(handler);
+		pub.unshiftMiddlewareAndKeepFirst((item: number) => Promise.resolve(item / 3));
+		pub.unshiftMiddleware((item: number) => Promise.resolve(item + 2));
+		pub.publish(9);
+	});
 });
 
 function testAvoidHandlerCall(value: any, done: jest.DoneCallback) {
