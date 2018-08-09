@@ -89,6 +89,26 @@ describe("Receiver", () => {
 		receiver.trigger(new CustomEvent());
 	});
 
+	it("should send all envents to global subscriptions", (done) => {
+		receiver.onAny((event) => {
+			expect(event).toBeInstanceOf(OtherEvent);
+			done();
+			return Promise.resolve();
+		});
+
+		receiver.trigger(new OtherEvent());
+	});
+
+	it("should send all envents to global subscriptions", (done) => {
+		receiver.onAny((event) => {
+			expect(event).toBeInstanceOf(CustomEvent);
+			done();
+			return Promise.resolve();
+		});
+
+		receiver.trigger(new CustomEvent());
+	});
+
 	it("should be able to clone itself and the clone should have the same subscriptions", (done) => {
 		receiver.on(CustomEvent, (event) => {
 			expect(event).toBeInstanceOf(CustomEvent);

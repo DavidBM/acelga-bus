@@ -8,4 +8,4 @@ export {
 	JsonizableInterface,
 	Constructable,
 } from './corebus/interfaces';
-export {createEventstoreBus} from './eventStore';
+export {create} from './eventStore';
