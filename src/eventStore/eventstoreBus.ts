@@ -1,8 +1,7 @@
-import {Backoff} from 'backoff';
-
 import {IEventBus, EventSubscriptionCallback, Constructable, Receiver} from '../index';
 import {IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent, ErrorLogger} from './interfaces';
 import {EventFactoryRespository as Repository} from './factoryRepository';
+import {EventstoreClient} from './eventstoreConsumer';
 
 /*
  Missing things here:
@@ -12,27 +11,17 @@ import {EventFactoryRespository as Repository} from './factoryRepository';
 export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {
 
 	dispatcher: Receiver<T> = new Receiver();
-	logError: (...args: any[]) => void;
+	logError: ErrorLogger;
 
 	eventRepository: Repository<T>;
-	backoffStrategy: Backoff;
+	client: EventstoreClient;
 
-	client: any;
-	streamName: string;
-	startPosition: number = 0;
-	messagesToGet = 100;
-
-	constructor(client: any, backoffStrategy: Backoff, errorLogger: ErrorLogger, eventRepository: Repository<T>, streamName: string, startPosition: number = 0) {
-		this.client = client;
-		this.backoffStrategy = backoffStrategy;
+	constructor(client: EventstoreClient, errorLogger: ErrorLogger, eventRepository: Repository<T>) {
 		this.eventRepository = eventRepository;
 		this.logError = errorLogger;
+		this.client = client;
 
-		this.startPosition = startPosition;
-		this.streamName = streamName;
-
-		this.declareConsumers();
-		this.backoffStrategy.backoff();
+		this.client.setHandler((events) => this.processEvents(events));
 	}
 
 	public on<T1 extends T>(eventType: Constructable<T1>, callback: EventSubscriptionCallback<T1> ): void {
@@ -45,43 +34,12 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 
 	public async publish(event: T): Promise<void> {
 		const eventType = event.constructor.name;
-		return this.client.writeEvent(this.streamName, eventType, event); //Asuming good serialization
+		return this.client.publish(eventType, event);
 	}
 
 	public addEventType(event: Constructable<T>, factory: IEventFactory<T>): void {
 		const eventType = event.constructor.name;
 		this.eventRepository.set(eventType, factory);
-	}
-
-	private declareConsumers(): void {
-
-		this.backoffStrategy.on('backoff', (number, delay) => {
-
-			this.client.getEvents(this.streamName, this.startPosition, this.messagesToGet)
-			.then((events: Array<IDecodedSerializedEventstoreEvent>) => {
-				return this.processConsumedAnswer(events)
-			})
-			.catch((error: any) => {
-				return this.backoffStrategy.backoff(error)
-			});
-		});
-
-		this.backoffStrategy.on('fail', (error: unknown) => {
-			this.logError(error);
-		});
-	}
-
-	protected processConsumedAnswer(events: Array<IDecodedSerializedEventstoreEvent>) {
-		if (events.length === 0) {
-			return this.backoffStrategy.backoff();
-		}
-
-		return this.processEvents(events)
-		.then((mesagesGot) => {
-			this.startPosition += mesagesGot;
-			this.backoffStrategy.reset();
-			this.backoffStrategy.backoff();
-		});
 	}
 
 	protected processEvents(events: Array<IDecodedSerializedEventstoreEvent>): Promise<number> {

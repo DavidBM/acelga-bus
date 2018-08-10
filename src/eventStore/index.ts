@@ -5,6 +5,7 @@ import * as debug from 'debug';
 import {EventStoreBus} from './eventstoreBus';
 import {EventFactoryRespository} from './factoryRepository';
 import {EventStoreConnectionOptions, IEventstoreEvent, ErrorLogger} from './interfaces';
+import {EventstoreClient} from './eventstoreConsumer';
 
 export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	connectionOptions: EventStoreConnectionOptions, 
@@ -13,14 +14,14 @@ export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	errorLogger?: ErrorLogger,
 	): EventStoreBus<T> {
 
-	const logger = errorLogger || debug('EventStoryBuss:error');
+	const logger = errorLogger || debug('EventStoryBus:error');
 	const client = createEventstoreConnection(connectionOptions);
 	const backoffStrategy = createBackoff();
 	const eventFactory = createEventFactoryRepository<T>();
+	const eventstoreClient = createEventstoreClient(client, logger, backoffStrategy, streamName, startPosition);
 
-	return new EventStoreBus<T>(client, backoffStrategy, logger, eventFactory, streamName, startPosition);
+	return new EventStoreBus<T>(eventstoreClient, logger, eventFactory);
 }
-
 
 function createBackoff(): backoff.Backoff {
 	return backoff.fibonacci({
@@ -36,4 +37,9 @@ function createEventstoreConnection(options: EventStoreConnectionOptions): any {
 
 function createEventFactoryRepository<T>(): EventFactoryRespository<T> {
 	return new EventFactoryRespository();
+}
+
+
+function createEventstoreClient(client: any, errorLogger: ErrorLogger, backoffStrategy: backoff.Backoff, streamName: string, startPosition: number = 0) {
+	return new EventstoreClient(client, errorLogger, backoffStrategy, streamName, startPosition);
 }
