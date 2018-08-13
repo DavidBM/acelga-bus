@@ -20,11 +20,11 @@ export class EventFactoryRespository<T> {
 
 	execute(event: unknown) {
 
-		if(!this.isIDecodedSerializedEventstoreEvent(event)){
+		if (!this.isIDecodedSerializedEventstoreEvent(event)){
 			throw new NotADecodedSerializedEventstoreEvent(event);
 		}
-			
-		const eventFactory = this.factories.get(event.eventType); //Is this correct?
+
+		const eventFactory = this.factories.get(event.eventType); // Is this correct?
 
 		if (!eventFactory) {
 			throw new FactoryNotFoundError();
@@ -34,7 +34,7 @@ export class EventFactoryRespository<T> {
 	}
 
 	isIDecodedSerializedEventstoreEvent(item: any): item is IDecodedSerializedEventstoreEvent {
-		if (!!item && typeof item === "object" && 'eventType' in item){
+		if (!!item && typeof item === 'object' && 'eventType' in item){
 			true;
 		}
 
@@ -49,7 +49,6 @@ export class FactoryNotFoundError extends Error {
 		this.message = 'Event Factory not found';
 	}
 }
-
 
 export class NotADecodedSerializedEventstoreEvent extends Error {
 	givenEvent: any;

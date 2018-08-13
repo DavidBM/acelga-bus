@@ -35,12 +35,12 @@ export class Receiver<T = {}> {
 
 		const future = [];
 
-		if(callbacks){
-			future.push(new Executor<T>(result, ...callbacks))
+		if (callbacks){
+			future.push(new Executor<T>(result, ...callbacks));
 		}
 
-		if(this.globalSubscriptions.size){
-			future.push(new Executor<T>(result, ...this.globalSubscriptions))
+		if (this.globalSubscriptions.size){
+			future.push(new Executor<T>(result, ...this.globalSubscriptions));
 		}
 
 		return Promise.all(future.map(executor => executor.execStopOnFail()))
