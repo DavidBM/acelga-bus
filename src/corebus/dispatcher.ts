@@ -7,7 +7,7 @@ import {
 	IMiddleware,
 } from './interfaces';
 
-export class Receiver<T = {}> {
+export class Dispatcher<T = {}> {
 
 	middlewareChain: MiddlewareChain<IMiddleware<T>, T> = new MiddlewareChain();
 	subscriptions: Map<Constructable<T>, EventCallbacksSet<T>> = new Map();

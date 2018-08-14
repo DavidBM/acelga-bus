@@ -45,7 +45,6 @@ export class EventFactoryRespository<T> {
 export class FactoryNotFoundError extends Error {
 	constructor() {
 		super();
-		this.stack = (new Error()).stack;
 		this.message = 'Event Factory not found';
 	}
 }
@@ -55,7 +54,6 @@ export class NotADecodedSerializedEventstoreEvent extends Error {
 
 	constructor(givenEvent: any) {
 		super();
-		this.stack = (new Error()).stack;
 		this.givenEvent = givenEvent;
 		this.message = 'The middleware for passing from a raw eventstore JSON object to a Event class has found that the data given is not an event. The original data is in the attribute "givenEvent" of this Error object';
 	}
@@ -64,7 +62,6 @@ export class NotADecodedSerializedEventstoreEvent extends Error {
 export class EventNameCollision extends Error {
 	constructor() {
 		super();
-		this.stack = (new Error()).stack;
 		this.message = 'The event you are trying to register seem to be registered previously. Maybe you are registerint it 2 times or you have 2 classes with the same name.';
 	}
 }

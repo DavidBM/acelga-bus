@@ -1,7 +1,7 @@
 import {Backoff} from 'backoff';
 import {IDecodedSerializedEventstoreEvent, ErrorLogger} from './interfaces'
 
-type Handler = (events: Array<IDecodedSerializedEventstoreEvent>) => Promise<number>;
+type Handler = (events: IDecodedSerializedEventstoreEvent) => Promise<void>;
 
 export class EventstoreClient {
 	client: any;
@@ -34,7 +34,7 @@ export class EventstoreClient {
 
 		this.backoffStrategy.on('backoff', (number, delay) => {
 
-			this.client.getEvents(this.streamName, this.startPosition, this.messagesToGet)
+			return this.client.getEvents(this.streamName, this.startPosition, this.messagesToGet)
 			.then((events: Array<IDecodedSerializedEventstoreEvent>) => {
 				return this.processConsumedAnswer(events)
 			})
@@ -48,20 +48,28 @@ export class EventstoreClient {
 		});
 	}
 
-	protected processConsumedAnswer(events: Array<IDecodedSerializedEventstoreEvent>) {
+	protected processConsumedAnswer(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
 		if (events.length === 0) {
-			return this.backoffStrategy.backoff();
+			this.backoffStrategy.backoff();
+			return Promise.resolve();
 		}
 
-		if(!this.handler)
-			return this.logError();
-
-		return this.handler(events)
-		.then((mesagesGot) => {
-			this.startPosition += mesagesGot;
+		return this.processEvents(events)
+		.then(() => {
+			this.startPosition += events.length;
 			this.backoffStrategy.reset();
 			this.backoffStrategy.backoff();
 		});
+	}
+
+	protected async processEvents(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
+		if(!this.handler){
+			return this.logError(new NoHanlderToProcessEvents(events));
+		}
+
+		for (const event of events) {
+			let eventResult = await this.handler(event);
+		}
 	}
 }
 

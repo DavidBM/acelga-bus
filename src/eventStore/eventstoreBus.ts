@@ -1,16 +1,16 @@
-import {IEventBus, EventSubscriptionCallback, Constructable, Receiver} from '../index';
+import {IEventBus, EventSubscriptionCallback, Constructable, Dispatcher} from '../index';
 import {IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent, ErrorLogger} from './interfaces';
 import {EventFactoryRespository as Repository} from './factoryRepository';
 import {EventstoreClient} from './eventstoreConsumer';
 
 /*
- Missing things here:
+ TODO:
  - TESTS
  - Change type receiver to Dispatcher
 */
 export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {
 
-	dispatcher: Receiver<T> = new Receiver();
+	dispatcher: Dispatcher<T> = new Dispatcher();
 	logError: ErrorLogger;
 
 	eventRepository: Repository<T>;
@@ -21,7 +21,7 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 		this.logError = errorLogger;
 		this.client = client;
 
-		this.client.setHandler((events) => this.processEvents(events));
+		this.client.setHandler((event) => this.processEvents(event));
 	}
 
 	public on<T1 extends T>(eventType: Constructable<T1>, callback: EventSubscriptionCallback<T1> ): void {
@@ -42,20 +42,16 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 		this.eventRepository.set(eventType, factory);
 	}
 
-	protected processEvents(events: Array<IDecodedSerializedEventstoreEvent>): Promise<number> {
-		for (const event of events) {
-			let eventObject = null;
+	// This is not a middleware because the type system would not allow that. We must ensure that everything in middlewares are events, nothing more.
+	protected async processEvents(event: IDecodedSerializedEventstoreEvent): Promise<void> {
+		let eventObject = null;
 
-			try {
-				eventObject = this.eventRepository.execute(event);
-			} catch (error) {
-				this.logError(error);
-				continue;
-			}
-
-			this.dispatcher.trigger(eventObject);
+		try {
+			eventObject = this.eventRepository.execute(event);
+		} catch (error) {
+			return this.logError(error);
 		}
 
-		return Promise.resolve(events.length);
+		this.dispatcher.trigger(eventObject);
 	}
 }

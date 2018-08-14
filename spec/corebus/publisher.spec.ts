@@ -65,7 +65,7 @@ describe("Publisher", () => {
 		setTimeout(() => {
 			expect(handler.mock.calls.length).toBe(0);
 			done();
-		})
+		}, 0)
 	});
 
 	it("should be cloned with the same handler and chain", (done) => {
@@ -86,7 +86,7 @@ describe("Publisher", () => {
 			expect(handler.mock.calls.filter(a => a[0] === 3).length).toBe(1);
 			expect(handler.mock.calls.filter(a => a[0] === 28).length).toBe(1);
 			done();
-		})
+		}, 0)
 	});
 
 	it("should be cloned with the same handler and chain", (done) => {
@@ -105,7 +105,7 @@ describe("Publisher", () => {
 			expect(handler.mock.calls.filter(a => a[0] === 3).length).toBe(1);
 			expect(handler.mock.calls.filter(a => a[0] === 9).length).toBe(1);
 			done();
-		})
+		}, 0)
 	});
 
 	it("should keep firstAndKeep & lastAndKeep middlewares if provided", (done) => {

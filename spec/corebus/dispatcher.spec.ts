@@ -1,20 +1,20 @@
-import {Receiver} from '@src/corebus/receiver';
+import {Dispatcher} from '@src/corebus/dispatcher';
 
 describe("Receiver", () => {
-	let receiver: Receiver;
+	let dispatcher: Dispatcher;
 
 	beforeEach(() => {
-		receiver = new Receiver();
+		dispatcher = new Dispatcher();
 	});
 
 	it("should allow to register to events", (done) => {
-		receiver.on(CustomEvent, (event) => {
+		dispatcher.on(CustomEvent, (event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			done();
 			return Promise.resolve();
 		});
 
-		receiver.trigger(new CustomEvent());
+		dispatcher.trigger(new CustomEvent());
 	});
 
 	it("should allow to register multiple times to events", (done) => {
@@ -27,10 +27,10 @@ describe("Receiver", () => {
 			return Promise.resolve();
 		});
 
-		receiver.on(CustomEvent, handler1);
-		receiver.on(CustomEvent, handler2);
+		dispatcher.on(CustomEvent, handler1);
+		dispatcher.on(CustomEvent, handler2);
 
-		receiver.trigger(new CustomEvent());
+		dispatcher.trigger(new CustomEvent());
 
 		setTimeout(() => {
 			expect(handler1.mock.calls.length).toBe(1);
@@ -44,11 +44,11 @@ describe("Receiver", () => {
 			return Promise.resolve();
 		});
 			
-		receiver.on(CustomEvent, handler1);
-		receiver.on(OtherEvent, handler1);
+		dispatcher.on(CustomEvent, handler1);
+		dispatcher.on(OtherEvent, handler1);
 
-		receiver.trigger(new CustomEvent());
-		receiver.trigger(new OtherEvent());
+		dispatcher.trigger(new CustomEvent());
+		dispatcher.trigger(new OtherEvent());
 
 		setTimeout(() => {
 			expect(handler1.mock.calls.length).toBe(2);
@@ -62,10 +62,10 @@ describe("Receiver", () => {
 			return Promise.resolve();
 		});
 			
-		receiver.on(CustomEvent, handler1);
-		receiver.on(CustomEvent, handler1);
+		dispatcher.on(CustomEvent, handler1);
+		dispatcher.on(CustomEvent, handler1);
 
-		receiver.trigger(new CustomEvent());
+		dispatcher.trigger(new CustomEvent());
 
 		setTimeout(() => {
 			expect(handler1.mock.calls.length).toBe(1);
@@ -74,55 +74,55 @@ describe("Receiver", () => {
 	});
 
 	it("should send the correct envent", (done) => {
-		receiver.on(CustomEvent, (event) => {
+		dispatcher.on(CustomEvent, (event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			done();
 			return Promise.resolve();
 		});
-		receiver.on(OtherEvent, (event) => {
+		dispatcher.on(OtherEvent, (event) => {
 			if(event instanceof CustomEvent)
 				done.fail(new Error('wrong callbacl called'));
 			return Promise.resolve();
 		});
 
-		receiver.trigger(new OtherEvent());
-		receiver.trigger(new CustomEvent());
+		dispatcher.trigger(new OtherEvent());
+		dispatcher.trigger(new CustomEvent());
 	});
 
 	it("should send all envents to global subscriptions", (done) => {
-		receiver.onAny((event) => {
+		dispatcher.onAny((event) => {
 			expect(event).toBeInstanceOf(OtherEvent);
 			done();
 			return Promise.resolve();
 		});
 
-		receiver.trigger(new OtherEvent());
+		dispatcher.trigger(new OtherEvent());
 	});
 
 	it("should send all envents to global subscriptions", (done) => {
-		receiver.onAny((event) => {
+		dispatcher.onAny((event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			done();
 			return Promise.resolve();
 		});
 
-		receiver.trigger(new CustomEvent());
+		dispatcher.trigger(new CustomEvent());
 	});
 
 	it("should be able to clone itself and the clone should have the same subscriptions", (done) => {
-		receiver.on(CustomEvent, (event) => {
+		dispatcher.on(CustomEvent, (event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			done();
 			return Promise.resolve();
 		});
-		receiver.on(OtherEvent, (event) => {
+		dispatcher.on(OtherEvent, (event) => {
 			if(event instanceof CustomEvent)
 				done.fail(new Error('wrong callbacl called'));
 			return Promise.resolve();
 		});
 
-		receiver.trigger(new OtherEvent());
-		receiver.trigger(new CustomEvent());
+		dispatcher.trigger(new OtherEvent());
+		dispatcher.trigger(new CustomEvent());
 	});
 
 	it("should allow to deregister a callback", (done) => {
@@ -131,10 +131,10 @@ describe("Receiver", () => {
 			return Promise.resolve();
 		});
 
-		receiver.on(CustomEvent, handler);
-		receiver.off(CustomEvent, handler);
+		dispatcher.on(CustomEvent, handler);
+		dispatcher.off(CustomEvent, handler);
 
-		receiver.trigger(new CustomEvent());
+		dispatcher.trigger(new CustomEvent());
 
 		setTimeout(() => {
 			expect(handler.mock.calls.length).toBe(0);
@@ -148,10 +148,10 @@ describe("Receiver", () => {
 			return Promise.resolve();
 		});
 
-		receiver.on(CustomEvent, handler);
-		receiver.off(CustomEvent);
+		dispatcher.on(CustomEvent, handler);
+		dispatcher.off(CustomEvent);
 
-		receiver.trigger(new CustomEvent());
+		dispatcher.trigger(new CustomEvent());
 
 		setTimeout(() => {
 			expect(handler.mock.calls.length).toBe(0);
@@ -160,7 +160,7 @@ describe("Receiver", () => {
 	});
 
 	it("should execute middlewares", (done) => {
-		let receiver = new Receiver<NumberEvent>();
+		let dispatcher = new Dispatcher<NumberEvent>();
 
 		var handler = jest.fn((event) => {
 			expect(event).toEqual(new NumberEvent(-5.5));
@@ -168,36 +168,36 @@ describe("Receiver", () => {
 			return Promise.resolve();
 		});
 
-		receiver.on(NumberEvent, handler);
+		dispatcher.on(NumberEvent, handler);
 
-		receiver.pushMiddleware(event => Promise.resolve(new NumberEvent(event.n * 3)));
-		receiver.unshiftMiddleware(event => new NumberEvent(event.n / 2));
-		receiver.pushMiddleware(event => Promise.resolve(new NumberEvent(event.n - 10)));
+		dispatcher.pushMiddleware(event => Promise.resolve(new NumberEvent(event.n * 3)));
+		dispatcher.unshiftMiddleware(event => new NumberEvent(event.n / 2));
+		dispatcher.pushMiddleware(event => Promise.resolve(new NumberEvent(event.n - 10)));
 
-		receiver.trigger(new NumberEvent(3));
+		dispatcher.trigger(new NumberEvent(3));
 	})
 
 	it("should not execute the handler if a middleware returns void", (done) => {
-		failTestIfMiddlewareDelivered(receiver, undefined, done);
+		failTestIfMiddlewareDelivered(dispatcher, undefined, done);
 	});
 
 	it("should not execute the handler if a middleware returns 0", (done) => {
-		failTestIfMiddlewareDelivered(receiver, 0, done);
+		failTestIfMiddlewareDelivered(dispatcher, 0, done);
 	});
 
 	it("should not execute the handler if a middleware returns \"\"", (done) => {
-		failTestIfMiddlewareDelivered(receiver, "", done);
+		failTestIfMiddlewareDelivered(dispatcher, "", done);
 	});
 
 	it("should not execute the handler if a middleware returns NaN", (done) => {
-		failTestIfMiddlewareDelivered(receiver, NaN, done);
+		failTestIfMiddlewareDelivered(dispatcher, NaN, done);
 	});
 
 	it("should allow to deregister from a non existent event without throw", () => {
-		expect(() => receiver.off(CustomEvent)).not.toThrow();
-		expect(() => receiver.off(CustomEvent, () => {})).not.toThrow();
+		expect(() => dispatcher.off(CustomEvent)).not.toThrow();
+		expect(() => dispatcher.off(CustomEvent, () => {})).not.toThrow();
 
-		expect(() => receiver.trigger(new CustomEvent())).not.toThrow();
+		expect(() => dispatcher.trigger(new CustomEvent())).not.toThrow();
 	});
 });
 
@@ -208,17 +208,17 @@ class NumberEvent{
 class CustomEvent{};
 class OtherEvent{};
 
-function failTestIfMiddlewareDelivered(receiver: Receiver, item: any, done: jest.DoneCallback) {
+function failTestIfMiddlewareDelivered(dispatcher: Dispatcher, item: any, done: jest.DoneCallback) {
 	var handler = jest.fn((event) => {
 		done.fail();
 		return Promise.resolve();
 	});
 
-	receiver.on(CustomEvent, handler);
+	dispatcher.on(CustomEvent, handler);
 
-	receiver.pushMiddleware(event => Promise.resolve(item));
+	dispatcher.pushMiddleware(event => Promise.resolve(item));
 
-	receiver.trigger(new CustomEvent());
+	dispatcher.trigger(new CustomEvent());
 
 	setTimeout(() => {
 		expect(handler.mock.calls.length).toBe(0);

@@ -1,6 +1,6 @@
 export {EventBus as Bus} from './corebus/eventBus';
 export {Publisher} from './corebus/publisher';
-export {Receiver} from './corebus/receiver';
+export {Dispatcher} from './corebus/dispatcher';
 export {
 	IMiddleware,
 	IEventBus,

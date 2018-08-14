@@ -8,26 +8,26 @@ import {
 
 import {Executor} from './executor';
 import {Publisher} from './publisher';
-import {Receiver} from './receiver';
+import {Dispatcher} from './dispatcher';
 
 export class EventBus<T = {}> implements IEventBus<T> {
 	defaultPublisher: Publisher<T> = this.createPublisher();
-	receivers: Set<Receiver<T>> = new Set();
-	defaultReceiver: Receiver<T> = this.createReceiver();
+	dispatcher: Set<Dispatcher<T>> = new Set();
+	defaultReceiver: Dispatcher<T> = this.createReceiver();
 
 	public createPublisher(): Publisher<T> {
 		return new Publisher((item: T) => this.deliver(item));
 	}
 
-	public createReceiver(): Receiver<T> {
-		const receiver = new Receiver<T>();
-		this.receivers.add(receiver);
+	public createReceiver(): Dispatcher<T> {
+		const receiver = new Dispatcher<T>();
+		this.dispatcher.add(receiver);
 		return receiver;
 	}
 
 	protected deliver(event: T): Promise<void> {
 		const promises: Promise<void>[] = [];
-		this.receivers.forEach(receiver => promises.push(receiver.trigger(event)));
+		this.dispatcher.forEach(receiver => promises.push(receiver.trigger(event)));
 
 		return Promise.all(promises)
 		.then(() => {});
