@@ -158,70 +158,7 @@ describe("Receiver", () => {
 			done();
 		}, 5);
 	});
-
-	it("should execute middlewares", (done) => {
-		let dispatcher = new Dispatcher<NumberEvent>();
-
-		var handler = jest.fn((event) => {
-			expect(event).toEqual(new NumberEvent(-5.5));
-			done();
-			return Promise.resolve();
-		});
-
-		dispatcher.on(NumberEvent, handler);
-
-		dispatcher.pushMiddleware(event => Promise.resolve(new NumberEvent(event.n * 3)));
-		dispatcher.unshiftMiddleware(event => new NumberEvent(event.n / 2));
-		dispatcher.pushMiddleware(event => Promise.resolve(new NumberEvent(event.n - 10)));
-
-		dispatcher.trigger(new NumberEvent(3));
-	})
-
-	it("should not execute the handler if a middleware returns void", (done) => {
-		failTestIfMiddlewareDelivered(dispatcher, undefined, done);
-	});
-
-	it("should not execute the handler if a middleware returns 0", (done) => {
-		failTestIfMiddlewareDelivered(dispatcher, 0, done);
-	});
-
-	it("should not execute the handler if a middleware returns \"\"", (done) => {
-		failTestIfMiddlewareDelivered(dispatcher, "", done);
-	});
-
-	it("should not execute the handler if a middleware returns NaN", (done) => {
-		failTestIfMiddlewareDelivered(dispatcher, NaN, done);
-	});
-
-	it("should allow to deregister from a non existent event without throw", () => {
-		expect(() => dispatcher.off(CustomEvent)).not.toThrow();
-		expect(() => dispatcher.off(CustomEvent, () => {})).not.toThrow();
-
-		expect(() => dispatcher.trigger(new CustomEvent())).not.toThrow();
-	});
 });
 
-class NumberEvent{
-	n: number;
-	constructor(n: number) { this.n = n; }
-}
 class CustomEvent{};
 class OtherEvent{};
-
-function failTestIfMiddlewareDelivered(dispatcher: Dispatcher, item: any, done: jest.DoneCallback) {
-	var handler = jest.fn((event) => {
-		done.fail();
-		return Promise.resolve();
-	});
-
-	dispatcher.on(CustomEvent, handler);
-
-	dispatcher.pushMiddleware(event => Promise.resolve(item));
-
-	dispatcher.trigger(new CustomEvent());
-
-	setTimeout(() => {
-		expect(handler.mock.calls.length).toBe(0);
-		done();
-	}, 5);
-}

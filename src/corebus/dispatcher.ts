@@ -1,5 +1,4 @@
 import {Executor} from './executor';
-import {MiddlewareChain} from './middlewareChain';
 import {
 	Constructable,
 	EventSubscriptionCallback,
@@ -9,7 +8,6 @@ import {
 
 export class Dispatcher<T = {}> {
 
-	middlewareChain: MiddlewareChain<IMiddleware<T>, T> = new MiddlewareChain();
 	subscriptions: Map<Constructable<T>, EventCallbacksSet<T>> = new Map();
 	globalSubscriptions: EventCallbacksSet<T> = new Set();
 
@@ -28,19 +26,18 @@ export class Dispatcher<T = {}> {
 	}
 
 	public async trigger(event: T): Promise<void> {
-		const result = await this.middlewareChain.execute(event);
 		const callbacks = this.subscriptions.get(event.constructor as Constructable<T>);
 
-		if (!result) return;
+		if (!event) return;
 
 		const future = [];
 
 		if (callbacks){
-			future.push(new Executor<T>(result, ...callbacks));
+			future.push(new Executor<T>(event, ...callbacks));
 		}
 
 		if (this.globalSubscriptions.size){
-			future.push(new Executor<T>(result, ...this.globalSubscriptions));
+			future.push(new Executor<T>(event, ...this.globalSubscriptions));
 		}
 
 		return Promise.all(future.map(executor => executor.execStopOnFail()))
@@ -59,13 +56,5 @@ export class Dispatcher<T = {}> {
 		if (!callbacks) return;
 
 		callbacks.delete(callback as EventSubscriptionCallback<T>);
-	}
-
-	pushMiddleware(middleware: IMiddleware<T>) {
-		this.middlewareChain.push(middleware);
-	}
-
-	unshiftMiddleware(middleware: IMiddleware<T>) {
-		this.middlewareChain.unshift(middleware);
 	}
 }
