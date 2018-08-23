@@ -7,6 +7,9 @@ import {EventstoreClient} from './eventstoreConsumer';
  TODO:
  - TESTS
  - Change type receiver to Dispatcher
+ - Add Scheduler for tracking how executions are done (parallel or sequential). It should have a public interface to be ableto implement an external scheduler.
+ - When decided to execute parallel, if there is more than one event in the queue, then wait for the first one to finish before execute the second. It will require to change the promise returns & code
+ - Only allow one subscription for each event type. Do that as an external dependency.
 */
 export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {
 
