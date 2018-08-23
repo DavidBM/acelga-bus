@@ -26,9 +26,9 @@ export class Dispatcher<T = {}> {
 	}
 
 	public async trigger(event: T): Promise<void> {
-		const callbacks = this.subscriptions.get(event.constructor as Constructable<T>);
-
 		if (!event) return;
+
+		const callbacks = this.subscriptions.get(event.constructor as Constructable<T>);
 
 		const future = [];
 

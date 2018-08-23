@@ -56,6 +56,39 @@ describe("Receiver", () => {
 		}, 5)
 	})
 
+	it("should not call the callback if there is a falsable variable in the trigger method", (done) => {
+		var handler1 = jest.fn((event) => {
+			return Promise.resolve();
+		});
+
+		dispatcher.on(CustomEvent, handler1);
+
+		dispatcher.trigger(null as any);
+		dispatcher.trigger(NaN as any);
+		dispatcher.trigger(undefined as any);
+		dispatcher.trigger(0 as any);
+
+		setTimeout(() => {
+			expect(handler1.mock.calls.length).toBe(0);
+			done();
+		}, 15)
+	})
+
+	it("should not call", (done) => {
+		var handler1 = jest.fn((event) => {
+			return Promise.resolve();
+		});
+
+		dispatcher.on(CustomEvent, handler1);
+
+		dispatcher.trigger(null as any);
+
+		setTimeout(() => {
+			expect(handler1.mock.calls.length).toBe(0);
+			done();
+		}, 15)
+	})
+
 	it("should execute the handler only one time per event, doesn't matter how may subscriptions is done", (done) => {
 		var handler1 = jest.fn((event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
@@ -157,6 +190,23 @@ describe("Receiver", () => {
 			expect(handler.mock.calls.length).toBe(0);
 			done();
 		}, 5);
+	});
+
+	it("should allow deregister any callbackks if the callback is not found", (done) => {
+		var handler = jest.fn((event) => {
+			expect(event).toBeInstanceOf(CustomEvent);
+			return Promise.resolve();
+		});
+
+		dispatcher.on(CustomEvent, handler);
+		dispatcher.off(OtherEvent, handler);
+
+		dispatcher.trigger(new CustomEvent());
+
+		setTimeout(() => {
+			expect(handler.mock.calls.length).toBe(1);
+			done();
+		}, 15);
 	});
 });
 

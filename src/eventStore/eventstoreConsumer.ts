@@ -48,18 +48,15 @@ export class EventstoreClient {
 		});
 	}
 
-	protected processConsumedAnswer(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
+	protected async processConsumedAnswer(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
 		if (events.length === 0) {
-			this.backoffStrategy.backoff();
-			return Promise.resolve();
+			return this.backoffStrategy.backoff();
 		}
 
-		return this.processEvents(events)
-		.then(() => {
-			this.startPosition += events.length;
-			this.backoffStrategy.reset();
-			this.backoffStrategy.backoff();
-		});
+		await this.processEvents(events)
+		this.startPosition += events.length;
+		this.backoffStrategy.reset();
+		this.backoffStrategy.backoff();
 	}
 
 	protected async processEvents(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {

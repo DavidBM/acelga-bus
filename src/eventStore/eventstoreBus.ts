@@ -45,7 +45,8 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 		this.eventRepository.set(eventType, factory);
 	}
 
-	// This is not a middleware because the type system would not allow that. We must ensure that everything in middlewares are events, nothing more.
+	// This is not a middleware because the type system would not allow that. 
+	// We must ensure that everything in middlewares are events, nothing more.
 	protected async processEvents(event: IDecodedSerializedEventstoreEvent): Promise<void> {
 		let eventObject = null;
 
