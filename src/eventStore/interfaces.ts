@@ -10,7 +10,7 @@ export interface EventStoreConnectionOptions {
 export interface IEventstoreEvent {}
 
 export interface IDecodedSerializedEventstoreEvent extends IEventstoreEvent {
-	eventType: string // Every event has a type in Eventstore
+	eventType: string; // Every event has a type in Eventstore
 }
 
 export interface IFactory<T = {}> {

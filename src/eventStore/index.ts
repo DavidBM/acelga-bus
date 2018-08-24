@@ -8,8 +8,8 @@ import {EventStoreConnectionOptions, IEventstoreEvent, ErrorLogger} from './inte
 import {EventstoreClient} from './eventstoreConsumer';
 
 export function create< T extends IEventstoreEvent = IEventstoreEvent>(
-	connectionOptions: EventStoreConnectionOptions, 
-	streamName: string, 
+	connectionOptions: EventStoreConnectionOptions,
+	streamName: string,
 	startPosition: number = 0,
 	errorLogger?: ErrorLogger,
 	): EventStoreBus<T> {

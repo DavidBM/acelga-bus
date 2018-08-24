@@ -1,5 +1,5 @@
 import {Backoff} from 'backoff';
-import {IDecodedSerializedEventstoreEvent, ErrorLogger} from './interfaces'
+import {IDecodedSerializedEventstoreEvent, ErrorLogger} from './interfaces';
 
 type Handler = (events: IDecodedSerializedEventstoreEvent) => Promise<void>;
 
@@ -27,7 +27,7 @@ export class EventstoreClient {
 	}
 
 	public async publish(eventType: string, event: {}): Promise<void> {
-		return this.client.writeEvent(this.streamName, eventType, event); //Asuming good serialization
+		return this.client.writeEvent(this.streamName, eventType, event); // Asuming good serialization
 	}
 
 	private declareConsumers(): void {
@@ -36,10 +36,10 @@ export class EventstoreClient {
 
 			return this.client.getEvents(this.streamName, this.startPosition, this.messagesToGet)
 			.then((events: Array<IDecodedSerializedEventstoreEvent>) => {
-				return this.processConsumedAnswer(events)
+				return this.processConsumedAnswer(events);
 			})
 			.catch((error: any) => {
-				return this.backoffStrategy.backoff(error)
+				return this.backoffStrategy.backoff(error);
 			});
 		});
 
@@ -53,19 +53,20 @@ export class EventstoreClient {
 			return this.backoffStrategy.backoff();
 		}
 
-		await this.processEvents(events)
+		await this.processEvents(events);
 		this.startPosition += events.length;
 		this.backoffStrategy.reset();
 		this.backoffStrategy.backoff();
 	}
 
 	protected async processEvents(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
-		if(!this.handler){
+		if (!this.handler){
 			return this.logError(new NoHanlderToProcessEvents(events));
 		}
 
 		for (const event of events) {
-			let eventResult = await this.handler(event);
+			// This implements a serial execution instead of parallel
+			await this.handler(event);
 		}
 	}
 }
