@@ -6,7 +6,6 @@ import {
 	EventCallbacksSet,
 } from './interfaces';
 
-import {Executor} from './executor';
 import {Publisher} from './publisher';
 import {Dispatcher} from './dispatcher';
 

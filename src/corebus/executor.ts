@@ -19,7 +19,12 @@ export class Executor<T> {
 		}
 	}
 
-	add(callback: EventSubscriptionCallback<T>): void {
+	add(callback: EventSubscriptionCallback<T> | EventSubscriptionCallback<T>[]): void {
+		if (Array.isArray(callback)){
+			this.callbacks.push(...callback);
+			return;
+		}
+
 		this.callbacks.push(callback);
 	}
 }

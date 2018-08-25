@@ -34,3 +34,7 @@ export interface IEventBus<T = {}> {
 }
 
 export type IMiddleware<T = {}> = (item: T) => Promise<T | void> | T | void;
+
+export interface Scheduler<T> {
+	schedule(items: T[], maxConcurrency?: number): Array<T[]>;
+}

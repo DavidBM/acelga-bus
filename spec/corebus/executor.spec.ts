@@ -25,7 +25,7 @@ describe('Executor', () => {
 			callbacks,
 			executor,
 			item,
-			callbackFactory
+			callbackFactory,
 		} = createBaseExecutor(ITEMS_QUANTITY);
 
 		const fn1 = callbackFactory(item);
@@ -33,6 +33,32 @@ describe('Executor', () => {
 
 		executor.add(fn1);
 		executor.add(fn2);
+
+		executor.execStopOnFail()
+		.then(() => {
+			callbacks.forEach(callback => {
+				expect(callback.mock.calls.length).toBe(1);
+			});
+
+			expect(fn1.mock.calls.length).toBe(1);
+			expect(fn2.mock.calls.length).toBe(1);
+			done();
+		});
+	});
+
+	it('Should allow to add several callbacks at the same time once created', (done) => {
+		const ITEMS_QUANTITY = 3;
+		const {
+			callbacks,
+			executor,
+			item,
+			callbackFactory,
+		} = createBaseExecutor(ITEMS_QUANTITY);
+
+		const fn1 = callbackFactory(item);
+		const fn2 = callbackFactory(item);
+
+		executor.add([fn1, fn2]);
 
 		executor.execStopOnFail()
 		.then(() => {

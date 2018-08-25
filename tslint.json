@@ -21,6 +21,7 @@
         "ordered-imports": [
             false
         ],
+        "no-unused-variable": true,
         "max-line-length": [
             150
         ],
