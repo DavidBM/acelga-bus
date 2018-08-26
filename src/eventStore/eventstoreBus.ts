@@ -1,4 +1,3 @@
-
 import {IEventBus, EventSubscriptionCallback, Constructable, Dispatcher, ErrorLogger} from '../index';
 import {IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent} from './interfaces';
 import {EventFactoryRespository as Repository} from './factoryRepository';
