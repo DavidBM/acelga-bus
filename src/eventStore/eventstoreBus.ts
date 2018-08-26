@@ -1,3 +1,4 @@
+
 import {IEventBus, EventSubscriptionCallback, Constructable, Dispatcher, ErrorLogger} from '../index';
 import {IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent} from './interfaces';
 import {EventFactoryRespository as Repository} from './factoryRepository';
@@ -14,6 +15,7 @@ import {EventstoreClient} from './eventstoreConsumer';
  - ErrorLogger needs to be async for errors in processing events
  - In case of error, can the results map back to the original array by the scheduler? Check that
  - Think about when to stop the execution and when to just log the error
+ - Remove the functions for recovery of the order from the scheduler plan. They aren't used. 
 */
 export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {
 
