@@ -8,7 +8,7 @@ describe('AllParallelScheduler', () => {
 		scheduler = new Scheduler(true);
 	});
 
-	it('should return all in parallel if max concurrency is fasable', () => {
+	it('should return all in only one pipeline', () => {
 		const events = new Array(100).fill(0).map((_, index) => index);
 
 		const plan = scheduler.schedule(events);
@@ -16,7 +16,7 @@ describe('AllParallelScheduler', () => {
 		expect(plan.plan).toEqual(mapPipelineExpectedValue([events], true));
 	});
 
-	it('should return all in parallel if max concurrency is fasable', () => {
+	it('the order of the result is the same as the scheduled order that is the same as the event order', () => {
 		const events = new Array(100).fill(0).map((_, index) => index);
 		const expectedResult = new Array(100).fill(0).map((_, index) => index);
 
