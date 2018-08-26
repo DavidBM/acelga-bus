@@ -1,6 +1,6 @@
-import {Scheduler, ScheduledPlan} from './interfaces';
+import {IScheduler, ScheduledPlan} from './interfaces';
 
-export default class AllParallelScheduler<T> implements Scheduler<T> {
+export default class AllParallelScheduler<T> implements IScheduler<T> {
 	schedule(events: T[], maxConcurrency?: number): ScheduledPlan<T> {
 
 		if (!Number.isFinite(maxConcurrency as number)
@@ -9,7 +9,10 @@ export default class AllParallelScheduler<T> implements Scheduler<T> {
 			|| events.length <= maxConcurrency
 		) {
 			return {
-				plan: events.map(event => [event]),
+				plan: events.map(event => { return {
+					payloads: [event],
+					preserveOrder: false,
+				}; }),
 				rebuildOrder: create1to1Mapper<T>(),
 			};
 		}
@@ -23,7 +26,10 @@ export default class AllParallelScheduler<T> implements Scheduler<T> {
 			indexMapping[pipelineIndex].push(index);
 		});
 
-		const clonedPlan = plan.map(pipeline => pipeline.slice(0));
+		const clonedPlan = plan.map(pipeline => { return {
+			preserveOrder: false,
+			payloads: pipeline.slice(0),
+		}; });
 
 		return {
 			plan: clonedPlan,
@@ -33,7 +39,7 @@ export default class AllParallelScheduler<T> implements Scheduler<T> {
 }
 
 function create1to1Mapper<T>() {
-	return (results: Array<any[]>): any {
+	return (results: Array<any[]>): any => {
 		return results.map((result: T[]) => {
 			if (!Array.isArray(result) || result.length !== 1){
 				throw new ResultsStructureNotMatchingOriginalExecutionPlan();

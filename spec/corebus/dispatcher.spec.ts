@@ -1,13 +1,16 @@
 import {Dispatcher} from '@src/corebus/dispatcher';
 
-describe("Receiver", () => {
+class CustomEvent{}
+class OtherEvent{}
+
+describe('Receiver', () => {
 	let dispatcher: Dispatcher;
 
 	beforeEach(() => {
 		dispatcher = new Dispatcher();
 	});
 
-	it("should allow to register to events", (done) => {
+	it('should allow to register to events', (done) => {
 		dispatcher.on(CustomEvent, (event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			done();
@@ -17,12 +20,12 @@ describe("Receiver", () => {
 		dispatcher.trigger(new CustomEvent());
 	});
 
-	it("should allow to register multiple times to events", (done) => {
-		var handler1 = jest.fn((event) => {
+	it('should allow to register multiple times to events', (done) => {
+		const handler1 = jest.fn((event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			return Promise.resolve();
 		});
-		var handler2 = jest.fn((event) => {
+		const handler2 = jest.fn((event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			return Promise.resolve();
 		});
@@ -36,14 +39,14 @@ describe("Receiver", () => {
 			expect(handler1.mock.calls.length).toBe(1);
 			expect(handler2.mock.calls.length).toBe(1);
 			done();
-		}, 5)
+		}, 5);
 	});
 
-	it("should call the handler one time per event", (done) => {
-		var handler1 = jest.fn((event) => {
+	it('should call the handler one time per event', (done) => {
+		const handler1 = jest.fn((event) => {
 			return Promise.resolve();
 		});
-			
+
 		dispatcher.on(CustomEvent, handler1);
 		dispatcher.on(OtherEvent, handler1);
 
@@ -53,11 +56,11 @@ describe("Receiver", () => {
 		setTimeout(() => {
 			expect(handler1.mock.calls.length).toBe(2);
 			done();
-		}, 5)
-	})
+		}, 5);
+	});
 
-	it("should not call the callback if there is a falsable variable in the trigger method", (done) => {
-		var handler1 = jest.fn((event) => {
+	it('should not call the callback if there is a falsable variable in the trigger method', (done) => {
+		const handler1 = jest.fn((event) => {
 			return Promise.resolve();
 		});
 
@@ -71,11 +74,11 @@ describe("Receiver", () => {
 		setTimeout(() => {
 			expect(handler1.mock.calls.length).toBe(0);
 			done();
-		}, 15)
-	})
+		}, 15);
+	});
 
-	it("should not call", (done) => {
-		var handler1 = jest.fn((event) => {
+	it('should not call', (done) => {
+		const handler1 = jest.fn((event) => {
 			return Promise.resolve();
 		});
 
@@ -86,15 +89,15 @@ describe("Receiver", () => {
 		setTimeout(() => {
 			expect(handler1.mock.calls.length).toBe(0);
 			done();
-		}, 15)
-	})
+		}, 15);
+	});
 
-	it("should execute the handler only one time per event, doesn't matter how may subscriptions is done", (done) => {
-		var handler1 = jest.fn((event) => {
+	it('should execute the handler only one time per event, doesn\'t matter how may subscriptions is done', (done) => {
+		const handler1 = jest.fn((event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			return Promise.resolve();
 		});
-			
+
 		dispatcher.on(CustomEvent, handler1);
 		dispatcher.on(CustomEvent, handler1);
 
@@ -103,17 +106,17 @@ describe("Receiver", () => {
 		setTimeout(() => {
 			expect(handler1.mock.calls.length).toBe(1);
 			done();
-		}, 5)
+		}, 5);
 	});
 
-	it("should send the correct envent", (done) => {
+	it('should send the correct envent', (done) => {
 		dispatcher.on(CustomEvent, (event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			done();
 			return Promise.resolve();
 		});
 		dispatcher.on(OtherEvent, (event) => {
-			if(event instanceof CustomEvent)
+			if (event instanceof CustomEvent)
 				done.fail(new Error('wrong callbacl called'));
 			return Promise.resolve();
 		});
@@ -122,7 +125,7 @@ describe("Receiver", () => {
 		dispatcher.trigger(new CustomEvent());
 	});
 
-	it("should send all envents to global subscriptions", (done) => {
+	it('should send all envents to global subscriptions', (done) => {
 		dispatcher.onAny((event) => {
 			expect(event).toBeInstanceOf(OtherEvent);
 			done();
@@ -132,7 +135,7 @@ describe("Receiver", () => {
 		dispatcher.trigger(new OtherEvent());
 	});
 
-	it("should send all envents to global subscriptions", (done) => {
+	it('should send all envents to global subscriptions', (done) => {
 		dispatcher.onAny((event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			done();
@@ -142,14 +145,14 @@ describe("Receiver", () => {
 		dispatcher.trigger(new CustomEvent());
 	});
 
-	it("should be able to clone itself and the clone should have the same subscriptions", (done) => {
+	it('should be able to clone itself and the clone should have the same subscriptions', (done) => {
 		dispatcher.on(CustomEvent, (event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			done();
 			return Promise.resolve();
 		});
 		dispatcher.on(OtherEvent, (event) => {
-			if(event instanceof CustomEvent)
+			if (event instanceof CustomEvent)
 				done.fail(new Error('wrong callbacl called'));
 			return Promise.resolve();
 		});
@@ -158,8 +161,8 @@ describe("Receiver", () => {
 		dispatcher.trigger(new CustomEvent());
 	});
 
-	it("should allow to deregister a callback", (done) => {
-		var handler = jest.fn((event) => {
+	it('should allow to deregister a callback', (done) => {
+		const handler = jest.fn((event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			return Promise.resolve();
 		});
@@ -175,8 +178,8 @@ describe("Receiver", () => {
 		}, 5);
 	});
 
-	it("should allow to deregister all callbackks from an event", (done) => {
-		var handler = jest.fn((event) => {
+	it('should allow to deregister all callbacks from an event', (done) => {
+		const handler = jest.fn((event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			return Promise.resolve();
 		});
@@ -192,8 +195,8 @@ describe("Receiver", () => {
 		}, 5);
 	});
 
-	it("should allow deregister any callbackks if the callback is not found", (done) => {
-		var handler = jest.fn((event) => {
+	it('should allow deregister any callbackks if the callback is not found', (done) => {
+		const handler = jest.fn((event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			return Promise.resolve();
 		});
@@ -209,6 +212,3 @@ describe("Receiver", () => {
 		}, 15);
 	});
 });
-
-class CustomEvent{};
-class OtherEvent{};

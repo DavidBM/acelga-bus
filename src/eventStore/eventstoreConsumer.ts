@@ -1,5 +1,6 @@
 import {Backoff} from 'backoff';
-import {IDecodedSerializedEventstoreEvent, ErrorLogger} from './interfaces';
+import {IDecodedSerializedEventstoreEvent} from './interfaces';
+import {ErrorLogger} from '../index';
 
 type Handler = (events: IDecodedSerializedEventstoreEvent) => Promise<void>;
 

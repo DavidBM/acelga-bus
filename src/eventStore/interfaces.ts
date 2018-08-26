@@ -20,5 +20,3 @@ export interface IFactory<T = {}> {
 export interface IEventFactory<T = {}> extends IFactory {
 	build(serializedEvent: IDecodedSerializedEventstoreEvent): T;
 }
-
-export type ErrorLogger = (...args: unknown[]) => void;

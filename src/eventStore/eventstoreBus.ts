@@ -1,5 +1,5 @@
-import {IEventBus, EventSubscriptionCallback, Constructable, Dispatcher} from '../index';
-import {IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent, ErrorLogger} from './interfaces';
+import {IEventBus, EventSubscriptionCallback, Constructable, Dispatcher, ErrorLogger} from '../index';
+import {IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent} from './interfaces';
 import {EventFactoryRespository as Repository} from './factoryRepository';
 import {EventstoreClient} from './eventstoreConsumer';
 
@@ -10,6 +10,10 @@ import {EventstoreClient} from './eventstoreConsumer';
  - Add Scheduler for tracking how executions are done (parallel or sequential). It should have a public interface to be ableto implement an external scheduler.
  - When decided to execute parallel, if there is more than one event in the queue, then wait for the first one to finish before execute the second. It will require to change the promise returns & code
  - Only allow one subscription for each event type. Do that as an external dependency.
+ - Only one possible subcriber per event?
+ - ErrorLogger needs to be async for errors in processing events
+ - In case of error, can the results map back to the original array by the scheduler? Check that
+ - Think about when to stop the execution and when to just log the error
 */
 export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {
 

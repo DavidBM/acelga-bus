@@ -9,7 +9,7 @@ describe('Executor', () => {
 		executor.execStopOnFail()
 		.then(() => {
 			expect(Array.isArray(callbacks)).toBeTruthy();
-			expect(callbacks.length).toBe(ITEMS_QUANTITY);			
+			expect(callbacks.length).toBe(ITEMS_QUANTITY);
 
 			callbacks.forEach(callback => {
 				expect(callback.mock.calls.length).toBe(1);

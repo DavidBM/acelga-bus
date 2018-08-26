@@ -4,7 +4,8 @@ import * as debug from 'debug';
 
 import {EventStoreBus} from './eventstoreBus';
 import {EventFactoryRespository} from './factoryRepository';
-import {EventStoreConnectionOptions, IEventstoreEvent, ErrorLogger} from './interfaces';
+import {EventStoreConnectionOptions, IEventstoreEvent} from './interfaces';
+import {ErrorLogger} from '../index';
 import {EventstoreClient} from './eventstoreConsumer';
 
 export function create< T extends IEventstoreEvent = IEventstoreEvent>(

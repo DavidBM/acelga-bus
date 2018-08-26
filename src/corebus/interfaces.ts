@@ -35,11 +35,36 @@ export interface IEventBus<T = {}> {
 
 export type IMiddleware<T = {}> = (item: T) => Promise<T | void> | T | void;
 
+export interface PipelinePlan<T> {
+	preserveOrder: boolean;
+	payloads: T[];
+}
+
 export interface ScheduledPlan<T> {
-	plan: Array<T[]>;
+	plan: PipelinePlan<T>[];
 	rebuildOrder: (results: Array<any[]>) => any[];
 }
 
-export interface Scheduler<T> {
+export interface IScheduler<T> {
 	schedule(items: T[], maxConcurrency?: number): ScheduledPlan<T>;
 }
+
+export type ErrorLogger = (...args: unknown[]) => void;
+
+export interface IDispatcher<T> {
+	on<T1 extends T>(eventType: Constructable<T1>, callback: EventSubscriptionCallback<T1> ): void;
+	onAny(callback: EventSubscriptionCallback<T>): void;
+	trigger(event: T): Promise<void>;
+	off<T1 extends T>(eventType: Constructable<T1>, callback?: EventSubscriptionCallback<T1> ): void;
+}
+
+export type PipelineResult<T> = void | Array<{event: T, error: Error}>;
+
+export type PipelineExecutionResult<T> = Promise<PipelineResult<T>>;
+
+export interface IPipeline<T> {
+	executeStopOnError(events: T[]): PipelineExecutionResult<T>;
+	executeContinueOnError(events: T[]): PipelineExecutionResult<T>;
+}
+
+export type PipelineFactory<T> = (scheduler: IDispatcher<T>) => IPipeline<T>;

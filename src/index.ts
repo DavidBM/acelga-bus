@@ -7,5 +7,6 @@ export {
 	EventSubscriptionCallback,
 	JsonizableInterface,
 	Constructable,
+	ErrorLogger,
 } from './corebus/interfaces';
 export {create} from './eventStore';

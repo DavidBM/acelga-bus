@@ -3,7 +3,6 @@ import {
 	Constructable,
 	EventSubscriptionCallback,
 	EventCallbacksSet,
-	IMiddleware,
 } from './interfaces';
 
 export class Dispatcher<T = {}> {

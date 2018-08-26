@@ -2,14 +2,14 @@ import {Bus, IMiddleware, Publisher} from '@src/index';
 import {Operation, CustomEventNumber, CustomEventOperationMiddleware, EmptyEvent} from './utils';
 
 describe('Bus', () => {
-	var bus: Bus;
-	var add2: IMiddleware<CustomEventNumber>;
-	var half: IMiddleware<CustomEventNumber>;
-	var sub2: IMiddleware<CustomEventNumber>;
-	var mul5: IMiddleware<CustomEventNumber>;
-	var sub1: IMiddleware<CustomEventNumber>;
-	var add3: IMiddleware<CustomEventNumber>;
-	var end: IMiddleware<CustomEventNumber>;
+	let bus: Bus;
+	let add2: IMiddleware<CustomEventNumber>;
+	let half: IMiddleware<CustomEventNumber>;
+	let sub2: IMiddleware<CustomEventNumber>;
+	let mul5: IMiddleware<CustomEventNumber>;
+	let sub1: IMiddleware<CustomEventNumber>;
+	let add3: IMiddleware<CustomEventNumber>;
+	let end: IMiddleware<CustomEventNumber>;
 
 	beforeAll(() => {
 		bus = new Bus();
@@ -23,12 +23,12 @@ describe('Bus', () => {
 
 	});
 
-	it("should exist", () => {
+	it('should exist', () => {
 		expect(bus instanceof Bus).toBeTruthy();
 	});
 
-	it("should send and receive messages", (done) => {
-		var event = new EmptyEvent();
+	it('should send and receive messages', (done) => {
+		const event = new EmptyEvent();
 
 		bus.on(EmptyEvent, (e) => {
 			expect(e).toEqual(event);
@@ -38,8 +38,8 @@ describe('Bus', () => {
 		bus.publish(event);
 	});
 
-	it("should send and receive messages to all subscrivers", (done) => {
-		var event = new EmptyEvent();
+	it('should send and receive messages to all subscrivers', (done) => {
+		const event = new EmptyEvent();
 
 		const fn1 = jest.fn((e) => expect(e).toBeInstanceOf(EmptyEvent));
 		const fn2 = jest.fn((e) => expect(e).toBeInstanceOf(EmptyEvent));
@@ -59,10 +59,10 @@ describe('Bus', () => {
 		}, 0);
 	});
 
-	it("should send and receive messages to the correct destination (inherited classes)", (done) => {
-		var event = new EmptyEvent();
-		class Event2 extends EmptyEvent {};
-		var event2 = new Event2;
+	it('should send and receive messages to the correct destination (inherited classes)', (done) => {
+		const event = new EmptyEvent();
+		class Event2 extends EmptyEvent {}
+		const event2 = new Event2();
 
 		bus.on(Event2, (e) => {
 			expect(e).toBeInstanceOf(Event2);
@@ -73,10 +73,10 @@ describe('Bus', () => {
 		bus.publish(event2);
 	});
 
-	it("should send and receive messages to the correct destination (independen classes)", (done) => {
-		var event = new EmptyEvent();
-		class Event2 {};
-		var event2 = new Event2;
+	it('should send and receive messages to the correct destination (independen classes)', (done) => {
+		const event = new EmptyEvent();
+		class Event2 {}
+		const event2 = new Event2();
 
 		bus.on(Event2, (e) => {
 			expect(e).toBeInstanceOf(Event2);
@@ -87,103 +87,103 @@ describe('Bus', () => {
 		bus.publish(event2);
 	});
 
-	it("should send and receive messages to the correct destination (no callbacks)", (done) => {
-		const bus = new Bus<{}>();
-		var event = new EmptyEvent();
-		class Event2 {};
-		class Event3 {};
-		var event2 = new Event2;
-		var event3 = new Event3;
+	it('should send and receive messages to the correct destination (no callbacks)', (done) => {
+		const customBus = new Bus<{}>();
+		const event = new EmptyEvent();
+		class Event2 {}
+		class Event3 {}
+		const event2 = new Event2();
+		const event3 = new Event3();
 
-		var fn = jest.fn();
+		const fn = jest.fn();
 
-		bus.on(Event3, fn);
+		customBus.on(Event3, fn);
 
 		setTimeout(() => {
 			expect(fn.mock.calls.length).toBe(0);
 			done();
 		}, 5);
 
-		bus.publish(event);
-		bus.publish(event2);
+		customBus.publish(event);
+		customBus.publish(event2);
 	});
 
 	describe('Middlewares', () => {
-		it("should apply the middlewares only one time", (done) => {
-			const bus = new Bus<CustomEventNumber>();
+		it('should apply the middlewares only one time', (done) => {
+			const customBus = new Bus<CustomEventNumber>();
 			const event = new CustomEventNumber(1);
-			bus.pushMiddleware(add2);
+			customBus.pushMiddleware(add2);
 
-			bus.on(CustomEventNumber, (event) => {
-				expect(event.data).toBe(3);
+			customBus.on(CustomEventNumber, (eventResult) => {
+				expect(eventResult.data).toBe(3);
 				done();
-			})
+			});
 
-			bus.publish(event);
+			customBus.publish(event);
 		});
-		
+
 		it('Middlewares should be executed in the correct order', (done) => {
-			const bus = new Bus<CustomEventNumber>();
+			const customBus = new Bus<CustomEventNumber>();
 			const event = new CustomEventNumber(2);
 
-			bus.unshiftMiddleware(half);
-			bus.pushMiddleware(sub2);
-			bus.pushMiddleware(mul5);
-			bus.unshiftMiddleware(sub1);
-			bus.pushMiddleware(add3);
+			customBus.unshiftMiddleware(half);
+			customBus.pushMiddleware(sub2);
+			customBus.pushMiddleware(mul5);
+			customBus.unshiftMiddleware(sub1);
+			customBus.pushMiddleware(add3);
 
-			bus.on(CustomEventNumber, (event) => {
-				//(((2) + 3) * 5 - 2) / 2 - 1 = 10.5
-				expect(event.data).toBe(10.5);
+			customBus.on(CustomEventNumber, (eventResult) => {
+				// (((2) + 3) * 5 - 2) / 2 - 1 = 10.5
+				expect(eventResult.data).toBe(10.5);
 				done();
-			})
+			});
 
-			bus.publish(event);
-		})
-		
+			customBus.publish(event);
+		});
+
 		it('Middlewares should stop the execution if they return void', (done) => {
-			const bus = new Bus<CustomEventNumber>();
+			const customBus = new Bus<CustomEventNumber>();
 			const event = new CustomEventNumber(2);
 
-			bus.unshiftMiddleware(half);
-			bus.pushMiddleware(mul5);
-			//Void makes the middleware to return nothign.
-			bus.unshiftMiddleware(end);
-			bus.unshiftMiddleware(sub1);
-			bus.pushMiddleware(add3);
+			customBus.unshiftMiddleware(half);
+			customBus.pushMiddleware(mul5);
+			// Void makes the middleware to return nothign.
+			customBus.unshiftMiddleware(end);
+			customBus.unshiftMiddleware(sub1);
+			customBus.pushMiddleware(add3);
 
 			const fn = jest.fn();
 
-			bus.on(CustomEventNumber, fn);
+			customBus.on(CustomEventNumber, fn);
 
-			bus.publish(event);
+			customBus.publish(event);
 
 			setTimeout(() => {
 				expect(fn.mock.calls.length).toBe(0);
 				done();
 			}, 5);
-		})
+		});
 	});
 
-	describe("Publisher", () => {
-		it("should allow to have different sets of middlewares in every publisher", (done) => {
-			const bus = new Bus<CustomEventNumber>();
-			const pubA = bus.createPublisher();
-			const pubB = bus.createPublisher();
+	describe('Publisher', () => {
+		it('should allow to have different sets of middlewares in every publisher', (done) => {
+			const customBus = new Bus<CustomEventNumber>();
+			const pubA = customBus.createPublisher();
+			const pubB = customBus.createPublisher();
 			const event = new CustomEventNumber(4);
 
-			bus.unshiftMiddleware(half);
+			customBus.unshiftMiddleware(half);
 			pubA.pushMiddleware(sub2);
 			pubA.pushMiddleware(half);
 
 			pubB.unshiftMiddleware(add2);
 			pubB.pushMiddleware(mul5);
 
-			const handler = jest.fn((event) => Promise.resolve());
+			const handler = jest.fn((eventResult) => Promise.resolve());
 
-			bus.on(CustomEventNumber, handler);
+			customBus.on(CustomEventNumber, handler);
 
-			bus.publish(event);
+			customBus.publish(event);
 			pubA.publish(event);
 			pubB.publish(event);
 
