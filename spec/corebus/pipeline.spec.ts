@@ -4,16 +4,6 @@ import {Dispatcher} from '@src/corebus/dispatchers/single';
 class EventA {}
 class EventB {}
 
-try {
-
-} catch(error) {
-	if(error instanceof Error)
-		throw error;
-
-	throw new Error(error);
-					
-}
-
 describe('Pipeline', () => {
 	let pipeline: Pipeline<any>;
 	let dispatcher: Dispatcher<any>;
