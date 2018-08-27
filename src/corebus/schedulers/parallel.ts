@@ -1,6 +1,6 @@
-import {IScheduler, ScheduledPlan} from './interfaces';
+import {IScheduler, ScheduledPlan} from '@src/corebus/interfaces';
 
-export default class AllParallelScheduler<T> implements IScheduler<T> {
+export default class ParallelScheduler<T> implements IScheduler<T> {
 	schedule(events: T[], maxConcurrency?: number): ScheduledPlan<T> {
 
 		if (!Number.isFinite(maxConcurrency as number)

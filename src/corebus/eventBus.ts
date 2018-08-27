@@ -7,7 +7,7 @@ import {
 } from './interfaces';
 
 import {Publisher} from './publisher';
-import {Dispatcher} from './dispatcher';
+import {Dispatcher} from '@src/corebus/dispatchers/single';
 
 export class EventBus<T = {}> implements IEventBus<T> {
 	defaultPublisher: Publisher<T> = this.createPublisher();

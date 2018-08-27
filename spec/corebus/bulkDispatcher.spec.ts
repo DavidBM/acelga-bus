@@ -1,11 +1,11 @@
 import {IScheduler, ErrorLogger} from '@src/corebus/interfaces';
-import {Dispatcher} from '@src/corebus/dispatcher';
-import BulkDispatcher from '@src/corebus/bulkDispatcher';
-import AllParallelScheduler from '@src/corebus/allParallelScheduler';
-import {pipelineFactory} from '@src/corebus/pipelineFactory';
+import {Dispatcher} from '@src/corebus/dispatchers/single';
+import BulkDispatcher from '@src/corebus/dispatchers/bulk';
+import ParallelScheduler from '@src/corebus/schedulers/parallel';
+import {pipelineFactory} from '@src/corebus/pipeline/factory';
 import {pipelineThrowErrorFactory} from './mocks/pipelineThrowError';
 import {pipelinePromiseRejectFactory} from './mocks/pipelinePromiseReject';
-import SequentialScheduler from '@src/corebus/sequentialScheduller';
+import SequentialScheduler from '@src/corebus/schedulers/sequential';
 import {NotExecutedByOrderPresentation} from '@src/corebus/pipeline';
 
 class CustomEvent{}
@@ -18,7 +18,7 @@ describe('BulkDispatcher', () => {
 	let errorLogger: ErrorLogger;
 
 	beforeEach(() => {
-		scheduler = new AllParallelScheduler();
+		scheduler = new ParallelScheduler();
 		errorLogger = (error) => {};
 		dispatcher = new Dispatcher();
 		bulkDispatcher = new BulkDispatcher(dispatcher, scheduler, pipelineFactory, errorLogger);

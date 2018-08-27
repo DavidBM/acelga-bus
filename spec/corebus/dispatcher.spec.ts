@@ -1,4 +1,4 @@
-import {Dispatcher} from '@src/corebus/dispatcher';
+import {Dispatcher} from '@src/corebus/dispatchers/single';
 
 class CustomEvent{}
 class OtherEvent{}

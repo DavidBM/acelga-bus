@@ -1,5 +1,5 @@
-import Scheduler from '@src/corebus/allParallelScheduler';
-import {ResultsStructureNotMatchingOriginalExecutionPlan} from '@src/corebus/allParallelScheduler';
+import Scheduler from '@src/corebus/schedulers/parallel';
+import {ResultsStructureNotMatchingOriginalExecutionPlan} from '@src/corebus/schedulers/parallel';
 import {PipelinePlan} from '@src/corebus/interfaces';
 
 describe('AllParallelScheduler', () => {

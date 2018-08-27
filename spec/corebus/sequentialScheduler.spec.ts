@@ -1,4 +1,4 @@
-import Scheduler from '@src/corebus/sequentialScheduller';
+import Scheduler from '@src/corebus/schedulers/sequential';
 import {PipelinePlan} from '@src/corebus/interfaces';
 
 describe('AllParallelScheduler', () => {
