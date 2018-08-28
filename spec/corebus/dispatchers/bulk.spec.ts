@@ -3,8 +3,8 @@ import {Dispatcher} from '@src/corebus/dispatchers/single';
 import BulkDispatcher from '@src/corebus/dispatchers/bulk';
 import ParallelScheduler from '@src/corebus/schedulers/parallel';
 import {pipelineFactory} from '@src/corebus/pipeline/factory';
-import {pipelineThrowErrorFactory} from './mocks/pipelineThrowError';
-import {pipelinePromiseRejectFactory} from './mocks/pipelinePromiseReject';
+import {pipelineThrowErrorFactory} from '../mocks/pipelineThrowError';
+import {pipelinePromiseRejectFactory} from '../mocks/pipelinePromiseReject';
 import SequentialScheduler from '@src/corebus/schedulers/sequential';
 import {NotExecutedByOrderPresentation} from '@src/corebus/pipeline';
 
