@@ -32,7 +32,7 @@ export default class BulkDispatcher<T> {
 		return this.dispatcher.onAny(callback);
 	}
 
-	public async trigger(events: T[]): Promise<void> {
+	public async trigger(events: T[]): Promise<void | Error[]> {
 		try {
 			const plan = this.scheduler.schedule(events);
 
@@ -43,14 +43,15 @@ export default class BulkDispatcher<T> {
 			const errors = this.getAllErrors(results);
 
 			if (errors.length){
-				return Promise.reject(errors);
+				return Promise.resolve(errors);
 			}
 		} catch (error) {
+			this.errorLogger(error);
 			return Promise.reject(error);
 		}
 	}
 
-	private getAllErrors(results: Array<PipelineResult<T>>): any[] {
+	protected getAllErrors(results: Array<PipelineResult<T>>): Error[] {
 		const errors: any = [];
 
 		results.forEach(result => {
@@ -62,7 +63,11 @@ export default class BulkDispatcher<T> {
 		return errors;
 	}
 
-	private executePipelinePlan(pipelinePlan: PipelinePlan<T>) {
+	public isListened(eventType: Constructable<T>): boolean {
+		return this.dispatcher.isListened(eventType);
+	}
+
+	protected executePipelinePlan(pipelinePlan: PipelinePlan<T>) {
 		const pipeline = this.pipelineFactory(this.dispatcher);
 
 		if (pipelinePlan.preserveOrder)
@@ -71,7 +76,7 @@ export default class BulkDispatcher<T> {
 		return pipeline.executeContinueOnError(pipelinePlan.payloads);
 	}
 
-	private mapPipelinePromises(pipelines: PipelineExecutionResult<T>[]){
+	protected mapPipelinePromises(pipelines: PipelineExecutionResult<T>[]){
 		const results: any[] = [];
 
 		const pipelinesPromises = pipelines.map((pipeline, index) => {

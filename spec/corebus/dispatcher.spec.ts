@@ -59,6 +59,17 @@ describe('Receiver', () => {
 		}, 5);
 	});
 
+	it('should recognize when a event is already subscribed', () => {
+		const handler1 = jest.fn((event) => {
+			return Promise.resolve();
+		});
+
+		dispatcher.on(CustomEvent, handler1);
+
+		expect(dispatcher.isListened(CustomEvent)).toBe(true);
+		expect(dispatcher.isListened(OtherEvent)).toBe(false);
+	});
+
 	it('should not call the callback if there is a falsable variable in the trigger method', (done) => {
 		const handler1 = jest.fn((event) => {
 			return Promise.resolve();

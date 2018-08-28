@@ -1,4 +1,4 @@
-import {Pipeline} from '@src/corebus/pipeline';
+import {Pipeline, NotExecutedByOrderPresentation} from '@src/corebus/pipeline';
 import {Dispatcher} from '@src/corebus/dispatchers/single';
 
 class EventA {}
@@ -33,6 +33,8 @@ describe('Pipeline', () => {
 			expect(errors.length).toBe(2);
 			expect(errors[0].error).toEqual(new Error('Hola'));
 			expect(errors[0].event).toBeInstanceOf(EventA);
+			expect(errors[1].error).toEqual(new NotExecutedByOrderPresentation());
+			expect(errors[1].event).toBeInstanceOf(EventB);
 		});
 
 		it('should stop on a rejected promise', async () => {

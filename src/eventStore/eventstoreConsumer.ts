@@ -2,7 +2,7 @@ import {Backoff} from 'backoff';
 import {IDecodedSerializedEventstoreEvent} from './interfaces';
 import {ErrorLogger} from '../index';
 
-type Handler = (events: IDecodedSerializedEventstoreEvent) => Promise<void>;
+type Handler = (events: IDecodedSerializedEventstoreEvent[]) => Promise<void>;
 
 export class EventstoreClient {
 	client: any;
@@ -65,10 +65,7 @@ export class EventstoreClient {
 			return this.logError(new NoHanlderToProcessEvents(events));
 		}
 
-		for (const event of events) {
-			// This implements a serial execution instead of parallel
-			await this.handler(event);
-		}
+		this.handler(events);
 	}
 }
 
@@ -77,7 +74,6 @@ export class NoHanlderToProcessEvents extends Error {
 
 	constructor(events: any) {
 		super();
-		this.stack = (new Error()).stack;
 		this.events = events;
 		this.message = 'The handler for processing events is still not set. The non-processed events are stored in attribute "events" of this error object';
 	}

@@ -43,6 +43,10 @@ export class Dispatcher<T = {}> {
 		.then(() => {});
 	}
 
+	public isListened(eventType: Constructable<T>): boolean {
+		return !!this.subscriptions.get(eventType);
+	}
+
 	public off<T1 extends T>(eventType: Constructable<T1>, callback?: EventSubscriptionCallback<T1> ): void {
 
 		if (!callback){

@@ -46,6 +46,6 @@ export class Pipeline<T> implements IPipeline<T> {
 export class NotExecutedByOrderPresentation extends Error {
 	constructor() {
 		super();
-		this.message = 'The pipeline was configures to preserve the order of the execution. One item fail and block the order of the other items. You can retry or remove that item when you create the new pipeline.';
+		this.message = 'The pipeline was configured to preserve the order of the execution. One item fail and block the order of the other items. You can retry or remove that item when you create the new pipeline.';
 	}
 }

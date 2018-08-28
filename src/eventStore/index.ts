@@ -5,7 +5,7 @@ import * as debug from 'debug';
 import {EventStoreBus} from './eventstoreBus';
 import {EventFactoryRespository} from './factoryRepository';
 import {EventStoreConnectionOptions, IEventstoreEvent} from './interfaces';
-import {ErrorLogger} from '../index';
+import {ErrorLogger, BulkDispatcher, Dispatcher, ParallelScheduler, pipelineFactory} from '../index';
 import {EventstoreClient} from './eventstoreConsumer';
 
 export function create< T extends IEventstoreEvent = IEventstoreEvent>(
@@ -20,8 +20,9 @@ export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	const backoffStrategy = createBackoff();
 	const eventFactory = createEventFactoryRepository<T>();
 	const eventstoreClient = createEventstoreClient(client, logger, backoffStrategy, streamName, startPosition);
+	const dispatcher = createDispatcher<T>(logger);
 
-	return new EventStoreBus<T>(eventstoreClient, logger, eventFactory);
+	return new EventStoreBus<T>(eventstoreClient, logger, eventFactory, dispatcher);
 }
 
 function createBackoff(): backoff.Backoff {
@@ -43,4 +44,10 @@ function createEventFactoryRepository<T>(): EventFactoryRespository<T> {
 
 function createEventstoreClient(client: any, errorLogger: ErrorLogger, backoffStrategy: backoff.Backoff, streamName: string, startPosition: number = 0) {
 	return new EventstoreClient(client, errorLogger, backoffStrategy, streamName, startPosition);
+}
+
+function createDispatcher<T>(errorLogger: ErrorLogger) {
+	const dispatcher = new Dispatcher<T>();
+	const scheduler = new ParallelScheduler<T>();
+	return new BulkDispatcher<T>(dispatcher, scheduler, pipelineFactory, errorLogger);
 }

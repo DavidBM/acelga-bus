@@ -49,7 +49,7 @@ export interface IScheduler<T> {
 	schedule(items: T[], maxConcurrency?: number): ScheduledPlan<T>;
 }
 
-export type ErrorLogger = (...args: unknown[]) => void;
+export type ErrorLogger = (...args: unknown[]) => Promise<void>;
 
 export interface IDispatcher<T> {
 	on<T1 extends T>(eventType: Constructable<T1>, callback: EventSubscriptionCallback<T1> ): void;
