@@ -76,7 +76,7 @@ export default class BulkDispatcher<T> {
 		return pipeline.executeContinueOnError(pipelinePlan.payloads);
 	}
 
-	protected mapPipelinePromises(pipelines: PipelineExecutionResult<T>[]){
+	protected async mapPipelinePromises(pipelines: PipelineExecutionResult<T>[]){
 		const results: any[] = [];
 
 		const pipelinesPromises = pipelines.map((pipeline, index) => {
@@ -85,8 +85,8 @@ export default class BulkDispatcher<T> {
 			.catch((error: any) => this.errorLogger(error));
 		});
 
-		return Promise.all(pipelinesPromises)
-		.then(() => results);
+		await Promise.all(pipelinesPromises)
+		return results;
 	}
 
 	public off<T1 extends T>(eventType: Constructable<T1>, callback?: EventSubscriptionCallback<T1> ): void {
