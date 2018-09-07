@@ -8,6 +8,9 @@ import {EventstoreClient} from './eventstoreConsumer';
  - TESTS
  - Move to subscriptions of EventStore instead of reading streams. The Bus doesn't need to keep the count of messagess
  - Use persistent subscriptions
+ - The subscription should ask for some kind of:
+ 	A) If it is a stream, a function where the user can store the received messages
+ 	B) IF it is a subscription, the function should ask the name of the subscription.
 */
 export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {
 

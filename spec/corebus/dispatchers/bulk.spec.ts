@@ -70,14 +70,14 @@ describe('BulkDispatcher', () => {
 		expect(bulkDispatcher.isListened(OtherEvent)).toBe(false);
 	});
 
-	it('should return the errors in case of error', (done) => {
+	it('should return the errors in case of error in the handlers', (done) => {
 		const handler1 = jest.fn((event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
 			return Promise.resolve();
 		});
 		const handler11 = jest.fn((event) => {
 			expect(event).toBeInstanceOf(CustomEvent);
-			return Promise.reject(new Error('hola'));
+			throw new Error('hola');
 		});
 
 		bulkDispatcher.on(CustomEvent, handler1);
@@ -88,6 +88,36 @@ describe('BulkDispatcher', () => {
 			expect(errors).toEqual([{error: new Error('hola'), event: new CustomEvent()}]);
 			expect(handler1.mock.calls.length).toBe(1);
 			expect(handler11.mock.calls.length).toBe(1);
+			done();
+		});
+	});
+
+	it('should return the errors in case of rejected promise in the handlers', (done) => {
+		const okHandler = jest.fn((event) => {
+			expect(event).toBeInstanceOf(CustomEvent);
+			return Promise.resolve();
+		});
+		const okHandler2 = jest.fn((event) => {
+			expect(event).toBeInstanceOf(OtherEvent);
+			return Promise.resolve();
+		});
+		const rejecHandler = jest.fn((event) => {
+			expect(event).toBeInstanceOf(CustomEvent);
+			return Promise.reject(new Error('hola'));
+		});
+
+		bulkDispatcher.on(CustomEvent, okHandler);
+		bulkDispatcher.on(CustomEvent, rejecHandler);
+		bulkDispatcher.on(OtherEvent, okHandler2);
+
+		bulkDispatcher.trigger([new CustomEvent(), new OtherEvent(), new CustomEvent(), new OtherEvent()])
+		.then(errors => {
+			expect(errors).toEqual([
+				{error: new Error('hola'), event: new CustomEvent()},
+				{error: new Error('hola'), event: new CustomEvent()}
+			]);
+			expect(okHandler.mock.calls.length).toBe(2);
+			expect(rejecHandler.mock.calls.length).toBe(2);
 			done();
 		});
 	});
@@ -116,16 +146,22 @@ describe('BulkDispatcher', () => {
 		const customErrorLogger = jest.fn(errorLogger);
 		const customBulkDispatcher = new BulkDispatcher(dispatcher, scheduler, pipelinePromiseRejectFactory, customErrorLogger);
 
-		const handler2 = jest.fn((event) => {
+		const handler1 = jest.fn((event) => {
 			expect(event).toBeInstanceOf(OtherEvent);
-			return Promise.reject();
+			return Promise.reject(new Error("Hola"));
+		});
+		const handler2 = jest.fn((event) => {
+			expect(event).toBeInstanceOf(CustomEvent);
+			return Promise.resolve();
 		});
 
-		customBulkDispatcher.on(OtherEvent, handler2);
+		customBulkDispatcher.on(OtherEvent, handler1);
+		customBulkDispatcher.on(CustomEvent, handler2);
 
-		customBulkDispatcher.trigger([new OtherEvent()])
+		customBulkDispatcher.trigger([new OtherEvent(), new CustomEvent()])
 		.then((value) => {
-			expect(customErrorLogger).toHaveBeenCalledTimes(1);
+			expect(customErrorLogger).toHaveBeenCalledTimes(2);
+			expect(customErrorLogger.mock.calls[0][0]).toBeInstanceOf(Error);
 			expect(handler2.mock.calls.length).toBe(0);
 			done();
 		});

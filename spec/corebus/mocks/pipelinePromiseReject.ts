@@ -6,11 +6,11 @@ export class PipelinePromiseReject<T> implements IPipeline<T> {
 	}
 
 	executeStopOnError(events: T[]): PipelineExecutionResult<T> {
-		return Promise.reject(new Error('executeStopOnError'));
+		return Promise.reject(new Error('executeStopOnError (error from Mock)'));
 	}
 
 	executeContinueOnError(events: T[]): PipelineExecutionResult<T> {
-		return Promise.reject(new Error('executeContinueOnError'));
+		return Promise.reject(new Error('executeContinueOnError (error from Mock)'));
 	}
 }
 
