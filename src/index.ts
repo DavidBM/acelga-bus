@@ -13,6 +13,6 @@ export {
 	JsonizableInterface,
 	Constructable,
 	ErrorLogger,
-	ExecutionError
+	ExecutionResult,
 } from './corebus/interfaces';
 export {create} from './eventStore';

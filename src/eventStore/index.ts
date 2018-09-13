@@ -41,7 +41,6 @@ function createEventFactoryRepository<T>(): EventFactoryRespository<T> {
 	return new EventFactoryRespository();
 }
 
-
 function createEventstoreClient(client: any, errorLogger: ErrorLogger, backoffStrategy: backoff.Backoff, subscriptions: Array<SubscriptionDefinition>) {
 	return new EventstoreClient(client, errorLogger, backoffStrategy, subscriptions);
 }

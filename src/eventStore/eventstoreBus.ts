@@ -1,4 +1,4 @@
-import {IEventBus, EventSubscriptionCallback, Constructable, BulkDispatcher, ErrorLogger, ExecutionError} from '../index';
+import {IEventBus, EventSubscriptionCallback, Constructable, BulkDispatcher, ErrorLogger, ExecutionResult} from '../index';
 import {IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent} from './interfaces';
 import {EventFactoryRespository as Repository} from './factoryRepository';
 import {EventstoreClient} from './eventstoreClient';
@@ -80,7 +80,7 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 		});
 	}
 
-	protected processErrors(errors: ExecutionError<T>[]): void {
+	protected async processErrors(errors: ExecutionResult<T>[]): Promise<void> {
 		if (!Array.isArray(errors) || errors.length === 0)
 			return ; // TODO: ACK all events
 
