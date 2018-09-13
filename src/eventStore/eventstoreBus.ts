@@ -1,7 +1,7 @@
 import {IEventBus, EventSubscriptionCallback, Constructable, BulkDispatcher, ErrorLogger} from '../index';
 import {IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent} from './interfaces';
 import {EventFactoryRespository as Repository} from './factoryRepository';
-import {EventstoreClient} from './eventstoreConsumer';
+import {EventstoreClient} from './eventstoreClient';
 
 /*
  TODO:
@@ -42,7 +42,7 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 
 	public async publish(event: T): Promise<void> {
 		const eventType = event.constructor.name;
-		return this.client.publish(eventType, event);
+		return this.client.publish(event.aggregate, eventType, event);
 	}
 
 	public addEventType(event: Constructable<T>, factory: IEventFactory<T>): void {

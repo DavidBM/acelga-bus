@@ -7,10 +7,13 @@ export interface EventStoreConnectionOptions {
 	};
 }
 
-export interface IEventstoreEvent {}
+export interface IEventstoreEvent {
+	aggregate: string; // Events needs to be routed to a stream called with the name
+}
 
 export interface IDecodedSerializedEventstoreEvent extends IEventstoreEvent {
-	eventType: string; // Every event has a type in Eventstore
+	eventType: string; // Every event has a type in Eventstore,
+
 }
 
 export interface IFactory<T = {}> {

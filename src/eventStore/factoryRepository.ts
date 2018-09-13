@@ -8,7 +8,7 @@ export class EventFactoryRespository<T> {
 			// We throw here because this function is usually called in
 			// the instantiation of the application. We want to fail fast & hard
 			// in order to show the error to the developer.
-			throw new EventNameCollision();
+			throw new EventNameCollision(name, factory);
 		}
 
 		this.factories.set(name, factory);
@@ -60,8 +60,13 @@ export class NotADecodedSerializedEventstoreEvent extends Error {
 }
 
 export class EventNameCollision extends Error {
-	constructor() {
+	name: string;
+	factory: IFactory;
+
+	constructor(name: string, factory: IFactory) {
 		super();
-		this.message = 'The event you are trying to register seem to be registered previously. Maybe you are registerint it 2 times or you have 2 classes with the same name.';
+		this.name = name;
+		this.factory = factory;
+		this.message = 'The event you are trying to register seem to be registered previously. Maybe you are registerint it 2 times or you have 2 classes with the same name. You can find the eventName and the factory in the "event" and "factory" attributes int his error';
 	}
 }

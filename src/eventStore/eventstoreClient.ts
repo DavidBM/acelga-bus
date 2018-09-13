@@ -3,39 +3,36 @@ import {IDecodedSerializedEventstoreEvent} from './interfaces';
 import {ErrorLogger} from '../index';
 
 type Handler = (events: IDecodedSerializedEventstoreEvent[]) => Promise<void>;
+export type SubscriptionDefinition = {stream: string, subscription: string};
 
 export class EventstoreClient {
 	client: any;
 	backoffStrategy: Backoff;
-	streamName: string;
-	startPosition: number = 0;
 	messagesToGet = 100;
 	handler: null | Handler = null;
 	logError: ErrorLogger;
 
-	constructor(client: any, errorLogger: ErrorLogger, backoffStrategy: Backoff, streamName: string, startPosition: number = 0) {
+	constructor(client: any, errorLogger: ErrorLogger, backoffStrategy: Backoff, subscriptions: Array<SubscriptionDefinition>) {
 		this.client = client;
 		this.backoffStrategy = backoffStrategy;
-		this.streamName = streamName;
-		this.startPosition = startPosition;
 		this.logError = errorLogger;
 
-		this.declareConsumers();
+		subscriptions.forEach(config => this.declareConsumers(config.subscription, config.stream));
 	}
 
 	public setHandler(handler: Handler) {
 		this.handler = handler;
 	}
 
-	public async publish(eventType: string, event: {}): Promise<void> {
-		return this.client.writeEvent(this.streamName, eventType, event); // Asuming good serialization
+	public async publish(streamName: string, eventType: string, event: {}): Promise<void> {
+		return this.client.writeEvent(streamName, eventType, event); // Asuming good serialization
 	}
 
-	private declareConsumers(): void {
+	private declareConsumers(subscriptionName: string, streamName: string): void {
 
 		this.backoffStrategy.on('backoff', (number, delay) => {
 
-			return this.client.getEvents(this.streamName, this.startPosition, this.messagesToGet)
+			return this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'Body')
 			.then((events: Array<IDecodedSerializedEventstoreEvent>) => {
 				return this.processConsumedAnswer(events);
 			})
@@ -55,7 +52,6 @@ export class EventstoreClient {
 		}
 
 		await this.processEvents(events);
-		this.startPosition += events.length;
 		this.backoffStrategy.reset();
 		this.backoffStrategy.backoff();
 	}
@@ -78,4 +74,3 @@ export class NoHanlderToProcessEvents extends Error {
 		this.message = 'The handler for processing events is still not set. The non-processed events are stored in attribute "events" of this error object';
 	}
 }
-

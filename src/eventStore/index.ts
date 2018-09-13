@@ -2,24 +2,24 @@ import * as eventstore from 'geteventstore-promise';
 import * as backoff from 'backoff';
 import * as debug from 'debug';
 
+import {debugLogger} from '@src/corebus/logger';
 import {EventStoreBus} from './eventstoreBus';
 import {EventFactoryRespository} from './factoryRepository';
 import {EventStoreConnectionOptions, IEventstoreEvent} from './interfaces';
 import {ErrorLogger, BulkDispatcher, Dispatcher, ParallelScheduler, pipelineFactory} from '../index';
-import {EventstoreClient} from './eventstoreConsumer';
+import {EventstoreClient, SubscriptionDefinition} from './eventstoreClient';
 
 export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	connectionOptions: EventStoreConnectionOptions,
-	streamName: string,
-	startPosition: number = 0,
+	subscriptions: Array<SubscriptionDefinition>,
 	errorLogger?: ErrorLogger,
 	): EventStoreBus<T> {
 
-	const logger = errorLogger || debug('EventStoryBus:error');
+	const logger = errorLogger || debugLogger(debug('EventStoryBus:error'));
 	const client = createEventstoreConnection(connectionOptions);
 	const backoffStrategy = createBackoff();
 	const eventFactory = createEventFactoryRepository<T>();
-	const eventstoreClient = createEventstoreClient(client, logger, backoffStrategy, streamName, startPosition);
+	const eventstoreClient = createEventstoreClient(client, logger, backoffStrategy, subscriptions);
 	const dispatcher = createDispatcher<T>(logger);
 
 	return new EventStoreBus<T>(eventstoreClient, logger, eventFactory, dispatcher);
@@ -42,8 +42,8 @@ function createEventFactoryRepository<T>(): EventFactoryRespository<T> {
 }
 
 
-function createEventstoreClient(client: any, errorLogger: ErrorLogger, backoffStrategy: backoff.Backoff, streamName: string, startPosition: number = 0) {
-	return new EventstoreClient(client, errorLogger, backoffStrategy, streamName, startPosition);
+function createEventstoreClient(client: any, errorLogger: ErrorLogger, backoffStrategy: backoff.Backoff, subscriptions: Array<SubscriptionDefinition>) {
+	return new EventstoreClient(client, errorLogger, backoffStrategy, subscriptions);
 }
 
 function createDispatcher<T>(errorLogger: ErrorLogger) {
