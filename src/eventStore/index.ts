@@ -1,4 +1,4 @@
-import * as eventstore from 'geteventstore-promise';
+import {HTTPClient} from 'geteventstore-promise';
 import * as backoff from 'backoff';
 import * as debug from 'debug';
 
@@ -34,7 +34,7 @@ function createBackoff(): backoff.Backoff {
 }
 
 function createEventstoreConnection(options: EventStoreConnectionOptions): any {
-	return eventstore.http(options);
+	return new HTTPClient(options);
 }
 
 function createEventFactoryRepository<T>(): EventFactoryRespository<T> {

@@ -1,4 +1,5 @@
 import {Backoff} from 'backoff';
+import {HTTPClient, EmbedType} from 'geteventstore-promise';
 import {IDecodedSerializedEventstoreEvent} from './interfaces';
 import {ErrorLogger} from '../index';
 import {decodeEventstoreResponse} from './eventstoreUtils';
@@ -10,7 +11,7 @@ export interface SubscriptionDefinition {
 }
 
 export class EventstoreClient {
-	client: any;
+	client: HTTPClient;
 	backoffStrategy: Backoff;
 	messagesToGet = 100;
 	handler: null | Handler = null;
@@ -36,7 +37,7 @@ export class EventstoreClient {
 
 		this.backoffStrategy.on('backoff', (number, delay) => {
 
-			return this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'Body')
+			return this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, EmbedType.Body)
 			.then((response: any) => decodeEventstoreResponse(response))
 			.then((events: Array<IDecodedSerializedEventstoreEvent>) => {
 				return this.processConsumedAnswer(events);

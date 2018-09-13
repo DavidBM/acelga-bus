@@ -1,6 +1,6 @@
 export interface EventStoreConnectionOptions {
 	hostname: string;
-	port: string;
+	port: number;
 	credentials: {
 		username: string,
 		password: string,
