@@ -1,4 +1,4 @@
-import {Pipeline, NotExecutedByOrderPresentation} from '@src/corebus/pipeline';
+import {Pipeline, NotExecutedByOrderDependency} from '@src/corebus/pipeline';
 import {Dispatcher} from '@src/corebus/dispatchers/single';
 
 class EventA {}
@@ -33,7 +33,7 @@ describe('Pipeline', () => {
 			expect(errors.length).toBe(2);
 			expect(errors[0].error).toEqual(new Error('Hola'));
 			expect(errors[0].event).toBeInstanceOf(EventA);
-			expect(errors[1].error).toEqual(new NotExecutedByOrderPresentation());
+			expect(errors[1].error).toEqual(new NotExecutedByOrderDependency());
 			expect(errors[1].event).toBeInstanceOf(EventB);
 		});
 
@@ -70,7 +70,17 @@ describe('Pipeline', () => {
 			expect(eventACallback).toHaveBeenCalledTimes(1);
 			expect(eventBCallback).toHaveBeenCalledTimes(1);
 
-			expect(errors).toBeUndefined();
+			expect(errors).toEqual([
+				{
+					error: null,
+					event: new EventA(),
+					isError: false,
+				}, {
+					error: null,
+					event: new EventB(),
+					isError: false,
+				},
+			]);
 		});
 
 		it('should return the rest of non processed events as error in case of error (case Promise rejected)', async () => {
@@ -126,7 +136,8 @@ describe('Pipeline', () => {
 
 			if (!Array.isArray(errors)) return;
 
-			expect(errors.length).toBe(1);
+			expect(errors.length).toBe(2);
+			expect(errors.filter(a => a.isError).length).toBe(1);
 			expect(errors[0].error).toEqual(new Error('Hola'));
 			expect(errors[0].event).toBeInstanceOf(EventA);
 		});
@@ -147,7 +158,8 @@ describe('Pipeline', () => {
 
 			if (!Array.isArray(errors)) return;
 
-			expect(errors.length).toBe(1);
+			expect(errors.length).toBe(2);
+			expect(errors.filter(a => a.isError).length).toBe(1);
 			expect(errors[0].error).toEqual(new Error('Hola'));
 			expect(errors[0].event).toBeInstanceOf(EventA);
 		});
@@ -164,7 +176,17 @@ describe('Pipeline', () => {
 			expect(eventACallback).toHaveBeenCalledTimes(1);
 			expect(eventBCallback).toHaveBeenCalledTimes(1);
 
-			expect(errors).toBeUndefined();
+			expect(errors).toEqual([
+				{
+					error: null,
+					event: new EventA(),
+					isError: false,
+				}, {
+					error: null,
+					event: new EventB(),
+					isError: false,
+				},
+			]);
 		});
 	});
 });

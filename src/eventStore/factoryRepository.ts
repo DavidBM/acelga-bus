@@ -34,7 +34,7 @@ export class EventFactoryRespository<T> {
 	}
 
 	isIDecodedSerializedEventstoreEvent(item: any): item is IDecodedSerializedEventstoreEvent {
-		if (!!item && typeof item === 'object' && 'eventType' in item){
+		if (!!item && typeof item === 'object' && 'eventType' in item && 'aggregate' in item){
 			true;
 		}
 

@@ -58,7 +58,9 @@ export interface IDispatcher<T> {
 	off<T1 extends T>(eventType: Constructable<T1>, callback?: EventSubscriptionCallback<T1> ): void;
 }
 
-export type PipelineResult<T> = void | Array<{event: T, error: Error}>;
+export interface ExecutionResult<T> {event: T; error: void | Error; isError: boolean; }
+
+export type PipelineResult<T> = Array<ExecutionResult<T>>;
 
 export type PipelineExecutionResult<T> = Promise<PipelineResult<T>>;
 

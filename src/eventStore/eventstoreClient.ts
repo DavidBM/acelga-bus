@@ -1,9 +1,13 @@
 import {Backoff} from 'backoff';
 import {IDecodedSerializedEventstoreEvent} from './interfaces';
 import {ErrorLogger} from '../index';
+import {decodeEventstoreResponse} from './eventstoreUtils';
 
 type Handler = (events: IDecodedSerializedEventstoreEvent[]) => Promise<void>;
-export type SubscriptionDefinition = {stream: string, subscription: string};
+export interface SubscriptionDefinition {
+	stream: string;
+	subscription: string;
+}
 
 export class EventstoreClient {
 	client: any;
@@ -33,6 +37,7 @@ export class EventstoreClient {
 		this.backoffStrategy.on('backoff', (number, delay) => {
 
 			return this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'Body')
+			.then((response: any) => decodeEventstoreResponse(response))
 			.then((events: Array<IDecodedSerializedEventstoreEvent>) => {
 				return this.processConsumedAnswer(events);
 			})
@@ -47,7 +52,7 @@ export class EventstoreClient {
 	}
 
 	protected async processConsumedAnswer(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
-		if (events.length === 0) {
+		if (!Array.isArray(events) || events.length === 0) {
 			return this.backoffStrategy.backoff();
 		}
 
@@ -61,7 +66,7 @@ export class EventstoreClient {
 			return this.logError(new NoHanlderToProcessEvents(events));
 		}
 
-		this.handler(events);
+		await this.handler(events);
 	}
 }
 

@@ -7,6 +7,7 @@ import {
 	ErrorLogger,
 	PipelinePlan,
 	PipelineResult,
+	ExecutionResult,
 	PipelineExecutionResult,
 	PipelineFactory,
 } from '@src/corebus/interfaces';
@@ -32,7 +33,7 @@ export default class BulkDispatcher<T> {
 		return this.dispatcher.onAny(callback);
 	}
 
-	public async trigger(events: T[]): Promise<void | Error[]> {
+	public async trigger(events: T[]): Promise<ExecutionResult<T>[]> {
 		try {
 			const plan = this.scheduler.schedule(events);
 
@@ -45,19 +46,19 @@ export default class BulkDispatcher<T> {
 			if (errors.length){
 				return Promise.resolve(errors);
 			}
+
+			return [];
 		} catch (error) {
 			this.errorLogger(error);
 			return Promise.reject(error);
 		}
 	}
 
-	protected getAllErrors(results: Array<PipelineResult<T>>): Error[] {
-		const errors: any = [];
+	protected getAllErrors(results: Array<PipelineResult<T>>): ExecutionResult<T>[] {
+		const errors: PipelineResult<T> = [];
 
 		results.forEach(result => {
-			if (Array.isArray(result)){
-				result.forEach(error => errors.push(error));
-			}
+			result.forEach(error => errors.push(error));
 		});
 
 		return errors;
@@ -85,7 +86,7 @@ export default class BulkDispatcher<T> {
 			.catch((error: any) => this.errorLogger(error));
 		});
 
-		await Promise.all(pipelinesPromises)
+		await Promise.all(pipelinesPromises);
 		return results;
 	}
 

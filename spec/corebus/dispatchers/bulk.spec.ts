@@ -6,7 +6,7 @@ import {pipelineFactory} from '@src/corebus/pipeline/factory';
 import {pipelineThrowErrorFactory} from '../mocks/pipelineThrowError';
 import {pipelinePromiseRejectFactory} from '../mocks/pipelinePromiseReject';
 import SequentialScheduler from '@src/corebus/schedulers/sequential';
-import {NotExecutedByOrderPresentation} from '@src/corebus/pipeline';
+import {NotExecutedByOrderDependency} from '@src/corebus/pipeline';
 
 class CustomEvent{}
 class OtherEvent{}
@@ -85,7 +85,7 @@ describe('BulkDispatcher', () => {
 
 		bulkDispatcher.trigger([new CustomEvent()])
 		.then(errors => {
-			expect(errors).toEqual([{error: new Error('hola'), event: new CustomEvent()}]);
+			expect(errors).toEqual([{error: new Error('hola'), event: new CustomEvent(), isError: true}]);
 			expect(handler1.mock.calls.length).toBe(1);
 			expect(handler11.mock.calls.length).toBe(1);
 			done();
@@ -113,8 +113,10 @@ describe('BulkDispatcher', () => {
 		bulkDispatcher.trigger([new CustomEvent(), new OtherEvent(), new CustomEvent(), new OtherEvent()])
 		.then(errors => {
 			expect(errors).toEqual([
-				{error: new Error('hola'), event: new CustomEvent()},
-				{error: new Error('hola'), event: new CustomEvent()}
+				{error: new Error('hola'), event: new CustomEvent(), isError: true},
+				{error: null, event: new CustomEvent(), isError: false},
+				{error: new Error('hola'), event: new CustomEvent(), isError: true},
+				{error: null, event: new CustomEvent(), isError: false}
 			]);
 			expect(okHandler.mock.calls.length).toBe(2);
 			expect(rejecHandler.mock.calls.length).toBe(2);
@@ -189,15 +191,19 @@ describe('BulkDispatcher', () => {
 			expect(errors).toEqual([{
 				error: undefined,
 				event: new OtherEvent(),
+				isError: true,
 			}, {
-				error: new NotExecutedByOrderPresentation(),
+				error: new NotExecutedByOrderDependency(),
 				event: new OtherEvent(),
+				isError: true,
 			}, {
-				error: new NotExecutedByOrderPresentation(),
+				error: new NotExecutedByOrderDependency(),
 				event: new CustomEvent(),
+				isError: true,
 			}, {
-				error: new NotExecutedByOrderPresentation(),
+				error: new NotExecutedByOrderDependency(),
 				event: new OtherEvent(),
+				isError: true,
 			}]);
 			expect(handler2.mock.calls.length).toBe(1);
 			done();
