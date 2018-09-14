@@ -11,7 +11,7 @@ import {EventstoreClient} from './eventstoreClient';
     | |  |  __|  \___ \   | |    | |\/| | | |  \___ \\___ \  | | | . ` | | |_ |
     | |  | |____ ____) |  | |    | |  | |_| |_ ____) |___) |_| |_| |\  | |__| |
     |_|  |______|_____/   |_|    |_|  |_|_____|_____/_____/|_____|_| \_|\_____|
-           (I think that it enough clear I need to do test of this folder.)
+        (I think that it isenough clear I need to do test of this folder.)
 
  - Move to subscriptions of EventStore instead of reading streams. The Bus doesn't need to keep the count of messagess
  - Use persistent subscriptions
@@ -20,6 +20,7 @@ import {EventstoreClient} from './eventstoreClient';
  	B) IF it is a subscription, the function should ask the name of the subscription.
  - Reorganize the intefaces to be in the correct files. Parent files must reexport interfaces if required. C
    reate a d.ts for files in order to have them in different files without importer the concrete implementation
+ - If the connection is not possible, reutrn an error.
 */
 export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {
 

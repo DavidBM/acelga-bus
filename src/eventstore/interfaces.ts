@@ -16,7 +16,7 @@ export interface IEventstoreEvent {
 export interface IDecodedSerializedEventstoreEvent extends IEventstoreEvent {
 	eventType: string; // Every event has a type in Eventstore,
 	data: any;
-	metadata: any;
+	metadata: any | void;
 	eventId: string;
 }
 

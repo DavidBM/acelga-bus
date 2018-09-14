@@ -46,6 +46,11 @@
   },
   "jest": {
     "testURL": "http://localhost",
+    "globals": {
+      "ts-jest": {
+        "enableTsDiagnostics": true
+      }
+    },
     "moduleFileExtensions": [
       "ts",
       "tsx",

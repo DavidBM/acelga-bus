@@ -15,4 +15,4 @@ export {
 	ErrorLogger,
 	ExecutionResult,
 } from './corebus/interfaces';
-export {create} from './eventStore';
+export {create} from './eventstore';

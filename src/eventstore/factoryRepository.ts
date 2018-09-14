@@ -1,6 +1,7 @@
-import {IFactory, IDecodedSerializedEventstoreEvent} from './interfaces';
+import {IFactory, IDecodedSerializedEventstoreEvent, IEventstoreEvent} from './interfaces';
+import {isValidDecodedEventStore} from './eventstoreUtils';
 
-export class EventFactoryRespository<T> {
+export class EventFactoryRespository<T extends IEventstoreEvent> {
 	factories: Map<string, IFactory<T>> = new Map();
 
 	set(name: string, factory: IFactory<T>): void {
@@ -15,12 +16,12 @@ export class EventFactoryRespository<T> {
 	}
 
 	get(name: string) {
-		this.factories.get(name);
+		return this.factories.get(name);
 	}
 
 	execute(event: unknown) {
 
-		if (!this.isIDecodedSerializedEventstoreEvent(event)){
+		if (!isValidDecodedEventStore(event)){
 			throw new NotADecodedSerializedEventstoreEvent(event);
 		}
 
@@ -31,14 +32,6 @@ export class EventFactoryRespository<T> {
 		}
 
 		return eventFactory.build(event);
-	}
-
-	isIDecodedSerializedEventstoreEvent(item: any): item is IDecodedSerializedEventstoreEvent {
-		if (!!item && typeof item === 'object' && 'eventType' in item && 'aggregate' in item){
-			true;
-		}
-
-		return false;
 	}
 }
 

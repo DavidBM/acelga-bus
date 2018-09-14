@@ -28,7 +28,7 @@ export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 function createBackoff(): backoff.Backoff {
 	return backoff.fibonacci({
 		randomisationFactor: 0,
-		initialDelay: 300,
+		initialDelay: 100,
 		maxDelay: 7000,
 	});
 }

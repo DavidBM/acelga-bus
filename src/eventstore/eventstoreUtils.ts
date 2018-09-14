@@ -16,8 +16,8 @@ export function decodeEventstoreEntries(entry: any): IDecodedSerializedEventstor
 		event = {
 			data: entry.event.data,
 			metadata: entry.event.metadata,
-			ack: entry.event.links.find((link: any) => link.relation = 'ack'),
-			nack: entry.event.links.find((link: any) => link.relation = 'nack'),
+			ack: entry.event.links.find((link: any) => link.relation = 'ack')[0],
+			nack: entry.event.links.find((link: any) => link.relation = 'nack')[0],
 			eventType: entry.event.eventType,
 			eventId: entry.event.eventId,
 			aggregate: entry.event.streamId,
@@ -35,14 +35,13 @@ export function decodeEventstoreEntries(entry: any): IDecodedSerializedEventstor
 
 // Cyclomatic complexity is failing. But honestly I don't think that sppliting this in several function is good
 // tslint:disable-next-line
-function isValidDecodedEventStore(event: any) {
-	return typeof event.data !== 'object'
-	|| !event.metadata
-	|| typeof event.ack !== 'string'
-	|| typeof event.nack !== 'string'
-	|| typeof event.eventType !== 'string'
-	|| typeof event.eventId !== 'string'
-	|| typeof event.aggregate !== 'string';
+export function isValidDecodedEventStore(event: any): event is IDecodedSerializedEventstoreEvent {
+	return typeof event.data === 'object'
+	&& typeof event.ack === 'string'
+	&& typeof event.nack === 'string'
+	&& typeof event.eventType === 'string'
+	&& typeof event.eventId === 'string'
+	&& typeof event.aggregate === 'string';
 }
 
 export class UnrecognizedEventstoreResponse extends Error {
