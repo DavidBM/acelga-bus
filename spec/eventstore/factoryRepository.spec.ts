@@ -1,5 +1,6 @@
 import {EventFactoryRespository, EventNameCollision, FactoryNotFoundError, NotADecodedSerializedEventstoreEvent} from '@src/eventstore/factoryRepository';
 import {IEventstoreEvent} from '@src/eventstore/interfaces';
+import {eventBuilderWithDefaults} from './utils';
 
 const EventA = 'EventA';
 const EventB = 'EventB';
@@ -43,7 +44,7 @@ describe('factoryRepository', () => {
 		repository.set(EventB, factoryB);
 		repository.set(EventC, factoryC);
 
-		repository.execute(eventBuilder(EventB));
+		repository.execute(eventBuilderWithDefaults(EventB));
 
 		expect(factoryB.build).toHaveBeenCalledTimes(1);
 		expect(factoryA.build).toHaveBeenCalledTimes(0);
@@ -62,7 +63,7 @@ describe('factoryRepository', () => {
 		// repository.set(EventB, factoryB);
 		repository.set(EventC, factoryC);
 
-		expect(() => repository.execute(eventBuilder(EventB))).toThrowError(FactoryNotFoundError);
+		expect(() => repository.execute(eventBuilderWithDefaults(EventB))).toThrowError(FactoryNotFoundError);
 
 		expect(factoryB.build).toHaveBeenCalledTimes(0);
 		expect(factoryA.build).toHaveBeenCalledTimes(0);
@@ -100,7 +101,7 @@ describe('factoryRepository', () => {
 		repository.set(EventB, factoryB);
 		repository.set(EventC, factoryC);
 
-		const event = eventBuilder(EventB, 1 as any);
+		const event = eventBuilderWithDefaults(EventB, 1 as any);
 
 		expect(() => repository.execute(event)).toThrowError(NotADecodedSerializedEventstoreEvent);
 
@@ -109,24 +110,3 @@ describe('factoryRepository', () => {
 		expect(factoryC.build).toHaveBeenCalledTimes(0);
 	});
 });
-
-function eventBuilder(
-	eventType: string,
-	aggregate: string = 'test',
-	data: any = {},
-	eventId: string = 'randon',
-	metadata: any = '',
-	ack: any = 'invalidUrlForAck',
-	nack: any = 'invalidUrlForNAck',
-	) {
-
-	return {
-		data,
-		metadata,
-		ack,
-		nack,
-		eventType,
-		eventId,
-		aggregate,
-	};
-}

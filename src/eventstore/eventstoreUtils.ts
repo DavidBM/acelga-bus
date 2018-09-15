@@ -4,44 +4,42 @@ export function decodeEventstoreResponse(response: any): Array<IDecodedSerialize
 	if (!response || !Array.isArray(response.entries))
 		throw new UnrecognizedEventstoreResponse(response);
 
-	const events = response.entries.map((entry: any) => decodeEventstoreEntries(entry));
-
-	return [];
+	return response.entries.map((entry: any) => decodeEventstoreEntry(entry));
 }
 
-export function decodeEventstoreEntries(entry: any): IDecodedSerializedEventstoreEvent {
+export function decodeEventstoreEntry(entry: any): IDecodedSerializedEventstoreEvent {
 	let event: IDecodedSerializedEventstoreEvent;
 
 	try {
 		event = {
 			data: entry.event.data,
-			metadata: entry.event.metadata,
-			ack: entry.event.links.find((link: any) => link.relation = 'ack')[0],
-			nack: entry.event.links.find((link: any) => link.relation = 'nack')[0],
+			metadata: entry.event.metaData,
+			ack: entry.event.links.find((link: any) => link.relation === 'ack').uri,
+			nack: entry.event.links.find((link: any) => link.relation === 'nack').uri,
 			eventType: entry.event.eventType,
 			eventId: entry.event.eventId,
 			aggregate: entry.event.streamId,
 		};
 
 	} catch (e) {
-		throw new UnrecognizedEventstoreEntry(entry);
+		throw new UnrecognizedEventstoreEntry(entry, e);
 	}
 
-	if (isValidDecodedEventStore(event))
+	if (!isValidDecodedEventStore(event))
 		throw new UnrecognizedEventstoreEntry(entry);
 
 	return event;
 }
 
-// Cyclomatic complexity is failing. But honestly I don't think that sppliting this in several function is good
+// Cyclomatic complexity is failing. But I don't think that sppliting this in several function is good
 // tslint:disable-next-line
 export function isValidDecodedEventStore(event: any): event is IDecodedSerializedEventstoreEvent {
 	return typeof event.data === 'object'
-	&& typeof event.ack === 'string'
-	&& typeof event.nack === 'string'
-	&& typeof event.eventType === 'string'
-	&& typeof event.eventId === 'string'
-	&& typeof event.aggregate === 'string';
+	&& (typeof event.ack === 'string' && !!event.ack.length)
+	&& (typeof event.nack === 'string' && !!event.nack.length)
+	&& (typeof event.eventType === 'string' && !!event.eventType.length)
+	&& (typeof event.eventId === 'string' && !!event.eventId.length)
+	&& (typeof event.aggregate === 'string' && !!event.aggregate.length);
 }
 
 export class UnrecognizedEventstoreResponse extends Error {
@@ -56,10 +54,12 @@ export class UnrecognizedEventstoreResponse extends Error {
 
 export class UnrecognizedEventstoreEntry extends Error {
 	entry: any;
+	originalError: any;
 
-	constructor(entry: any) {
+	constructor(entry: any, originalError?: any) {
 		super();
 		this.entry = entry;
-		this.message = 'The entry from the response from event store is not a recognized entry. The original entry is attached in the "entry" attribute of this error';
+		this.originalError = originalError;
+		this.message = 'The entry from the response from event store is not a recognized entry. The original entry is attached in the "entry" attribute of this error. In case of exception there is an attribute "originalError".';
 	}
 }
