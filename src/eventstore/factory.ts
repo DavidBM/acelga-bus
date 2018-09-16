@@ -37,8 +37,8 @@ function createEventstoreConnection(options: EventStoreConnectionOptions): any {
 	return new HTTPClient(options);
 }
 
-function createEventFactoryRepository<T>(): EventFactoryRespository<T> {
-	return new EventFactoryRespository();
+function createEventFactoryRepository<T extends IEventstoreEvent>(): EventFactoryRespository<T> {
+	return new EventFactoryRespository<T>();
 }
 
 function createEventstoreClient(client: any, errorLogger: ErrorLogger, backoffStrategy: backoff.Backoff, subscriptions: Array<SubscriptionDefinition>) {

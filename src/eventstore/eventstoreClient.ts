@@ -17,12 +17,13 @@ export class EventstoreClient {
 	handler: null | Handler = null;
 	logError: ErrorLogger;
 
-	constructor(client: any, errorLogger: ErrorLogger, backoffStrategy: Backoff, subscriptions: Array<SubscriptionDefinition>) {
+	constructor(client: HTTPClient, errorLogger: ErrorLogger, backoffStrategy: Backoff, subscriptions: Array<SubscriptionDefinition>) {
 		this.client = client;
 		this.backoffStrategy = backoffStrategy;
 		this.logError = errorLogger;
 
 		subscriptions.forEach(config => this.declareConsumers(config.subscription, config.stream));
+		this.backoffStrategy.backoff();
 	}
 
 	public setHandler(handler: Handler) {
@@ -36,30 +37,34 @@ export class EventstoreClient {
 	private declareConsumers(subscriptionName: string, streamName: string): void {
 
 		this.backoffStrategy.on('backoff', (number, delay) => {
-
-			return this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, EmbedType.Body)
-			.then((response: any) => decodeEventstoreResponse(response))
-			.then((events: Array<IDecodedSerializedEventstoreEvent>) => {
+			return this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'Body')
+			.then((response) => decodeEventstoreResponse(response))
+			.then((events) => {
 				return this.processConsumedAnswer(events);
 			})
-			.catch((error: any) => {
-				return this.backoffStrategy.backoff(error);
+			.catch((error) => {
+				this.logError(error);
+				throw error;
 			});
+		});
+
+		this.backoffStrategy.on('ready', () => {
+			this.backoffStrategy.reset();
+			this.backoffStrategy.backoff();
 		});
 
 		this.backoffStrategy.on('fail', (error: unknown) => {
 			this.logError(error);
+			this.backoffStrategy.backoff();
 		});
 	}
 
 	protected async processConsumedAnswer(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
 		if (!Array.isArray(events) || events.length === 0) {
-			return this.backoffStrategy.backoff();
+			return Promise.reject();
 		}
 
 		await this.processEvents(events);
-		this.backoffStrategy.reset();
-		this.backoffStrategy.backoff();
 	}
 
 	protected async processEvents(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
