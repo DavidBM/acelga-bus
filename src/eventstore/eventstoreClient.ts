@@ -1,4 +1,4 @@
-import {Backoff} from 'backoff';
+import {BackoffExecutor} from './backoff';
 import {HTTPClient, EmbedType} from 'geteventstore-promise';
 import {IDecodedSerializedEventstoreEvent} from './interfaces';
 import {ErrorLogger} from '../index';
@@ -12,18 +12,17 @@ export interface SubscriptionDefinition {
 
 export class EventstoreClient {
 	client: HTTPClient;
-	backoffStrategy: Backoff;
+	backoffStrategy: BackoffExecutor;
 	messagesToGet = 100;
 	handler: null | Handler = null;
 	logError: ErrorLogger;
 
-	constructor(client: HTTPClient, errorLogger: ErrorLogger, backoffStrategy: Backoff, subscriptions: Array<SubscriptionDefinition>) {
+	constructor(client: HTTPClient, errorLogger: ErrorLogger, backoffStrategy: BackoffExecutor, subscriptions: Array<SubscriptionDefinition>) {
 		this.client = client;
 		this.backoffStrategy = backoffStrategy;
 		this.logError = errorLogger;
 
 		subscriptions.forEach(config => this.declareConsumers(config.subscription, config.stream));
-		this.backoffStrategy.backoff();
 	}
 
 	public setHandler(handler: Handler) {
@@ -35,33 +34,24 @@ export class EventstoreClient {
 	}
 
 	private declareConsumers(subscriptionName: string, streamName: string): void {
-
-		this.backoffStrategy.on('backoff', (number, delay) => {
-			return this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'Body')
+		this.backoffStrategy((continuing, restarting, number, delay) => {
+			this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'body')
 			.then((response) => decodeEventstoreResponse(response))
-			.then((events) => {
-				return this.processConsumedAnswer(events);
-			})
+			.then((events) => this.processConsumedAnswer(events))
+			.then(() => restarting())
 			.catch((error) => {
+				if(!error)
+					return continuing();
+
 				this.logError(error);
-				throw error;
-			});
-		});
-
-		this.backoffStrategy.on('ready', () => {
-			this.backoffStrategy.reset();
-			this.backoffStrategy.backoff();
-		});
-
-		this.backoffStrategy.on('fail', (error: unknown) => {
-			this.logError(error);
-			this.backoffStrategy.backoff();
+				restarting();
+			})
 		});
 	}
 
 	protected async processConsumedAnswer(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
 		if (!Array.isArray(events) || events.length === 0) {
-			return Promise.reject();
+			return await Promise.reject();
 		}
 
 		await this.processEvents(events);

@@ -1,5 +1,5 @@
 import {HTTPClient} from 'geteventstore-promise';
-import * as backoff from 'backoff';
+import {backoffFibonacci, BackoffExecutor} from './backoff';
 import * as debug from 'debug';
 
 import {debugLogger} from '@src/corebus/logger';
@@ -25,8 +25,8 @@ export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	return new EventStoreBus<T>(eventstoreClient, logger, eventFactory, dispatcher);
 }
 
-function createBackoff(): backoff.Backoff {
-	return backoff.fibonacci({
+function createBackoff(): BackoffExecutor {
+	return backoffFibonacci({
 		randomisationFactor: 0,
 		initialDelay: 100,
 		maxDelay: 7000,
@@ -41,7 +41,7 @@ function createEventFactoryRepository<T extends IEventstoreEvent>(): EventFactor
 	return new EventFactoryRespository<T>();
 }
 
-function createEventstoreClient(client: any, errorLogger: ErrorLogger, backoffStrategy: backoff.Backoff, subscriptions: Array<SubscriptionDefinition>) {
+function createEventstoreClient(client: any, errorLogger: ErrorLogger, backoffStrategy: BackoffExecutor, subscriptions: Array<SubscriptionDefinition>) {
 	return new EventstoreClient(client, errorLogger, backoffStrategy, subscriptions);
 }
 

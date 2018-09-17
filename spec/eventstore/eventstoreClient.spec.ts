@@ -5,16 +5,22 @@ import {
 	createMockedSpiedEventstorelibWithCorrectEvents,
 } from './mocks';
 
-import {Backoff} from 'backoff';
+import {BackoffExecutor} from '@src/eventstore/backoff';
 import {ErrorLogger} from '../../';
 import {HTTPClient} from 'geteventstore-promise';
 
 describe('eventstore Client', () => {
-	let spiedBackoff: Backoff;
+	let spiedBackoff: BackoffExecutor;
 	let errorLogger: ErrorLogger;
+	let backoffSummary: {
+		resetCalls: number,
+		backoffCalls: number,
+	};
 
 	beforeEach(() => {
-		spiedBackoff = createSpiedBackoff();
+		let {backoff, summary} = createSpiedBackoff();
+		backoffSummary = summary;
+		spiedBackoff = backoff;
 		errorLogger = jest.fn();
 	});
 
@@ -38,8 +44,7 @@ describe('eventstore Client', () => {
 
 		setTimeout(() => {
 			expect(handler).toHaveBeenCalledTimes(4);
-			spiedBackoff.removeAllListeners();
-			spiedBackoff.reset();
+			expect(backoffSummary.backoffCalls).toBeGreaterThan(4);
 			done();
 		}, 500);
 	});
