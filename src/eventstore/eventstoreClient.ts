@@ -4,6 +4,8 @@ import {IDecodedSerializedEventstoreEvent} from './interfaces';
 import {ErrorLogger} from '../index';
 import {decodeEventstoreResponse} from './eventstoreUtils';
 
+const NO_MESSAGES = Symbol('no messages');
+
 type Handler = (events: IDecodedSerializedEventstoreEvent[]) => Promise<void>;
 export interface SubscriptionDefinition {
 	stream: string;
@@ -40,7 +42,7 @@ export class EventstoreClient {
 			.then((events) => this.processConsumedAnswer(events))
 			.then(() => restarting())
 			.catch((error) => {
-				if(!error)
+				if(error === NO_MESSAGES)
 					return continuing();
 
 				this.logError(error);
@@ -51,7 +53,7 @@ export class EventstoreClient {
 
 	protected async processConsumedAnswer(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
 		if (!Array.isArray(events) || events.length === 0) {
-			return await Promise.reject();
+			return await Promise.reject(NO_MESSAGES);
 		}
 
 		await this.processEvents(events);
