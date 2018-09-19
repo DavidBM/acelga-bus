@@ -72,6 +72,7 @@ export function createSpiedMockedEventstoreClient(correctEventsIterations: numbe
 	return {
 		client: esClient,
 		backoffSummary: summary,
+		backoff,
 		errorLogger,
 		evClient: client
 	}
