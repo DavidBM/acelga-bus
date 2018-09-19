@@ -60,3 +60,7 @@ export function createMockedSpiedEventstorelibWithCorrectEvents(times: number = 
 	return client;
 }
 
+export function createSpiedMockedEventstoreClient(correctEventsIterations: number) {
+	const backoff = createSpiedBackoff(10, 1);
+	
+}
