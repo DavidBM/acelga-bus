@@ -1,4 +1,4 @@
-import {IFactory, IDecodedSerializedEventstoreEvent, IEventstoreEvent} from './interfaces';
+import {IFactory, IDecodedSerializedEventstoreEvent, IEventstoreEvent, originalEventSymbol} from './interfaces';
 import {isValidDecodedEventStore} from './eventstoreUtils';
 
 export class EventFactoryRespository<T extends IEventstoreEvent> {
@@ -25,7 +25,7 @@ export class EventFactoryRespository<T extends IEventstoreEvent> {
 			throw new NotADecodedSerializedEventstoreEvent(event);
 		}
 
-		const eventFactory = this.factories.get(event.eventType); // Is this correct?
+		const eventFactory = this.factories.get(event.eventType);
 
 		if (!eventFactory) {
 			throw new FactoryNotFoundError();

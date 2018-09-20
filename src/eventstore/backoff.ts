@@ -23,7 +23,7 @@ export let backoffFibonacci: Backoff = (options: backoff.ExponentialOptions, cre
 			backoffStrategy.backoff();
 		});
 
-		backoffStrategy.backoff();
+		setTimeout(() => backoffStrategy.backoff(), 0);
 	};
 }
 

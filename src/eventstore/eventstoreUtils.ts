@@ -1,4 +1,4 @@
-import {IDecodedSerializedEventstoreEvent} from './interfaces';
+import {IDecodedSerializedEventstoreEvent, originalEventSymbol} from './interfaces';
 
 export function decodeEventstoreResponse(response: any): Array<IDecodedSerializedEventstoreEvent> {
 	if (!response || !Array.isArray(response.entries))
@@ -12,13 +12,13 @@ export function decodeEventstoreEntry(entry: any): IDecodedSerializedEventstoreE
 
 	try {
 		event = {
+			aggregate: entry.event.streamId,
 			data: entry.event.data,
 			metadata: entry.event.metaData,
 			ack: entry.event.links.find((link: any) => link.relation === 'ack').uri,
 			nack: entry.event.links.find((link: any) => link.relation === 'nack').uri,
 			eventType: entry.event.eventType,
 			eventId: entry.event.eventId,
-			aggregate: entry.event.streamId,
 		};
 
 	} catch (e) {
@@ -34,7 +34,8 @@ export function decodeEventstoreEntry(entry: any): IDecodedSerializedEventstoreE
 // Cyclomatic complexity is failing. But I don't think that sppliting this in several function is good
 // tslint:disable-next-line
 export function isValidDecodedEventStore(event: any): event is IDecodedSerializedEventstoreEvent {
-	return typeof event.data === 'object'
+	return event
+	&& typeof event.data === 'object'
 	&& (typeof event.ack === 'string' && !!event.ack.length)
 	&& (typeof event.nack === 'string' && !!event.nack.length)
 	&& (typeof event.eventType === 'string' && !!event.eventType.length)

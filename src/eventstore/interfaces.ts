@@ -9,15 +9,23 @@ export interface EventStoreConnectionOptions {
 
 export interface IEventstoreEvent {
 	aggregate: string; // Events needs to be routed to a stream called with the name
-	ack: string;
-	nack: string;
 }
 
-export interface IDecodedSerializedEventstoreEvent extends IEventstoreEvent {
+export const originalEventSymbol: unique symbol = Symbol('originalEvent');
+
+export type OriginalType = IEventstoreEvent & {
+	ack: string;
+	nack: string;
 	eventType: string; // Every event has a type in Eventstore,
 	data: any;
 	metadata: any | void;
 	eventId: string;
+}
+
+export interface IDecodedSerializedEventstoreEvent extends IEventstoreEvent, OriginalType {}
+
+export interface IEventstoreEventReceived extends IEventstoreEvent {
+	[originalEventSymbol]: OriginalType
 }
 
 export interface IFactory<T = {}> {

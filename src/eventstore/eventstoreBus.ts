@@ -1,5 +1,5 @@
 import {IEventBus, EventSubscriptionCallback, Constructable, BulkDispatcher, ErrorLogger, ExecutionResult} from '../index';
-import {IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent} from './interfaces';
+import {IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent, IEventstoreEventReceived, originalEventSymbol} from './interfaces';
 import {EventFactoryRespository as Repository} from './factoryRepository';
 import {EventstoreClient} from './eventstoreClient';
 
@@ -39,11 +39,12 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 		this.client.setHandler((events) => this.processEvents(events));
 	}
 
-	public on<T1 extends T>(eventType: Constructable<T1>, callback: EventSubscriptionCallback<T1> ): void {
+	public on<T1 extends T>(eventType: Constructable<T1>, callback: EventSubscriptionCallback<T1 & IEventstoreEventReceived> ): void {
 		if (this.dispatcher.isListened(eventType)) {
 			throw new EventAlreadySubscribed(eventType);
 		}
-		return this.dispatcher.on(eventType, callback);
+		//We are returning extra data in the events
+		return this.dispatcher.on(eventType, callback as EventSubscriptionCallback<T1>);
 	}
 
 	public onAny(callback: EventSubscriptionCallback<T>): void {
@@ -63,15 +64,22 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 	// This is not a middleware because the type system would not allow that.
 	// We must ensure that everything in middlewares are events, nothing more.
 	protected async processEvents(events: IDecodedSerializedEventstoreEvent[]): Promise<void> {
-		const eventInstances: T[] = [];
+		const eventInstances: Array<T & IEventstoreEventReceived> = [];
 
 		for (const event of events){
 			try {
-				eventInstances.push(await this.eventRepository.execute(event));
+				//Any used here because of this: https://github.com/Microsoft/TypeScript/pull/26797
+				//Once fixed, we can just add "[key: symbol]: OriginalType" to the IEventstoreEvent type
+				const decodedEvent = await this.eventRepository.execute(event) as any; //IEventstoreEvent type
+
+				decodedEvent[originalEventSymbol] = event;
+
+				eventInstances.push(originalEventSymbol as any); //T + IEventstoreEventReceived
 			} catch (error) {
 				return this.logError(error);
 			}
 		}
+
 
 		await this.dispatcher.trigger(eventInstances)
 		.then(errors => this.processErrors(errors)) // Events to retry or to discard

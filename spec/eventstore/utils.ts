@@ -1,3 +1,5 @@
+import {originalEventSymbol} from '@src/eventstore/interfaces';
+
 export function eventBuilder(
 	eventType: string,
 	aggregate: string,
@@ -36,7 +38,7 @@ export const eventstoreResponse = {
 	entries: [{
 		event: {
 			eventId: '84741430-1430-1430-1430-153684741430',
-			eventType: 'test',
+			eventType: 'EvetA',
 			eventNumber: 1,
 			data: {
 				hola: ':D:',
@@ -72,7 +74,7 @@ export const eventstoreResponse = {
 	}, {
 		event: {
 			eventId: '84739125-9125-9125-9125-153684739125',
-			eventType: 'test',
+			eventType: 'EventB',
 			eventNumber: 0,
 			data: {
 				hola: ':D:',
