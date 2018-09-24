@@ -4,23 +4,12 @@ import {EventFactoryRespository} from './factoryRepository';
 import {EventstoreClient} from './eventstoreClient';
 
 /*
- TODO:
-   _______ ______  _____ _______   __  __ _____  _____ _____ _____ _   _  _____
- |__   __|  ____|/ ____|__   __| |  \/  |_   _|/ ____/ ____|_   _| \ | |/ ____|
-    | |  | |__  | (___    | |    | \  / | | | | (___| (___   | | |  \| | |  __
-    | |  |  __|  \___ \   | |    | |\/| | | |  \___ \\___ \  | | | . ` | | |_ |
-    | |  | |____ ____) |  | |    | |  | |_| |_ ____) |___) |_| |_| |\  | |__| |
-    |_|  |______|_____/   |_|    |_|  |_|_____|_____/_____/|_____|_| \_|\_____|
-        (I think that it isenough clear I need to do test of this folder.)
-
- - Move to subscriptions of EventStore instead of reading streams. The Bus doesn't need to keep the count of messagess
- - Use persistent subscriptions
- - The subscription should ask for some kind of:
- 	A) If it is a stream, a function where the user can store the received messages
- 	B) IF it is a subscription, the function should ask the name of the subscription.
  - Reorganize the intefaces to be in the correct files. Parent files must reexport interfaces if required. C
    reate a d.ts for files in order to have them in different files without importer the concrete implementation
  - If the connection is not possible, reutrn an error.
+ - Create a start & stop method
+ - Dinamic subscriptions
+ - Research about how to know if a message was no ack before
 */
 export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {
 
