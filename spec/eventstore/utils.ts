@@ -38,7 +38,7 @@ export const eventstoreResponse = {
 	entries: [{
 		event: {
 			eventId: '84741430-1430-1430-1430-153684741430',
-			eventType: 'EvetA',
+			eventType: 'EventA',
 			eventNumber: 1,
 			data: {
 				hola: ':D:',

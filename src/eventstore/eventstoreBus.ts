@@ -1,6 +1,6 @@
 import {IEventBus, EventSubscriptionCallback, Constructable, BulkDispatcher, ErrorLogger, ExecutionResult} from '../index';
 import {IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent, IEventstoreEventReceived, originalEventSymbol} from './interfaces';
-import {EventFactoryRespository as Repository} from './factoryRepository';
+import {EventFactoryRespository} from './factoryRepository';
 import {EventstoreClient} from './eventstoreClient';
 
 /*
@@ -27,10 +27,10 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 	dispatcher: BulkDispatcher<T>;
 	logError: ErrorLogger;
 
-	eventRepository: Repository<T>;
+	eventRepository: EventFactoryRespository<T>;
 	client: EventstoreClient;
 
-	constructor(client: EventstoreClient, errorLogger: ErrorLogger, eventRepository: Repository<T>, dispatcher: BulkDispatcher<T>) {
+	constructor(client: EventstoreClient, errorLogger: ErrorLogger, eventRepository: EventFactoryRespository<T>, dispatcher: BulkDispatcher<T>) {
 		this.client = client;
 		this.eventRepository = eventRepository;
 		this.logError = errorLogger;
@@ -41,7 +41,7 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 
 	public on<T1 extends T>(eventType: Constructable<T1>, callback: EventSubscriptionCallback<T1 & IEventstoreEventReceived> ): void {
 		if (this.dispatcher.isListened(eventType)) {
-			throw new EventAlreadySubscribed(eventType);
+			throw new EventAlreadySubscribed<T>(eventType);
 		}
 		//We are returning extra data in the events
 		return this.dispatcher.on(eventType, callback as EventSubscriptionCallback<T1>);
@@ -57,7 +57,7 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 	}
 
 	public addEventType(event: Constructable<T>, factory: IEventFactory<T>): void {
-		const eventType = event.constructor.name;
+		const eventType = event.name;
 		this.eventRepository.set(eventType, factory);
 	}
 
@@ -71,15 +71,13 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 				//Any used here because of this: https://github.com/Microsoft/TypeScript/pull/26797
 				//Once fixed, we can just add "[key: symbol]: OriginalType" to the IEventstoreEvent type
 				const decodedEvent = await this.eventRepository.execute(event) as any; //IEventstoreEvent type
-
 				decodedEvent[originalEventSymbol] = event;
 
-				eventInstances.push(originalEventSymbol as any); //T + IEventstoreEventReceived
+				eventInstances.push(decodedEvent as any); //T + IEventstoreEventReceived
 			} catch (error) {
-				return this.logError(error);
+				this.logError(error);
 			}
 		}
-
 
 		await this.dispatcher.trigger(eventInstances)
 		.then(errors => this.processErrors(errors)) // Events to retry or to discard

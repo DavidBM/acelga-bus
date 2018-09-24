@@ -63,7 +63,7 @@ export function createMockedSpiedEventstorelibWithCorrectEvents(times: number = 
 
 export function createSpiedMockedEventstoreClient(correctEventsIterations: number, subscritions: Array<SubscriptionDefinition> = []) {
 
-	const {backoff, summary} = createSpiedBackoff(10, 1);
+	const {backoff, summary} = createSpiedBackoff(1, 10);
 	const client = createMockedSpiedEventstorelibWithCorrectEvents(correctEventsIterations);
 	const errorLogger = jest.fn();
 
