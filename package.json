@@ -75,8 +75,10 @@
     "@types/backoff": "^2.5.1",
     "@types/debug": "0.0.30",
     "@types/generic-pool": "^3.1.4",
+    "@types/got": "^8.3.4",
     "backoff": "^2.5.0",
     "debug": "^3.1.0",
-    "geteventstore-promise": "^3.0.1"
+    "geteventstore-promise": "^3.0.1",
+    "got": "^9.2.2"
   }
 }

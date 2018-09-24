@@ -3,6 +3,7 @@ import {HTTPClient, EmbedType} from 'geteventstore-promise';
 import {IDecodedSerializedEventstoreEvent} from './interfaces';
 import {ErrorLogger} from '../index';
 import {decodeEventstoreResponse} from './eventstoreUtils';
+import * as got from 'got';
 
 const NO_MESSAGES = Symbol('no messages');
 
@@ -49,6 +50,14 @@ export class EventstoreClient {
 				restarting();
 			})
 		});
+	}
+
+	async ack(url: string): Promise<void> {
+		await got.post(url);
+	}
+
+	async nack(url: string): Promise<void> {
+		await got.post(url);
 	}
 
 	protected async processConsumedAnswer(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
