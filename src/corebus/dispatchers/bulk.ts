@@ -33,7 +33,7 @@ export default class BulkDispatcher<T> {
 		return this.dispatcher.onAny(callback);
 	}
 
-	public async trigger(events: T[]): Promise<ExecutionResult<T>[]> {
+	public async trigger<R extends T = T>(events: R[]): Promise<ExecutionResult<T, R>[]> {
 		try {
 			const plan = this.scheduler.schedule(events);
 
@@ -41,7 +41,7 @@ export default class BulkDispatcher<T> {
 
 			const results: any[] = await this.mapPipelinePromises(pipelinesPromises);
 
-			const errors = this.getAllErrors(results);
+			const errors = this.getAllErrors<R>(results);
 
 			if (errors.length){
 				return Promise.resolve(errors);
@@ -54,8 +54,8 @@ export default class BulkDispatcher<T> {
 		}
 	}
 
-	protected getAllErrors(results: Array<PipelineResult<T>>): ExecutionResult<T>[] {
-		const errors: PipelineResult<T> = [];
+	protected getAllErrors<R extends T = T>(results: Array<PipelineResult<T, R>>): ExecutionResult<T, R>[] {
+		const errors: PipelineResult<T, R> = [];
 
 		results.forEach(result => {
 			result.forEach(error => errors.push(error));
