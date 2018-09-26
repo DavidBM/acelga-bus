@@ -5,15 +5,15 @@ import {
 	createMockedSpiedEventstorelibWithCorrectEvents,
 } from './mocks';
 import {eventstoreResponse} from './utils';
-import {backoffFibonacci} from '@src/eventstore/backoff';
-
-import {BackoffExecutor} from '@src/eventstore/backoff';
+import {backoffFibonacci, BackoffExecutor} from '@src/eventstore/backoff';
+import {EventstoreFeedbackHTTP} from '@src/eventstore/interfaces';
 import {ErrorLogger} from '../../';
 import {HTTPClient} from 'geteventstore-promise';
 
 describe('eventstore Client', () => {
 	let spiedBackoff: BackoffExecutor;
 	let errorLogger: ErrorLogger;
+	let eventstoreSignal: EventstoreFeedbackHTTP;
 	let backoffSummary: {
 		resetCalls: number,
 		backoffCalls: number,
@@ -24,11 +24,12 @@ describe('eventstore Client', () => {
 		backoffSummary = summary;
 		spiedBackoff = backoff;
 		errorLogger = jest.fn();
+		eventstoreSignal = jest.fn().mockImplementation(() => Promise.resolve());
 	});
 
 	it('should call the getEvents from the eventstore library', (done) => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
-		const client = new EventstoreClient(mockedSpiedEventstore, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
 
 		setTimeout(() => {
 			expect(mockedSpiedEventstore.persistentSubscriptions.getEvents).toHaveBeenCalled();
@@ -38,7 +39,7 @@ describe('eventstore Client', () => {
 
 	it('should call the getEvents and repeat if there are events', (done) => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(4);
-		const client = new EventstoreClient(mockedSpiedEventstore, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
 
 		const handler = jest.fn();
 
@@ -55,7 +56,7 @@ describe('eventstore Client', () => {
 		const ERROR_TO_THROW = new Error('test');
 
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(1);
-		const client = new EventstoreClient(mockedSpiedEventstore, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
 
 		const handler = jest.fn().mockImplementation((event) => {
 			throw ERROR_TO_THROW;
@@ -72,7 +73,7 @@ describe('eventstore Client', () => {
 
 	it('should log the no handler to process the event error in case of no handler provided', (done) => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(2);
-		const client = new EventstoreClient(mockedSpiedEventstore, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
 
 		setTimeout(() => {
 			expect(errorLogger).toHaveBeenCalledWith(new NoHanlderToProcessEvents(eventstoreResponse))
@@ -83,7 +84,7 @@ describe('eventstore Client', () => {
 
 	it('should call writeEvent from the client when publish is called', (done) => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
-		const client = new EventstoreClient(mockedSpiedEventstore, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
 
 		client.publish('test', 'test', {})
 
@@ -104,7 +105,7 @@ describe('eventstore Client', () => {
 		const handler = jest.fn();
 
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
-		const client = new EventstoreClient(mockedSpiedEventstore, errorLogger, backoff, [{stream: 'a', subscription: 'a'}]);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, backoff, [{stream: 'a', subscription: 'a'}]);
 
 		client.setHandler(handler);
 

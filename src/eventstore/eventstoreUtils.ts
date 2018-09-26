@@ -1,4 +1,5 @@
-import {IDecodedSerializedEventstoreEvent, originalEventSymbol} from './interfaces';
+import {IDecodedSerializedEventstoreEvent, originalEventSymbol, EventstoreFeedbackHTTP} from './interfaces';
+import * as got from 'got';
 
 export function decodeEventstoreResponse(response: any): Array<IDecodedSerializedEventstoreEvent> {
 	if (!response || !Array.isArray(response.entries))
@@ -63,4 +64,8 @@ export class UnrecognizedEventstoreEntry extends Error {
 		this.originalError = originalError;
 		this.message = 'The entry from the response from event store is not a recognized entry. The original entry is attached in the "entry" attribute of this error. In case of exception there is an attribute "originalError".';
 	}
+}
+
+export let eventstoreFeedbackHTTP: EventstoreFeedbackHTTP = (url: string): Promise<void> => {
+	return got.post(url).then(() => {});
 }

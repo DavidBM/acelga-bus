@@ -4,7 +4,7 @@ import {EventFactoryRespository} from './factoryRepository';
 import {EventstoreClient} from './eventstoreClient';
 import {iterate} from 'iterated-pipes';
 
-const PARALLEL_FEEDBACK = 5;
+const PARALLEL_FEEDBACK = 50;
 enum FEEDBACK_ACTION {
 	nack = 'nack',
 	ack = 'ack'
@@ -101,6 +101,7 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 
 	protected async giveEventFeedback(event: IEventstoreEventReceived, action: FEEDBACK_ACTION): Promise<void> {
 		const originalEvent = event[originalEventSymbol];
+
 		if(originalEvent && originalEvent[action]){
 			await this.client[action]("")
 			.catch(error => this.logError(error));

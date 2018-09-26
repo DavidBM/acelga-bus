@@ -5,9 +5,10 @@ import * as debug from 'debug';
 import {debugLogger} from '@src/corebus/logger';
 import {EventStoreBus} from './eventstoreBus';
 import {EventFactoryRespository} from './factoryRepository';
-import {EventStoreConnectionOptions, IEventstoreEvent} from './interfaces';
+import {EventStoreConnectionOptions, IEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
 import {ErrorLogger, BulkDispatcher, Dispatcher, ParallelScheduler, pipelineFactory} from '../index';
 import {EventstoreClient, SubscriptionDefinition} from './eventstoreClient';
+import {eventstoreFeedbackHTTP} from '@src/eventstore/eventstoreUtils';
 
 export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	connectionOptions: EventStoreConnectionOptions,
@@ -19,7 +20,7 @@ export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	const client = createEventstoreConnection(connectionOptions);
 	const backoffStrategy = createBackoff();
 	const eventFactory = createEventFactoryRepository<T>();
-	const eventstoreClient = createEventstoreClient(client, logger, backoffStrategy, subscriptions);
+	const eventstoreClient = createEventstoreClient(client, eventstoreFeedbackHTTP, logger, backoffStrategy, subscriptions);
 	const dispatcher = createDispatcher<T>(logger);
 
 	return new EventStoreBus<T>(eventstoreClient, logger, eventFactory, dispatcher);
@@ -41,8 +42,8 @@ function createEventFactoryRepository<T extends IEventstoreEvent>(): EventFactor
 	return new EventFactoryRespository<T>();
 }
 
-function createEventstoreClient(client: any, errorLogger: ErrorLogger, backoffStrategy: BackoffExecutor, subscriptions: Array<SubscriptionDefinition>) {
-	return new EventstoreClient(client, errorLogger, backoffStrategy, subscriptions);
+function createEventstoreClient(client: any, signalServer: EventstoreFeedbackHTTP, errorLogger: ErrorLogger, backoffStrategy: BackoffExecutor, subscriptions: Array<SubscriptionDefinition>) {
+	return new EventstoreClient(client, signalServer, errorLogger, backoffStrategy, subscriptions);
 }
 
 function createDispatcher<T>(errorLogger: ErrorLogger) {

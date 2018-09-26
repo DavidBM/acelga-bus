@@ -1,9 +1,8 @@
 import {BackoffExecutor} from './backoff';
 import {HTTPClient, EmbedType} from 'geteventstore-promise';
-import {IDecodedSerializedEventstoreEvent} from './interfaces';
+import {IDecodedSerializedEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
 import {ErrorLogger} from '../index';
 import {decodeEventstoreResponse} from './eventstoreUtils';
-import * as got from 'got';
 
 const NO_MESSAGES = Symbol('no messages');
 
@@ -19,11 +18,13 @@ export class EventstoreClient {
 	messagesToGet = 100;
 	handler: null | Handler = null;
 	logError: ErrorLogger;
+	signal: EventstoreFeedbackHTTP;
 
-	constructor(client: HTTPClient, errorLogger: ErrorLogger, backoffStrategy: BackoffExecutor, subscriptions: Array<SubscriptionDefinition>) {
+	constructor(client: HTTPClient, signalInterface: EventstoreFeedbackHTTP, errorLogger: ErrorLogger, backoffStrategy: BackoffExecutor, subscriptions: Array<SubscriptionDefinition>) {
 		this.client = client;
 		this.backoffStrategy = backoffStrategy;
 		this.logError = errorLogger;
+		this.signal = signalInterface;
 
 		subscriptions.forEach(config => this.declareConsumers(config.subscription, config.stream));
 	}
@@ -53,11 +54,11 @@ export class EventstoreClient {
 	}
 
 	async ack(url: string): Promise<void> {
-		await got.post(url);
+		await this.signal(url);
 	}
 
 	async nack(url: string): Promise<void> {
-		await got.post(url);
+		await this.signal(url);
 	}
 
 	protected async processConsumedAnswer(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {

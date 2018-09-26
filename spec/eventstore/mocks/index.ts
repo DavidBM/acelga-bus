@@ -3,6 +3,7 @@ import {backoffFibonacci, BackoffCallback, BackoffExecutor, Backoff, BackoffActi
 import {HTTPClient} from 'geteventstore-promise';
 import {eventstoreResponse} from '../utils';
 import {SubscriptionDefinition, EventstoreClient} from '@src/eventstore/eventstoreClient';
+import {EventstoreFeedbackHTTP} from '@src/eventstore/interfaces';
 
 export function createSpiedBackoff(initialDelay: number = 1, maxDelay: number = 10) {
 	const summary = {
@@ -66,14 +67,15 @@ export function createSpiedMockedEventstoreClient(correctEventsIterations: numbe
 	const {backoff, summary} = createSpiedBackoff(1, 10);
 	const client = createMockedSpiedEventstorelibWithCorrectEvents(correctEventsIterations);
 	const errorLogger = jest.fn();
-
-	const esClient = new EventstoreClient(client, errorLogger, backoff, subscritions);
+	let eventstoreSignal: EventstoreFeedbackHTTP = jest.fn().mockImplementation(() => Promise.resolve())
+	const esClient = new EventstoreClient(client, eventstoreSignal, errorLogger, backoff, subscritions);
 
 	return {
 		client: esClient,
 		backoffSummary: summary,
 		backoff,
 		errorLogger,
-		evClient: client
+		evClient: client,
+		eventstoreSignal
 	}
 }
