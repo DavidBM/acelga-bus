@@ -1,4 +1,4 @@
-import {BackoffExecutor} from './backoff';
+import {BackoffExecutor, BackoffStopper} from './backoff';
 import {HTTPClient, EmbedType} from 'geteventstore-promise';
 import {IDecodedSerializedEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
 import {ErrorLogger} from '../index';
@@ -13,24 +13,38 @@ export interface SubscriptionDefinition {
 }
 
 export class EventstoreClient {
-	client: HTTPClient;
-	backoffStrategy: BackoffExecutor;
-	messagesToGet = 100;
-	handler: null | Handler = null;
-	logError: ErrorLogger;
-	signal: EventstoreFeedbackHTTP;
+	protected client: HTTPClient;
+	protected backoffStrategy: BackoffExecutor;
+	protected messagesToGet = 100;
+	protected handler: null | Handler = null;
+	protected logError: ErrorLogger;
+	protected signal: EventstoreFeedbackHTTP;
+	protected subscriptions: SubscriptionDefinition[];
+	protected subscriptionsCancellers: BackoffStopper[];
 
 	constructor(client: HTTPClient, signalInterface: EventstoreFeedbackHTTP, errorLogger: ErrorLogger, backoffStrategy: BackoffExecutor, subscriptions: Array<SubscriptionDefinition>) {
 		this.client = client;
 		this.backoffStrategy = backoffStrategy;
 		this.logError = errorLogger;
 		this.signal = signalInterface;
-
-		subscriptions.forEach(config => this.declareConsumers(config.subscription, config.stream));
+		this.subscriptions = subscriptions;
+		this.subscriptionsCancellers = [];
 	}
 
 	public setHandler(handler: Handler) {
 		this.handler = handler;
+	}
+
+	public startConsumption() {
+		this.subscriptions.forEach(config => this.declareConsumers(config.subscription, config.stream));
+	}
+
+	public ping() {
+		return this.client.ping();
+	}
+
+	public stop() {
+		this.subscriptionsCancellers.forEach(canceller => canceller());
 	}
 
 	public async publish(streamName: string, eventType: string, event: {}): Promise<void> {
@@ -38,7 +52,7 @@ export class EventstoreClient {
 	}
 
 	private declareConsumers(subscriptionName: string, streamName: string): void {
-		this.backoffStrategy((continuing, restarting, number, delay) => {
+		let backoffStopper = this.backoffStrategy((continuing, restarting, number, delay) => {
 			this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'body')
 			.then((response) => decodeEventstoreResponse(response))
 			.then((events) => this.processConsumedAnswer(events))
@@ -51,6 +65,8 @@ export class EventstoreClient {
 				restarting();
 			})
 		});
+
+		this.subscriptionsCancellers.push(backoffStopper);
 	}
 
 	async ack(url: string): Promise<void> {

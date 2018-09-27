@@ -43,6 +43,7 @@ export function createMockedSpiedEventstorelibWithNoEvents() {
 
 	jest.spyOn(client.persistentSubscriptions, 'getEvents').mockImplementation(() => Promise.resolve({entries: []}));
 	jest.spyOn(client, 'writeEvent').mockImplementation(() => Promise.resolve());
+	jest.spyOn(client, 'ping').mockImplementation(() => Promise.resolve());
 
 	return client;
 }

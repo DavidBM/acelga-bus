@@ -5,7 +5,7 @@ export enum BackoffAction {
 	continue
 };
 
-export let backoffFibonacci: Backoff = (options: backoff.ExponentialOptions, createInstance?: (options: backoff.ExponentialOptions) => backoff.Backoff) => {
+export let backoffFibonacci: Backoff = (options, createInstance?: (options: backoff.ExponentialOptions) => backoff.Backoff): BackoffExecutor => {
 
 	return (callback: BackoffCallback) => {
 
@@ -24,11 +24,15 @@ export let backoffFibonacci: Backoff = (options: backoff.ExponentialOptions, cre
 		});
 
 		setTimeout(() => backoffStrategy.backoff(), 0);
+
+		return () => backoffStrategy.reset();
 	};
 }
 
 export type BackoffCallback = (continuing: () => void, restarting: () => void, number: number, delay: number, error?: any) => void;
 
-export type BackoffExecutor = (callback: BackoffCallback) => void;
+export type BackoffExecutor = (callback: BackoffCallback) => BackoffStopper;
+
+export type BackoffStopper = () => void;
 
 export type Backoff = (options: backoff.ExponentialOptions, createInstance?: (options: backoff.ExponentialOptions) => backoff.Backoff) => BackoffExecutor;

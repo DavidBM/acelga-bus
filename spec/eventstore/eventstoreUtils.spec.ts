@@ -1,5 +1,6 @@
-import {isValidDecodedEventStore, decodeEventstoreEntry, UnrecognizedEventstoreEntry, decodeEventstoreResponse, UnrecognizedEventstoreResponse} from '@src/eventstore/eventstoreUtils';
+import {isValidDecodedEventStore, decodeEventstoreEntry, UnrecognizedEventstoreEntry, decodeEventstoreResponse, UnrecognizedEventstoreResponse, eventstoreFeedbackHTTP} from '@src/eventstore/eventstoreUtils';
 import {eventBuilder, eventBuilderWithDefaults, eventstoreResponse, wrongEntries} from './utils';
+import {createServer} from 'http';
 
 describe('eventstore Utils',  () => {
 	describe('isValidDecodedEventStore', () => {
@@ -76,6 +77,34 @@ describe('eventstore Utils',  () => {
 		it('should launch an error in case that entries are not valid', () => {
 			expect(() => decodeEventstoreResponse(wrongEntries)).toThrowError(UnrecognizedEventstoreEntry);
 			expect(() => decodeEventstoreResponse(null)).toThrowError(UnrecognizedEventstoreResponse);
+		});
+	});
+
+	describe('eventstoreFeedbackHTTP', () => {
+		it('call the endpoint with got', (done) => {
+			const PORT = 61028;
+			
+			const server = createServer((request,response)=>{
+			    response.writeHead(200,{'Content-Type':'text/plain'});
+			    response.write('Hello world');
+			    response.end();
+			    expect(request.url).toBe('/hola');
+			});
+
+			server.listen(PORT, (error:any) => {
+				eventstoreFeedbackHTTP(`http://localhost:${PORT}/hola`)
+				.then((data) => {
+					expect(data).toBeUndefined();
+					server.close();
+					done();
+				}).catch((error) => {
+					console.log(error);
+					server.close();
+					done.fail();
+				});
+			});
+
+			setTimeout(() => server.close(), 5000);
 		});
 	});
 });

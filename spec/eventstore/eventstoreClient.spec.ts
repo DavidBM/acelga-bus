@@ -30,6 +30,7 @@ describe('eventstore Client', () => {
 	it('should call the getEvents from the eventstore library', (done) => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
 		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
+		client.startConsumption();
 
 		setTimeout(() => {
 			expect(mockedSpiedEventstore.persistentSubscriptions.getEvents).toHaveBeenCalled();
@@ -37,9 +38,34 @@ describe('eventstore Client', () => {
 		}, 50);
 	});
 
+	it('should call the getEvents from the eventstore library', () => {
+		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
+		client.ping();
+
+		expect(mockedSpiedEventstore.ping).toHaveBeenCalled();
+	});
+
+	it('should call the getEvents from the eventstore library', () => {
+		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
+		client.ack('hola');
+
+		expect(eventstoreSignal).toHaveBeenCalledWith('hola');
+	});
+
+	it('should call the getEvents from the eventstore library', () => {
+		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
+		client.nack('hola');
+
+		expect(eventstoreSignal).toHaveBeenCalledWith('hola');
+	});
+
 	it('should call the getEvents and repeat if there are events', (done) => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(4);
 		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
+		client.startConsumption();
 
 		const handler = jest.fn();
 
@@ -57,6 +83,7 @@ describe('eventstore Client', () => {
 
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(1);
 		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
+		client.startConsumption();
 
 		const handler = jest.fn().mockImplementation((event) => {
 			throw ERROR_TO_THROW;
@@ -74,6 +101,7 @@ describe('eventstore Client', () => {
 	it('should log the no handler to process the event error in case of no handler provided', (done) => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(2);
 		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
+		client.startConsumption();
 
 		setTimeout(() => {
 			expect(errorLogger).toHaveBeenCalledWith(new NoHanlderToProcessEvents(eventstoreResponse))
@@ -85,6 +113,7 @@ describe('eventstore Client', () => {
 	it('should call writeEvent from the client when publish is called', (done) => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
 		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}]);
+		client.startConsumption();
 
 		client.publish('test', 'test', {})
 
@@ -106,6 +135,7 @@ describe('eventstore Client', () => {
 
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
 		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, backoff, [{stream: 'a', subscription: 'a'}]);
+		client.startConsumption();
 
 		client.setHandler(handler);
 

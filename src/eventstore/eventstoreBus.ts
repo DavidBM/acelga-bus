@@ -4,7 +4,7 @@ import {EventFactoryRespository} from './factoryRepository';
 import {EventstoreClient} from './eventstoreClient';
 import {iterate} from 'iterated-pipes';
 
-const PARALLEL_FEEDBACK = 50;
+const PARALLEL_FEEDBACK = 5;
 enum FEEDBACK_ACTION {
 	nack = 'nack',
 	ack = 'ack'
@@ -13,20 +13,18 @@ enum FEEDBACK_ACTION {
 type ReceivedEvents<T> = T & IEventstoreEventReceived;
 
 /*
- - Reorganize the intefaces to be in the correct files. Parent files must reexport interfaces if required. C
-   reate a d.ts for files in order to have them in different files without importer the concrete implementation
- - If the connection is not possible, reutrn an error.
- - Create a start & stop method
- - Dinamic subscriptions
+ - Reorganize the interfaces to be in the correct files. Parent files must reexport interfaces if required.
+   Create a d.ts for files in order to have them in different files without importer the concrete implementation
+ - Create a stop method
  - Research about how to know if a message was no ack before
 */
 export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {
 
-	dispatcher: BulkDispatcher<T>;
-	logError: ErrorLogger;
+	protected dispatcher: BulkDispatcher<T>;
+	protected logError: ErrorLogger;
 
-	eventRepository: EventFactoryRespository<T>;
-	client: EventstoreClient;
+	protected eventRepository: EventFactoryRespository<T>;
+	protected client: EventstoreClient;
 
 	constructor(client: EventstoreClient, errorLogger: ErrorLogger, eventRepository: EventFactoryRespository<T>, dispatcher: BulkDispatcher<T>) {
 		this.client = client;
@@ -35,6 +33,11 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 		this.dispatcher = dispatcher;
 
 		this.client.setHandler((events) => this.processEvents(events));
+	}
+
+	public startConsumption() {
+		return this.client.ping()
+		.then(() => this.client.startConsumption());
 	}
 
 	public on<T1 extends T>(eventType: Constructable<T1>, callback: EventSubscriptionCallback<T1 & IEventstoreEventReceived> ): void {

@@ -96,6 +96,7 @@ describe('EventstoreBus', () => {
 	});
 
 	it('should add the correct subscription', () => {
+		client.startConsumption();
 		bus.on(EventA, (event) =>  {
 			return Promise.resolve();
 		});
@@ -112,6 +113,7 @@ describe('EventstoreBus', () => {
 	});
 
 	it('should not call the handler in the case of a event already subscribed', (done) => {
+		client.startConsumption();
 		const handlerA = jest.fn().mockImplementation(() => Promise.resolve());
 		const handlerB = jest.fn().mockImplementation(() => Promise.resolve());
 		const factoryA = jest.fn().mockImplementation(() => {return new EventA()});
@@ -133,6 +135,7 @@ describe('EventstoreBus', () => {
 	});
 
 	it('should receive all events in the case of a correct subscription', (done) => {
+		client.startConsumption();
 		const handlerA = jest.fn().mockImplementation(() => Promise.resolve());
 		const handlerB = jest.fn().mockImplementation(() => Promise.resolve());
 		const factoryA = jest.fn().mockImplementation(() => {return new EventA()});
@@ -154,6 +157,7 @@ describe('EventstoreBus', () => {
 	});
 
 	it('should receive all events in the case of onAny', (done) => {
+		client.startConsumption();
 
 		const factoryResult = {aggregate: Math.random() + ''};
 
@@ -173,6 +177,7 @@ describe('EventstoreBus', () => {
 	});
 
 	it('should log an error if an event without factory is received', (done) => {
+		client.startConsumption();
 
 		const handler = jest.fn().mockImplementation(() => Promise.resolve());
 		const factory = jest.fn().mockImplementation(() => {return {aggregate: ''}});
@@ -187,6 +192,7 @@ describe('EventstoreBus', () => {
 	});
 
 	it('should log an error if an event without factory is received', (done) => {
+		client.startConsumption();
 
 		bus.publish(new EventA());
 
