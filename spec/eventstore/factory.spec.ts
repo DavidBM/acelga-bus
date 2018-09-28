@@ -1,5 +1,5 @@
 import {create} from '@src/eventstore/index';
-import {EventStoreBus} from '@src/eventstore/eventstoreBus';
+import {EventStoreBus} from '@src/eventstore/bus';
 
 const CONNECTION_OPTIONS = {hostname: 'localhost', port: 2113, credentials: {username: 'admin', password: 'changeit'}};
 

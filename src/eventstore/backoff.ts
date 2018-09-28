@@ -11,17 +11,36 @@ export let backoffFibonacci: Backoff = (options, createInstance?: (options: back
 
 		const backoffStrategy = createInstance ? createInstance(options) : backoff.fibonacci(options);
 
-		let backoffResult: BackoffAction;
-		const continuing = () => backoffResult = BackoffAction.continue;
-		const restarting = () => backoffResult = BackoffAction.restart;
+		let backoffResult: BackoffAction | null = null;
+		const continuing = () => {
+			backoffResult = BackoffAction.continue;
+			setTimeout(computebackoff, 0);
+		};
+		const restarting = () => {
+			backoffResult = BackoffAction.restart;
+			setTimeout(computebackoff, 0);
+		};
 
-		backoffStrategy.on('backoff', (number, delay, error) => callback(continuing, restarting, number, delay, error));
+		let isReady = false;
+
+		backoffStrategy.on('backoff', (number, delay, error) => {
+			backoffResult = null;
+			isReady = false;
+			callback(continuing, restarting, number, delay, error);
+		});
 
 		backoffStrategy.on('ready', () => {
+			isReady = true;
+			setTimeout(computebackoff, 0);
+		});
+
+		const computebackoff = () => {
+			if(!isReady) return;
 			if(backoffResult === BackoffAction.restart)
 				backoffStrategy.reset();
-			backoffStrategy.backoff();
-		});
+			if(backoffResult !== null)
+				backoffStrategy.backoff();
+		}
 
 		setTimeout(() => backoffStrategy.backoff(), 0);
 

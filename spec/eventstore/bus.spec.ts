@@ -1,6 +1,6 @@
-import {EventStoreBus, EventAlreadySubscribed} from '@src/eventstore/eventstoreBus';
+import {EventStoreBus, EventAlreadySubscribed} from '@src/eventstore/bus';
 import {createSpiedMockedEventstoreClient} from './mocks'
-import {EventstoreClient} from '@src/eventstore/eventstoreClient';
+import {EventstoreClient} from '@src/eventstore/client';
 import {ErrorLogger} from '../../';
 import {BackoffExecutor} from '@src/eventstore/backoff';
 import {EventFactoryRespository, FactoryNotFoundError} from '@src/eventstore/factoryRepository';

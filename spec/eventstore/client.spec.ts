@@ -1,4 +1,4 @@
-import {EventstoreClient, NoHanlderToProcessEvents} from '@src/eventstore/eventstoreClient';
+import {EventstoreClient, NoHanlderToProcessEvents} from '@src/eventstore/client';
 import {
 	createSpiedBackoff,
 	createMockedSpiedEventstorelibWithNoEvents,
@@ -78,7 +78,7 @@ describe('eventstore Client', () => {
 			expect(handler).toHaveBeenCalledTimes(4);
 			expect(backoffSummary.backoffCalls).toBeGreaterThan(4);
 			done();
-		}, 50);
+		}, 500);
 	});
 
 	it('should log the error in case of exception in the handler', (done) => {
@@ -147,5 +147,34 @@ describe('eventstore Client', () => {
 			expect(mockedSpiedEventstore.persistentSubscriptions.getEvents).toHaveBeenCalledTimes(6)
 			done();
 		}, 130);
+	});
+
+	it('should stop once all events are processed', (done) => {
+		const handlerTimeout = jest.fn();
+		const handler = jest.fn((events: any): Promise<void> => {
+			return new Promise<void>(resolve => {
+				setTimeout(() => {
+					handlerTimeout();
+					resolve();
+				}, 500);
+			});
+		});
+
+		const before = Date.now();
+
+		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(1);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}], tracker, 50000000);
+		client.startConsumption();
+
+		client.setHandler(handler);
+
+		setTimeout(() => {
+			client.stop()
+			.then(() => {
+				expect(handler).toHaveBeenCalledTimes(1);
+				expect(handlerTimeout).toHaveBeenCalledTimes(1);
+				done();
+			});			
+		}, 100);
 	});
 });

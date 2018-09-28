@@ -2,7 +2,7 @@ import * as BackoffOriginall from 'backoff';
 import {backoffFibonacci, BackoffCallback, BackoffExecutor, Backoff, BackoffAction} from '@src/eventstore/backoff';
 import {HTTPClient} from 'geteventstore-promise';
 import {eventstoreResponse} from '../utils';
-import {SubscriptionDefinition, EventstoreClient} from '@src/eventstore/eventstoreClient';
+import {SubscriptionDefinition, EventstoreClient} from '@src/eventstore/client';
 import {EmptyTracker} from '@src/eventstore/emptyTracker';
 import {EventstoreFeedbackHTTP} from '@src/eventstore/interfaces';
 

@@ -1,4 +1,11 @@
-import {isValidDecodedEventStore, decodeEventstoreEntry, UnrecognizedEventstoreEntry, decodeEventstoreResponse, UnrecognizedEventstoreResponse, eventstoreFeedbackHTTP} from '@src/eventstore/eventstoreUtils';
+import {
+	isValidDecodedEventStore,
+	decodeEventstoreEntry,
+	UnrecognizedEventstoreEntry,
+	decodeEventstoreResponse,
+	UnrecognizedEventstoreResponse,
+	eventstoreFeedbackHTTP
+} from '@src/eventstore/utils';
 import {eventBuilder, eventBuilderWithDefaults, eventstoreResponse, wrongEntries} from './utils';
 import {createServer} from 'http';
 

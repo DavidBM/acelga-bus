@@ -2,7 +2,7 @@ import {BackoffExecutor, BackoffStopper} from './backoff';
 import {HTTPClient, EmbedType} from 'geteventstore-promise';
 import {IDecodedSerializedEventstoreEvent, EventstoreFeedbackHTTP, IEmptyTracker} from './interfaces';
 import {ErrorLogger} from '../index';
-import {decodeEventstoreResponse} from './eventstoreUtils';
+import {decodeEventstoreResponse} from './utils';
 
 const NO_MESSAGES = Symbol('no messages');
 
@@ -59,6 +59,7 @@ export class EventstoreClient {
 	public stop(): Promise<void> {
 		this.tracker.forget('running');
 		this.subscriptionsCancellers.forEach(canceller => canceller());
+		this.subscriptionsCancellers.length = 0;
 		
 		return this.tracker.waitUntilEmpty(this.milisecondsToStop)
 		.catch(error => {
@@ -71,15 +72,17 @@ export class EventstoreClient {
 	}
 
 	private declareConsumers(subscriptionName: string, streamName: string): void {
-		let backoffStopper = this.backoffStrategy(async (continuing, restarting, number, delay) => {
-			try {
-				this.tracker.remember(number);
-				const response = await this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'body');
-				const events = decodeEventstoreResponse(response);
-				await this.processConsumedAnswer(events);
+		let backoffStopper = this.backoffStrategy((continuing, restarting, number, delay) => {
+			this.tracker.remember(number);
+
+			return this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'body')
+			.then(response => decodeEventstoreResponse(response))
+			.then(events => this.processConsumedAnswer(events))
+			.then(() => {
 				this.tracker.forget(number); 
 				restarting();
-			} catch (error) {
+			})
+			.catch(error => {
 				if(error === NO_MESSAGES){
 					this.tracker.forget(number);
 					return continuing();
@@ -88,7 +91,7 @@ export class EventstoreClient {
 				this.logError(error);
 				this.tracker.forget(number);
 				restarting();
-			}
+			})
 		});
 
 		this.subscriptionsCancellers.push(backoffStopper);
@@ -102,20 +105,20 @@ export class EventstoreClient {
 		await this.signal(url);
 	}
 
-	protected async processConsumedAnswer(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
+	protected processConsumedAnswer(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
 		if (!Array.isArray(events) || events.length === 0) {
-			return await Promise.reject(NO_MESSAGES);
+			return Promise.reject(NO_MESSAGES);
 		}
 
-		await this.processEvents(events);
+		return this.processEvents(events);
 	}
 
-	protected async processEvents(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
+	protected processEvents(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
 		if (!this.handler){
 			return this.logError(new NoHanlderToProcessEvents(events));
 		}
 
-		await this.handler(events);
+		return this.handler(events)
 	}
 }
 

@@ -3,12 +3,12 @@ import {backoffFibonacci, BackoffExecutor} from './backoff';
 import * as debug from 'debug';
 
 import {debugLogger} from '@src/corebus/logger';
-import {EventStoreBus} from './eventstoreBus';
+import {EventStoreBus} from './bus';
 import {EventFactoryRespository} from './factoryRepository';
 import {EventStoreConnectionOptions, IEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
 import {ErrorLogger, BulkDispatcher, Dispatcher, ParallelScheduler, pipelineFactory} from '../index';
-import {EventstoreClient, SubscriptionDefinition} from './eventstoreClient';
-import {eventstoreFeedbackHTTP} from '@src/eventstore/eventstoreUtils';
+import {EventstoreClient, SubscriptionDefinition} from './client';
+import {eventstoreFeedbackHTTP} from '@src/eventstore/utils';
 import {EmptyTracker} from '@src/eventstore/emptyTracker';
 
 export function create< T extends IEventstoreEvent = IEventstoreEvent>(

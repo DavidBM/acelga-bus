@@ -1,7 +1,7 @@
 import {IEventBus, EventSubscriptionCallback, Constructable, BulkDispatcher, ErrorLogger, ExecutionResult} from '../index';
 import {IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent, IEventstoreEventReceived, originalEventSymbol} from './interfaces';
 import {EventFactoryRespository} from './factoryRepository';
-import {EventstoreClient} from './eventstoreClient';
+import {EventstoreClient} from './client';
 import {iterate} from 'iterated-pipes';
 
 const PARALLEL_FEEDBACK = 5;
@@ -15,7 +15,6 @@ type ReceivedEvents<T> = T & IEventstoreEventReceived;
 /*
  - Reorganize the interfaces to be in the correct files. Parent files must reexport interfaces if required.
    Create a d.ts for files in order to have them in different files without importer the concrete implementation
- - Create a stop method
  - Research about how to know if a message was no ack before
 */
 export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {

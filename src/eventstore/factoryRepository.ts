@@ -1,5 +1,5 @@
 import {IFactory, IDecodedSerializedEventstoreEvent, IEventstoreEvent, originalEventSymbol} from './interfaces';
-import {isValidDecodedEventStore} from './eventstoreUtils';
+import {isValidDecodedEventStore} from './utils';
 
 export class EventFactoryRespository<T extends IEventstoreEvent> {
 	factories: Map<string, IFactory<T>> = new Map();
