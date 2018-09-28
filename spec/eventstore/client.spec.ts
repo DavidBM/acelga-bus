@@ -130,7 +130,7 @@ describe('eventstore Client', () => {
 	it('should do one call for each iteration with the correct backoff', (done) => {
 		const backoff = backoffFibonacci({
 			randomisationFactor: 0,
-			initialDelay: 10,
+			initialDelay: 20,
 			maxDelay: 50,
 		});
 
@@ -143,10 +143,10 @@ describe('eventstore Client', () => {
 		client.setHandler(handler);
 
 		setTimeout(() => {
-			// 6 times for: initial 10ms 10ms 20ms 30ms 50ms = 120ms (with the normal timeout exactitude, we can assume that we can have 6 calls in 130 ms)
-			expect(mockedSpiedEventstore.persistentSubscriptions.getEvents).toHaveBeenCalledTimes(6)
+			// 5 times for: initial 20ms 20ms 40ms 50ms = 130ms (with the normal timeout exactitude, we can assume that we can have 5 calls in 150 ms)
+			expect(mockedSpiedEventstore.persistentSubscriptions.getEvents).toHaveBeenCalledTimes(5)
 			done();
-		}, 130);
+		}, 150);
 	});
 
 	it('should stop once all events are processed', (done) => {
@@ -156,7 +156,7 @@ describe('eventstore Client', () => {
 				setTimeout(() => {
 					handlerTimeout();
 					resolve();
-				}, 500);
+				}, 75);
 			});
 		});
 
@@ -175,6 +175,64 @@ describe('eventstore Client', () => {
 				expect(handlerTimeout).toHaveBeenCalledTimes(1);
 				done();
 			});			
-		}, 100);
+		}, 10);
+	});
+
+	it('should stop once all events are processed (reject)', (done) => {
+		const handlerTimeout = jest.fn();
+		const handler = jest.fn((events: any): Promise<void> => {
+			return new Promise<void>((resolve, reject) => {
+				setTimeout(() => {
+					handlerTimeout();
+					reject();
+				}, 75);
+			});
+		});
+
+		const before = Date.now();
+
+		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(1);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}], tracker, 50000000);
+		client.startConsumption();
+
+		client.setHandler(handler);
+
+		setTimeout(() => {
+			client.stop()
+			.then(() => {
+				expect(handler).toHaveBeenCalledTimes(1);
+				expect(handlerTimeout).toHaveBeenCalledTimes(1);
+				done();
+			});			
+		}, 10);
+	});
+
+	it('should stop once all events are processed', (done) => {
+		const handlerTimeout = jest.fn();
+		const handler = jest.fn((events: any): Promise<void> => {
+			return new Promise<void>(resolve => {
+				setTimeout(() => {
+					handlerTimeout();
+					resolve();
+				}, 75);
+			});
+		});
+
+		const before = Date.now();
+
+		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(1);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}], tracker, 50);
+		client.startConsumption();
+
+		client.setHandler(handler);
+
+		setTimeout(() => {
+			client.stop()
+			.then(() => {
+				expect(handler).toHaveBeenCalled();
+				expect(handlerTimeout).not.toHaveBeenCalled();
+				done();
+			});			
+		}, 10);
 	});
 });

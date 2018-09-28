@@ -60,6 +60,7 @@ export function createMockedSpiedEventstorelibWithCorrectEvents(times: number = 
 	});
 
 	jest.spyOn(client, 'writeEvent').mockImplementation(() => Promise.resolve());
+	jest.spyOn(client, 'ping').mockImplementation(() => Promise.resolve());
 
 	return client;
 }
