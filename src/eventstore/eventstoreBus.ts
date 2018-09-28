@@ -69,12 +69,10 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 
 		for (const event of events){
 			try {
-				//Any used here because of this: https://github.com/Microsoft/TypeScript/pull/26797
-				//Once fixed, we can just add "[key: symbol]: OriginalType" to the IEventstoreEvent type
-				const decodedEvent = await this.eventRepository.execute(event) as any; //IEventstoreEvent type
+				const decodedEvent = await this.eventRepository.execute(event) as ReceivedEvents<T>;
 				decodedEvent[originalEventSymbol] = event;
 
-				eventInstances.push(decodedEvent as any); //T + IEventstoreEventReceived
+				eventInstances.push(decodedEvent); //T + IEventstoreEventReceived
 			} catch (error) {
 				this.logError(error);
 			}
@@ -90,16 +88,16 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 		});
 	}
 
-	protected async processErrors(results: ExecutionResult<T>[]): Promise<void> {
-			return iterate(results)
-			.parallel(PARALLEL_FEEDBACK, result => {
+	protected async processErrors(results: ExecutionResult<ReceivedEvents<T>>[]): Promise<void> {
+		return iterate(results)
+		.parallel(PARALLEL_FEEDBACK, result => {
 
-				let action = FEEDBACK_ACTION.ack;
-				if(result.isError)
-					action = FEEDBACK_ACTION.nack;
+			let action = FEEDBACK_ACTION.ack;
+			if(result.isError)
+				action = FEEDBACK_ACTION.nack;
 
-				return this.giveEventFeedback(result.event as any, action);
-			})
+			return this.giveEventFeedback(result.event, action);
+		})
 	}
 
 	protected async giveEventFeedback(event: IEventstoreEventReceived, action: FEEDBACK_ACTION): Promise<void> {
