@@ -9,6 +9,7 @@ import {EventStoreConnectionOptions, IEventstoreEvent, EventstoreFeedbackHTTP} f
 import {ErrorLogger, BulkDispatcher, Dispatcher, ParallelScheduler, pipelineFactory} from '../index';
 import {EventstoreClient, SubscriptionDefinition} from './eventstoreClient';
 import {eventstoreFeedbackHTTP} from '@src/eventstore/eventstoreUtils';
+import {EmptyTracker} from '@src/eventstore/emptyTracker';
 
 export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	connectionOptions: EventStoreConnectionOptions,
@@ -17,10 +18,11 @@ export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	): EventStoreBus<T> {
 
 	const logger = errorLogger || debugLogger(debug('EventStoryBus:error'));
-	const client = createEventstoreConnection(connectionOptions);
+	const tracker = new EmptyTracker();
+	const client = new HTTPClient(connectionOptions);
 	const backoffStrategy = createBackoff();
-	const eventFactory = createEventFactoryRepository<T>();
-	const eventstoreClient = createEventstoreClient(client, eventstoreFeedbackHTTP, logger, backoffStrategy, subscriptions);
+	const eventFactory = new EventFactoryRespository<T>();
+	const eventstoreClient = new EventstoreClient(client, eventstoreFeedbackHTTP, logger, backoffStrategy, subscriptions, tracker, 25000);
 	const dispatcher = createDispatcher<T>(logger);
 
 	return new EventStoreBus<T>(eventstoreClient, logger, eventFactory, dispatcher);
@@ -32,18 +34,6 @@ function createBackoff(): BackoffExecutor {
 		initialDelay: 100,
 		maxDelay: 7000,
 	});
-}
-
-function createEventstoreConnection(options: EventStoreConnectionOptions): any {
-	return new HTTPClient(options);
-}
-
-function createEventFactoryRepository<T extends IEventstoreEvent>(): EventFactoryRespository<T> {
-	return new EventFactoryRespository<T>();
-}
-
-function createEventstoreClient(client: any, signalServer: EventstoreFeedbackHTTP, errorLogger: ErrorLogger, backoffStrategy: BackoffExecutor, subscriptions: Array<SubscriptionDefinition>) {
-	return new EventstoreClient(client, signalServer, errorLogger, backoffStrategy, subscriptions);
 }
 
 function createDispatcher<T>(errorLogger: ErrorLogger) {

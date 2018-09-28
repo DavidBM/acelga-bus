@@ -1,6 +1,6 @@
 import {BackoffExecutor, BackoffStopper} from './backoff';
 import {HTTPClient, EmbedType} from 'geteventstore-promise';
-import {IDecodedSerializedEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
+import {IDecodedSerializedEventstoreEvent, EventstoreFeedbackHTTP, IEmptyTracker} from './interfaces';
 import {ErrorLogger} from '../index';
 import {decodeEventstoreResponse} from './eventstoreUtils';
 
@@ -21,14 +21,26 @@ export class EventstoreClient {
 	protected signal: EventstoreFeedbackHTTP;
 	protected subscriptions: SubscriptionDefinition[];
 	protected subscriptionsCancellers: BackoffStopper[];
+	protected tracker: IEmptyTracker;
+	protected milisecondsToStop: number;
 
-	constructor(client: HTTPClient, signalInterface: EventstoreFeedbackHTTP, errorLogger: ErrorLogger, backoffStrategy: BackoffExecutor, subscriptions: Array<SubscriptionDefinition>) {
+	constructor(
+		client: HTTPClient,
+		signalInterface: EventstoreFeedbackHTTP,
+		errorLogger: ErrorLogger,
+		backoffStrategy: BackoffExecutor,
+		subscriptions: Array<SubscriptionDefinition>,
+		tracker: IEmptyTracker,
+		milisecondsToStop: number
+	) {
 		this.client = client;
 		this.backoffStrategy = backoffStrategy;
 		this.logError = errorLogger;
 		this.signal = signalInterface;
 		this.subscriptions = subscriptions;
 		this.subscriptionsCancellers = [];
+		this.tracker = tracker;
+		this.milisecondsToStop = milisecondsToStop;
 	}
 
 	public setHandler(handler: Handler) {
@@ -36,15 +48,22 @@ export class EventstoreClient {
 	}
 
 	public startConsumption() {
+		this.tracker.remember('running');
 		this.subscriptions.forEach(config => this.declareConsumers(config.subscription, config.stream));
 	}
 
-	public ping() {
+	public ping(): Promise<void> {
 		return this.client.ping();
 	}
 
-	public stop() {
+	public stop(): Promise<void> {
+		this.tracker.forget('running');
 		this.subscriptionsCancellers.forEach(canceller => canceller());
+		
+		return this.tracker.waitUntilEmpty(this.milisecondsToStop)
+		.catch(error => {
+			this.logError(new TooMuchTimeToStop());
+		});
 	}
 
 	public async publish(streamName: string, eventType: string, event: {}): Promise<void> {
@@ -52,18 +71,24 @@ export class EventstoreClient {
 	}
 
 	private declareConsumers(subscriptionName: string, streamName: string): void {
-		let backoffStopper = this.backoffStrategy((continuing, restarting, number, delay) => {
-			this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'body')
-			.then((response) => decodeEventstoreResponse(response))
-			.then((events) => this.processConsumedAnswer(events))
-			.then(() => restarting())
-			.catch((error) => {
-				if(error === NO_MESSAGES)
+		let backoffStopper = this.backoffStrategy(async (continuing, restarting, number, delay) => {
+			try {
+				this.tracker.remember(number);
+				const response = await this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'body');
+				const events = decodeEventstoreResponse(response);
+				await this.processConsumedAnswer(events);
+				this.tracker.forget(number); 
+				restarting();
+			} catch (error) {
+				if(error === NO_MESSAGES){
+					this.tracker.forget(number);
 					return continuing();
+				}
 
 				this.logError(error);
+				this.tracker.forget(number);
 				restarting();
-			})
+			}
 		});
 
 		this.subscriptionsCancellers.push(backoffStopper);
@@ -101,5 +126,12 @@ export class NoHanlderToProcessEvents extends Error {
 		super();
 		this.events = events;
 		this.message = 'The handler for processing events is still not set. The non-processed events are stored in attribute "events" of this error object';
+	}
+}
+
+export class TooMuchTimeToStop extends Error {
+	constructor() {
+		super();
+		this.message = 'Stopping the server took too much time. Stopping anyway, events may be still in process';
 	}
 }

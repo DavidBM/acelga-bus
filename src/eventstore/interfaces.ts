@@ -37,3 +37,11 @@ export interface IEventFactory<T = {}> extends IFactory {
 }
 
 export type EventstoreFeedbackHTTP = (url: string) => Promise<void>;
+
+export interface IEmptyTracker {
+	remember(item: any): void;
+	forget(item: any): void;
+	on(type: 'empty', callback: Function): void;
+	isEmpty(): boolean;
+	waitUntilEmpty(timeout: number): Promise<void>;
+}
