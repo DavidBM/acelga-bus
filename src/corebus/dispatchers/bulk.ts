@@ -36,7 +36,6 @@ export default class BulkDispatcher<T> {
 	public async trigger<R extends T = T>(events: R[]): Promise<ExecutionResult<T, R>[]> {
 		try {
 			const plan = this.scheduler.schedule(events);
-
 			const pipelinesPromises = plan.plan.map(pipelinePlan => this.executePipelinePlan(pipelinePlan));
 
 			const results: any[] = await this.mapPipelinePromises(pipelinesPromises);

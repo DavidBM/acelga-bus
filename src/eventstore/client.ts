@@ -31,7 +31,7 @@ export class EventstoreClient {
 		backoffStrategy: BackoffExecutor,
 		subscriptions: Array<SubscriptionDefinition>,
 		tracker: IEmptyTracker,
-		milisecondsToStop: number
+		milisecondsToStop: number,
 	) {
 		this.client = client;
 		this.backoffStrategy = backoffStrategy;
@@ -60,7 +60,7 @@ export class EventstoreClient {
 		this.tracker.forget('running');
 		this.subscriptionsCancellers.forEach(canceller => canceller());
 		this.subscriptionsCancellers.length = 0;
-		
+
 		return this.tracker.waitUntilEmpty(this.milisecondsToStop)
 		.catch(error => {
 			this.logError(new TooMuchTimeToStop());
@@ -72,18 +72,18 @@ export class EventstoreClient {
 	}
 
 	private declareConsumers(subscriptionName: string, streamName: string): void {
-		let backoffStopper = this.backoffStrategy((continuing, restarting, number, delay) => {
+		const backoffStopper = this.backoffStrategy(async (continuing, restarting, number, delay) => {
 			this.tracker.remember(number);
 
-			return this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'body')
-			.then(response => decodeEventstoreResponse(response))
-			.then(events => this.processConsumedAnswer(events))
-			.then(() => {
-				this.tracker.forget(number); 
+			try {
+				const response = await this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'body');
+				const events = decodeEventstoreResponse(response);
+				await this.processConsumedAnswer(events);
+				this.tracker.forget(number);
 				restarting();
-			})
-			.catch(error => {
-				if(error === NO_MESSAGES){
+
+			} catch (error) {
+				if (error === NO_MESSAGES){
 					this.tracker.forget(number);
 					return continuing();
 				}
@@ -91,7 +91,7 @@ export class EventstoreClient {
 				this.logError(error);
 				this.tracker.forget(number);
 				restarting();
-			})
+			}
 		});
 
 		this.subscriptionsCancellers.push(backoffStopper);
@@ -118,7 +118,7 @@ export class EventstoreClient {
 			return this.logError(new NoHanlderToProcessEvents(events));
 		}
 
-		return this.handler(events)
+		return this.handler(events);
 	}
 }
 

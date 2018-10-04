@@ -7,8 +7,8 @@ import {iterate} from 'iterated-pipes';
 const PARALLEL_FEEDBACK = 5;
 enum FEEDBACK_ACTION {
 	nack = 'nack',
-	ack = 'ack'
-};
+	ack = 'ack',
+}
 
 type ReceivedEvents<T> = T & IEventstoreEventReceived;
 
@@ -43,8 +43,12 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 		if (this.dispatcher.isListened(eventType)) {
 			throw new EventAlreadySubscribed<T>(eventType);
 		}
-		//We are returning extra data in the events
+		// We are returning extra data in the events
 		return this.dispatcher.on(eventType, callback as EventSubscriptionCallback<T1>);
+	}
+
+	public stop(): Promise<void> {
+		return this.client.stop();
 	}
 
 	public onAny(callback: EventSubscriptionCallback<T>): void {
@@ -66,25 +70,27 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 	protected async processEvents(events: IDecodedSerializedEventstoreEvent[]): Promise<void> {
 		const eventInstances: Array<ReceivedEvents<T>> = [];
 
-		for (const event of events){
-			try {
-				const decodedEvent = await this.eventRepository.execute(event) as ReceivedEvents<T>;
-				decodedEvent[originalEventSymbol] = event;
+		try {
 
-				eventInstances.push(decodedEvent); //T + IEventstoreEventReceived
-			} catch (error) {
-				this.logError(error);
+			for (const event of events){
+				try {
+					const decodedEvent = await this.eventRepository.execute(event) as ReceivedEvents<T>;
+					decodedEvent[originalEventSymbol] = event;
+
+					eventInstances.push(decodedEvent); // T + IEventstoreEventReceived
+				} catch (error) {
+					this.logError(error);
+				}
 			}
-		}
 
-		await this.dispatcher.trigger(eventInstances)
-		.then(errors => this.processErrors(errors))
-		.catch(error => {
+			const errors = await this.dispatcher.trigger(eventInstances);
+			await this.processErrors(errors);
+		} catch (error) {
 			this.logError(new InternalErrorNOACKAll(error));
 
 			return iterate(eventInstances)
 			.parallel(PARALLEL_FEEDBACK, event => this.giveEventFeedback(event, FEEDBACK_ACTION.nack));
-		});
+		}
 	}
 
 	protected async processErrors(results: ExecutionResult<ReceivedEvents<T>>[]): Promise<void> {
@@ -92,18 +98,18 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 		.parallel(PARALLEL_FEEDBACK, result => {
 
 			let action = FEEDBACK_ACTION.ack;
-			if(result.isError)
+			if (result.isError)
 				action = FEEDBACK_ACTION.nack;
 
 			return this.giveEventFeedback(result.event, action);
-		})
+		});
 	}
 
 	protected async giveEventFeedback(event: IEventstoreEventReceived, action: FEEDBACK_ACTION): Promise<void> {
 		const originalEvent = event[originalEventSymbol];
 
-		if(originalEvent && originalEvent[action]){
-			await this.client[action]("")
+		if (originalEvent && originalEvent[action]){
+			await this.client[action](originalEvent[action])
 			.catch(error => this.logError(error));
 		} else {
 			this.logError(new EventWithoutACKLiks(event, originalEvent));

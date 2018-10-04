@@ -1,5 +1,5 @@
 import {EventStoreBus, EventAlreadySubscribed} from '@src/eventstore/bus';
-import {createSpiedMockedEventstoreClient} from './mocks'
+import {createSpiedMockedEventstoreClient, createBrokenPipelineFactory} from './mocks';
 import {EventstoreClient} from '@src/eventstore/client';
 import {ErrorLogger} from '../../';
 import {BackoffExecutor} from '@src/eventstore/backoff';
@@ -18,12 +18,13 @@ class EventA implements IEventstoreEvent {
 	hola(): number {
 		return 2;
 	}
-};
+}
+
 class EventB implements IEventstoreEvent {
 	aggregate = 'aggregateB';
-};
+}
 
-function createBus (){
+function createBus(pipelineFactoryToInject: any = pipelineFactory){
 	const {
 		client: client,
 		backoffSummary: backoffSummary,
@@ -32,13 +33,12 @@ function createBus (){
 		backoff: backoff,
 	} = createSpiedMockedEventstoreClient(1, [{stream: 'a', subscription: 'a'}]);
 
-	let dispatcher = new Dispatcher<IEventstoreEvent>();
-	let scheduler = new Scheduler<IEventstoreEvent>();
-
-	let bulkDispatcher = new BulkDispatcher<IEventstoreEvent>(dispatcher, scheduler, pipelineFactory, errorLogger);
+	const dispatcher = new Dispatcher<IEventstoreEvent>();
+	const scheduler = new Scheduler<IEventstoreEvent>();
+	const bulkDispatcher = new BulkDispatcher<IEventstoreEvent>(dispatcher, scheduler, pipelineFactoryToInject, errorLogger);
 	jest.spyOn(bulkDispatcher, 'on');
-	let eventFactoryRepository = new EventFactoryRespository();
-	let bus = new EventStoreBus(client, errorLogger, eventFactoryRepository, bulkDispatcher);
+	const eventFactoryRepository = new EventFactoryRespository();
+	const bus = new EventStoreBus(client, errorLogger, eventFactoryRepository, bulkDispatcher);
 
 	return {
 		client,
@@ -51,7 +51,7 @@ function createBus (){
 		bulkDispatcher,
 		eventFactoryRepository,
 		bus,
-	}
+	};
 }
 
 describe('EventstoreBus', () => {
@@ -64,13 +64,13 @@ describe('EventstoreBus', () => {
 		resetCalls: number,
 		backoffCalls: number,
 	};
-	let eventFactoryRepository: EventFactoryRespository<any>; 
+	let eventFactoryRepository: EventFactoryRespository<any>;
 	let dispatcher: Dispatcher<any>;
 	let scheduler: IScheduler<any>;
 	let bulkDispatcher: BulkDispatcher<any>;
 
 	beforeEach(() => {
-		let {
+		const {
 			client: _client,
 			backoffSummary: _backoffSummary,
 			errorLogger: _errorLogger,
@@ -95,13 +95,13 @@ describe('EventstoreBus', () => {
 		bus = _bus;
 	});
 
-	it('should add the correct subscription', () => {
-		bus.startConsumption();
+	it('should add the correct subscription', async () => {
+		await bus.startConsumption();
 		bus.on(EventA, (event) =>  {
 			return Promise.resolve();
 		});
 
-		expect(bulkDispatcher.on).toHaveBeenCalled()
+		expect(bulkDispatcher.on).toHaveBeenCalled();
 	});
 
 	it('should not allow more than one listeners by event', () => {
@@ -109,15 +109,15 @@ describe('EventstoreBus', () => {
 			return Promise.resolve();
 		});
 
-		expect(() => bus.on(EventA, () => {})).toThrow(EventAlreadySubscribed)
+		expect(() => bus.on(EventA, () => {})).toThrow(EventAlreadySubscribed);
 	});
 
 	it('should not call the handler in the case of a event already subscribed', (done) => {
 		bus.startConsumption();
 		const handlerA = jest.fn().mockImplementation(() => Promise.resolve());
 		const handlerB = jest.fn().mockImplementation(() => Promise.resolve());
-		const factoryA = jest.fn().mockImplementation(() => {return new EventA()});
-		const factoryB = jest.fn().mockImplementation(() => {return new EventB()});
+		const factoryA = jest.fn().mockImplementation(() => new EventA());
+		const factoryB = jest.fn().mockImplementation(() => new EventB());
 
 		bus.addEventType(EventA, {build: factoryA});
 		bus.addEventType(EventB, {build: factoryB});
@@ -130,7 +130,7 @@ describe('EventstoreBus', () => {
 			expect(handlerB).toHaveBeenCalledTimes(0);
 			expect(factoryA).toHaveBeenCalledTimes(1);
 			expect(factoryB).toHaveBeenCalledTimes(1);
-			done()
+			done();
 		}, 5);
 	});
 
@@ -138,8 +138,8 @@ describe('EventstoreBus', () => {
 		bus.startConsumption();
 		const handlerA = jest.fn().mockImplementation(() => Promise.resolve());
 		const handlerB = jest.fn().mockImplementation(() => Promise.resolve());
-		const factoryA = jest.fn().mockImplementation(() => {return new EventA()});
-		const factoryB = jest.fn().mockImplementation(() => {return new EventB()});
+		const factoryA = jest.fn().mockImplementation(() => new EventA());
+		const factoryB = jest.fn().mockImplementation(() => new EventB());
 
 		bus.addEventType(EventA, {build: factoryA});
 		bus.addEventType(EventB, {build: factoryB});
@@ -152,7 +152,7 @@ describe('EventstoreBus', () => {
 			expect(handlerB).toHaveBeenCalledTimes(1);
 			expect(factoryA).toHaveBeenCalledTimes(1);
 			expect(factoryB).toHaveBeenCalledTimes(1);
-			done()
+			done();
 		}, 5);
 	});
 
@@ -162,7 +162,7 @@ describe('EventstoreBus', () => {
 		const factoryResult = {aggregate: Math.random() + ''};
 
 		const handler = jest.fn().mockImplementation(() => Promise.resolve());
-		const factory = jest.fn().mockImplementation(() => {return factoryResult});
+		const factory = jest.fn().mockImplementation(() => factoryResult);
 
 		bus.addEventType(EventA, {build: factory});
 
@@ -172,7 +172,7 @@ describe('EventstoreBus', () => {
 			expect(handler).toHaveBeenCalledTimes(1);
 			expect(handler).toHaveBeenCalledWith(factoryResult);
 			expect(factory).toHaveBeenCalledTimes(1);
-			done()
+			done();
 		}, 5);
 	});
 
@@ -180,25 +180,30 @@ describe('EventstoreBus', () => {
 		bus.startConsumption();
 
 		const handler = jest.fn().mockImplementation(() => Promise.resolve());
-		const factory = jest.fn().mockImplementation(() => {return {aggregate: ''}});
+		const factory = jest.fn().mockImplementation(() => ({aggregate: ''}));
 
 		bus.addEventType(EventA, {build: factory});
 
 		setTimeout(() => {
 			expect(errorLogger).toHaveBeenCalledTimes(1);
 			expect(errorLogger).toHaveBeenCalledWith(new FactoryNotFoundError());
-			done()
+			done();
 		}, 5);
 	});
 
-	it('should log an error if an event without factory is received', (done) => {
-		bus.startConsumption();
+	it('should nack all messages when there is an internal error', async (done) => {
+		const {bus: _bus, client: _client} = createBus(createBrokenPipelineFactory());
 
-		bus.publish(new EventA());
+		const factoryA = jest.fn().mockImplementation(() => new EventA());
+		const factoryB = jest.fn().mockImplementation(() => new EventB());
 
-		setTimeout(() => {
-			expect(evClient.writeEvent).toHaveBeenCalledWith('aggregateA', 'EventA', new EventA());
-			done();
-		}, 5);
+		_bus.addEventType(EventA, {build: factoryA});
+		_bus.addEventType(EventB, {build: factoryB});
+
+		await _bus.startConsumption();
+		await _bus.stop();
+
+		expect(_client.nack).toHaveBeenCalledTimes(2);
+		done();
 	});
 });

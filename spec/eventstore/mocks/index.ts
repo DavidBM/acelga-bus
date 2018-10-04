@@ -5,6 +5,9 @@ import {eventstoreResponse} from '../utils';
 import {SubscriptionDefinition, EventstoreClient} from '@src/eventstore/client';
 import {EmptyTracker} from '@src/eventstore/emptyTracker';
 import {EventstoreFeedbackHTTP} from '@src/eventstore/interfaces';
+import {pipelineFactory} from '@src/corebus/pipeline/factory';
+import {Dispatcher} from '@src/corebus/dispatchers/single';
+import {IDispatcher, IPipeline} from '@src/corebus/interfaces';
 
 export function createSpiedBackoff(initialDelay: number = 1, maxDelay: number = 10) {
 	const summary = {
@@ -17,13 +20,13 @@ export function createSpiedBackoff(initialDelay: number = 1, maxDelay: number = 
 		initialDelay,
 		maxDelay,
 	}, (options) => {
-		let back = BackoffOriginall.fibonacci(options);
+		const back = BackoffOriginall.fibonacci(options);
 
 		const originalOn = back.on;
 		const originalReset = back.reset;
 		const originalBackoff = back.backoff;
 
-		//jest.spyOn(back, 'on').mockImplementation(() => {originalOn.call(back);});
+		// jest.spyOn(back, 'on').mockImplementation(() => {originalOn.call(back);});
 		jest.spyOn(back, 'reset').mockImplementation(() => {
 			summary.resetCalls++;
 			originalReset.call(back);
@@ -74,12 +77,25 @@ export function createSpiedMockedEventstoreClient(correctEventsIterations: numbe
 	const tracker = new EmptyTracker();
 	const esClient = new EventstoreClient(client, eventstoreSignal, errorLogger, backoff, subscritions, tracker, 25000);
 
+	jest.spyOn(esClient, 'nack');
+
 	return {
 		client: esClient,
 		backoffSummary: summary,
 		backoff,
 		errorLogger,
 		evClient: client,
-		eventstoreSignal
-	}
+		eventstoreSignal,
+	};
+}
+
+export function createBrokenPipelineFactory<T>() {
+	return (dispatcher: IDispatcher<T>): IPipeline<T> => {
+		const pipeline = pipelineFactory<T>(dispatcher);
+
+		jest.spyOn(pipeline, 'executeContinueOnError').mockImplementation(() => { throw new Error('One Randon Error'); });
+		jest.spyOn(pipeline, 'executeStopOnError').mockImplementation(() => { throw new Error('Other Randon Error'); });
+
+		return pipeline;
+	};
 }
