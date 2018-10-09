@@ -68,4 +68,4 @@ export class UnrecognizedEventstoreEntry extends Error {
 
 export let eventstoreFeedbackHTTP: EventstoreFeedbackHTTP = (url: string): Promise<void> => {
 	return got.post(url).then(() => {});
-}
+};

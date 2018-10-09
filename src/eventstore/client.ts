@@ -23,12 +23,14 @@ export class EventstoreClient {
 	protected subscriptionsCancellers: BackoffStopper[];
 	protected tracker: IEmptyTracker;
 	protected milisecondsToStop: number;
+	protected eventstoreResponseDecoder: (response: any) => Array<IDecodedSerializedEventstoreEvent>;
 
 	constructor(
 		client: HTTPClient,
 		signalInterface: EventstoreFeedbackHTTP,
 		errorLogger: ErrorLogger,
 		backoffStrategy: BackoffExecutor,
+		eventstoreResponseDecoder: (response: any) => Array<IDecodedSerializedEventstoreEvent>,
 		subscriptions: Array<SubscriptionDefinition>,
 		tracker: IEmptyTracker,
 		milisecondsToStop: number,
@@ -41,6 +43,7 @@ export class EventstoreClient {
 		this.subscriptionsCancellers = [];
 		this.tracker = tracker;
 		this.milisecondsToStop = milisecondsToStop;
+		this.eventstoreResponseDecoder = eventstoreResponseDecoder;
 	}
 
 	public setHandler(handler: Handler) {
@@ -62,8 +65,8 @@ export class EventstoreClient {
 		this.subscriptionsCancellers.length = 0;
 
 		return this.tracker.waitUntilEmpty(this.milisecondsToStop)
-		.catch(error => {
-			this.logError(new TooMuchTimeToStop());
+		.catch(() => {
+			this.logError(new TooLongToStop());
 		});
 	}
 
@@ -73,23 +76,24 @@ export class EventstoreClient {
 
 	private declareConsumers(subscriptionName: string, streamName: string): void {
 		const backoffStopper = this.backoffStrategy(async (continuing, restarting, number, delay) => {
-			this.tracker.remember(number);
+			const trackerId = streamName + number + Math.random();
+			this.tracker.remember(trackerId);
 
 			try {
 				const response = await this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'body');
-				const events = decodeEventstoreResponse(response);
+				const events = this.eventstoreResponseDecoder(response);
 				await this.processConsumedAnswer(events);
-				this.tracker.forget(number);
+				this.tracker.forget(trackerId);
 				restarting();
 
 			} catch (error) {
 				if (error === NO_MESSAGES){
-					this.tracker.forget(number);
+					this.tracker.forget(trackerId);
 					return continuing();
 				}
 
 				this.logError(error);
-				this.tracker.forget(number);
+				this.tracker.forget(trackerId);
 				restarting();
 			}
 		});
@@ -132,7 +136,7 @@ export class NoHanlderToProcessEvents extends Error {
 	}
 }
 
-export class TooMuchTimeToStop extends Error {
+export class TooLongToStop extends Error {
 	constructor() {
 		super();
 		this.message = 'Stopping the server took too much time. Stopping anyway, events may be still in process';

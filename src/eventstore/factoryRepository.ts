@@ -3,6 +3,11 @@ import {isValidDecodedEventStore} from './utils';
 
 export class EventFactoryRespository<T extends IEventstoreEvent> {
 	factories: Map<string, IFactory<T>> = new Map();
+	validator: (event: any) => event is IDecodedSerializedEventstoreEvent;
+
+	constructor(validator: (event: any) => event is IDecodedSerializedEventstoreEvent) {
+		this.validator = validator;
+	}
 
 	set(name: string, factory: IFactory<T>): void {
 		if (this.factories.get(name)) {
@@ -21,7 +26,7 @@ export class EventFactoryRespository<T extends IEventstoreEvent> {
 
 	execute(event: unknown) {
 
-		if (!isValidDecodedEventStore(event)){
+		if (!this.validator(event)){
 			throw new NotADecodedSerializedEventstoreEvent(event);
 		}
 

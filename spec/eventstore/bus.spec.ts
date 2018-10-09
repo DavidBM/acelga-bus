@@ -1,5 +1,5 @@
-import {EventStoreBus, EventAlreadySubscribed} from '@src/eventstore/bus';
-import {createSpiedMockedEventstoreClient, createBrokenPipelineFactory} from './mocks';
+import {EventStoreBus, EventAlreadySubscribed, EventWithoutACKLinks} from '@src/eventstore/bus';
+import {createSpiedMockedEventstoreClient, createBrokenPipelineFactory, noACKDecodedEventstoreResponse, noNACKDecodedEventstoreResponse} from './mocks';
 import {EventstoreClient} from '@src/eventstore/client';
 import {ErrorLogger} from '../../';
 import {BackoffExecutor} from '@src/eventstore/backoff';
@@ -9,6 +9,7 @@ import {Dispatcher} from '@src/corebus/dispatchers/single';
 import Scheduler from '@src/corebus/schedulers/parallel';
 import {IScheduler} from '@src/corebus/interfaces';
 import {IEventstoreEvent} from '@src/eventstore/interfaces';
+import {isValidDecodedEventStore} from '@src/eventstore/utils';
 import {pipelineFactory} from '@src/corebus/pipeline/factory';
 import {HTTPClient} from 'geteventstore-promise';
 
@@ -24,20 +25,20 @@ class EventB implements IEventstoreEvent {
 	aggregate = 'aggregateB';
 }
 
-function createBus(pipelineFactoryToInject: any = pipelineFactory){
+function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToReturn?: any, evDecoder?: any, decodedEventValidator: any = isValidDecodedEventStore){
 	const {
 		client: client,
 		backoffSummary: backoffSummary,
 		errorLogger: errorLogger,
 		evClient: evClient,
 		backoff: backoff,
-	} = createSpiedMockedEventstoreClient(1, [{stream: 'a', subscription: 'a'}]);
+	} = createSpiedMockedEventstoreClient(1, [{stream: 'a', subscription: 'a'}], eventsToReturn, evDecoder);
 
 	const dispatcher = new Dispatcher<IEventstoreEvent>();
 	const scheduler = new Scheduler<IEventstoreEvent>();
 	const bulkDispatcher = new BulkDispatcher<IEventstoreEvent>(dispatcher, scheduler, pipelineFactoryToInject, errorLogger);
 	jest.spyOn(bulkDispatcher, 'on');
-	const eventFactoryRepository = new EventFactoryRespository();
+	const eventFactoryRepository = new EventFactoryRespository(decodedEventValidator);
 	const bus = new EventStoreBus(client, errorLogger, eventFactoryRepository, bulkDispatcher);
 
 	return {
@@ -201,9 +202,156 @@ describe('EventstoreBus', () => {
 		_bus.addEventType(EventB, {build: factoryB});
 
 		await _bus.startConsumption();
-		await _bus.stop();
 
-		expect(_client.nack).toHaveBeenCalledTimes(2);
-		done();
+		setTimeout(async () => {
+			await _bus.stop();
+
+			expect(_client.nack).toHaveBeenCalledTimes(2);
+			done();
+		}, 0);
+	});
+
+	it('should publish the messages correctly using the client', async (done) => {
+		const event = new EventA();
+
+		bus.publish(event);
+
+		setTimeout(async () => {
+			expect(evClient.writeEvent).toHaveBeenCalledWith(event.aggregate, EventA.name, event);
+			done();
+		}, 0);
+	});
+
+	it('should nack the mesages that got an error', async (done) => {
+		const {bus: _bus, client: _client} = createBus();
+
+		const factoryA = jest.fn().mockImplementation(() => new EventA());
+		const factoryB = jest.fn().mockImplementation(() => new EventB());
+
+		_bus.addEventType(EventA, {build: factoryA});
+		_bus.addEventType(EventB, {build: factoryB});
+
+		_bus.on(EventA, (event) => Promise.resolve());
+		_bus.on(EventB, (event) => Promise.reject());
+
+		await _bus.startConsumption();
+
+		setTimeout(async () => {
+			await _bus.stop();
+
+			expect(_client.nack).toHaveBeenCalledTimes(1);
+			expect(_client.ack).toHaveBeenCalledTimes(1);
+			done();
+		}, 0);
+	});
+
+	it('should log an error when there is no ack link', async (done) => {
+		const {bus: _bus, client: _client, errorLogger: _errorLogger} = createBus(pipelineFactory, undefined, noACKDecodedEventstoreResponse, () => true);
+
+		const factoryA = jest.fn().mockImplementation(() => new EventA());
+		const factoryB = jest.fn().mockImplementation(() => new EventB());
+
+		_bus.addEventType(EventA, {build: factoryA});
+		_bus.addEventType(EventB, {build: factoryB});
+
+		_bus.on(EventA, (event) => Promise.resolve());
+		_bus.on(EventB, (event) => Promise.resolve());
+
+		await _bus.startConsumption();
+
+		setTimeout(async () => {
+			await _bus.stop();
+
+			expect(_client.nack).toHaveBeenCalledTimes(0);
+			expect(_errorLogger).toHaveBeenCalledTimes(2);
+			expect(_errorLogger.mock.calls[0][0]).toBeInstanceOf(EventWithoutACKLinks);
+			expect(_errorLogger.mock.calls[1][0]).toBeInstanceOf(EventWithoutACKLinks);
+
+			done();
+		}, 0);
+	});
+
+	it('should log an error when there is no nack link', async (done) => {
+		const {bus: _bus, client: _client, errorLogger: _errorLogger} = createBus(pipelineFactory, undefined, noNACKDecodedEventstoreResponse, () => true);
+
+		const factoryA = jest.fn().mockImplementation(() => new EventA());
+		const factoryB = jest.fn().mockImplementation(() => new EventB());
+
+		_bus.addEventType(EventA, {build: factoryA});
+		_bus.addEventType(EventB, {build: factoryB});
+
+		_bus.on(EventA, (event) => Promise.resolve());
+		_bus.on(EventB, (event) => Promise.resolve());
+
+		await _bus.startConsumption();
+
+		setTimeout(async () => {
+			await _bus.stop();
+
+			expect(_client.nack).toHaveBeenCalledTimes(0);
+			expect(_errorLogger).toHaveBeenCalledTimes(2);
+			expect(_errorLogger.mock.calls[0][0]).toBeInstanceOf(EventWithoutACKLinks);
+			expect(_errorLogger.mock.calls[1][0]).toBeInstanceOf(EventWithoutACKLinks);
+
+			done();
+		}, 0);
+	});
+
+	it('should log an error if ack call fails', async (done) => {
+		const {bus: _bus, client: _client, errorLogger: _errorLogger, evClient: _evClient} = createBus(pipelineFactory);
+		const errorReturned = new Error('errorReturned');
+
+		jest.spyOn(_client, 'ack').mockImplementation(() => Promise.reject(errorReturned));
+
+		const factoryA = jest.fn().mockImplementation(() => new EventA());
+		const factoryB = jest.fn().mockImplementation(() => new EventB());
+
+		_bus.addEventType(EventA, {build: factoryA});
+		_bus.addEventType(EventB, {build: factoryB});
+
+		_bus.on(EventA, (event) => Promise.resolve());
+		_bus.on(EventB, (event) => Promise.resolve());
+
+		await _bus.startConsumption();
+
+		setTimeout(async () => {
+			await _bus.stop();
+
+			expect(_client.ack).toHaveBeenCalledTimes(2);
+			expect(_client.nack).toHaveBeenCalledTimes(0);
+			expect(_errorLogger).toHaveBeenCalledTimes(2);
+			expect(_errorLogger.mock.calls[0][0]).toEqual(errorReturned);
+
+			done();
+		}, 0);
+	});
+
+	it('should log an error if ack call fails', async (done) => {
+		const {bus: _bus, client: _client, errorLogger: _errorLogger, evClient: _evClient} = createBus(pipelineFactory);
+		const errorReturned = new Error('errorReturned');
+
+		jest.spyOn(_client, 'nack').mockImplementation(() => Promise.reject(errorReturned));
+
+		const factoryA = jest.fn().mockImplementation(() => new EventA());
+		const factoryB = jest.fn().mockImplementation(() => new EventB());
+
+		_bus.addEventType(EventA, {build: factoryA});
+		_bus.addEventType(EventB, {build: factoryB});
+
+		_bus.on(EventA, (event) => Promise.reject());
+		_bus.on(EventB, (event) => Promise.reject());
+
+		await _bus.startConsumption();
+
+		setTimeout(async () => {
+			await _bus.stop();
+
+			expect(_client.ack).toHaveBeenCalledTimes(0);
+			expect(_client.nack).toHaveBeenCalledTimes(2);
+			expect(_errorLogger).toHaveBeenCalledTimes(2);
+			expect(_errorLogger.mock.calls[0][0]).toEqual(errorReturned);
+
+			done();
+		}, 0);
 	});
 });

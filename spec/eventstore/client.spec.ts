@@ -7,6 +7,7 @@ import {
 import {eventstoreResponse} from './utils';
 import {backoffFibonacci, BackoffExecutor} from '@src/eventstore/backoff';
 import {EventstoreFeedbackHTTP, IEmptyTracker} from '@src/eventstore/interfaces';
+import {decodeEventstoreResponse} from '@src/eventstore/utils';
 import {ErrorLogger} from '../../';
 import {HTTPClient} from 'geteventstore-promise';
 import {EmptyTracker} from '@src/eventstore/emptyTracker';
@@ -32,7 +33,7 @@ describe('eventstore Client', () => {
 
 	it('should call the getEvents from the eventstore library', (done) => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
-		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}], tracker, 50);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50);
 		client.startConsumption();
 
 		setTimeout(() => {
@@ -43,7 +44,7 @@ describe('eventstore Client', () => {
 
 	it('should call the getEvents from the eventstore library', () => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
-		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}], tracker, 50);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50);
 		client.ping();
 
 		expect(mockedSpiedEventstore.ping).toHaveBeenCalled();
@@ -51,7 +52,7 @@ describe('eventstore Client', () => {
 
 	it('should call the getEvents from the eventstore library', () => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
-		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}], tracker, 50);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50);
 		client.ack('hola');
 
 		expect(eventstoreSignal).toHaveBeenCalledWith('hola');
@@ -59,7 +60,7 @@ describe('eventstore Client', () => {
 
 	it('should call the getEvents from the eventstore library', () => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
-		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}], tracker, 50);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50);
 		client.nack('hola');
 
 		expect(eventstoreSignal).toHaveBeenCalledWith('hola');
@@ -67,7 +68,7 @@ describe('eventstore Client', () => {
 
 	it('should call the getEvents and repeat if there are events', (done) => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(4);
-		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}], tracker, 50);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50);
 		client.startConsumption();
 
 		const handler = jest.fn();
@@ -85,7 +86,7 @@ describe('eventstore Client', () => {
 		const ERROR_TO_THROW = new Error('test');
 
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(1);
-		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}], tracker, 50);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50);
 		client.startConsumption();
 
 		const handler = jest.fn().mockImplementation((event) => {
@@ -103,7 +104,7 @@ describe('eventstore Client', () => {
 
 	it('should log the no handler to process the event error in case of no handler provided', (done) => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(2);
-		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}], tracker, 50);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50);
 		client.startConsumption();
 
 		setTimeout(() => {
@@ -115,7 +116,7 @@ describe('eventstore Client', () => {
 
 	it('should call writeEvent from the client when publish is called', (done) => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
-		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}], tracker, 50);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50);
 		client.startConsumption();
 
 		client.publish('test', 'test', {})
@@ -137,7 +138,7 @@ describe('eventstore Client', () => {
 		const handler = jest.fn();
 
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
-		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, backoff, [{stream: 'a', subscription: 'a'}], tracker, 50);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, backoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50);
 		client.startConsumption();
 
 		client.setHandler(handler);
@@ -163,7 +164,7 @@ describe('eventstore Client', () => {
 		const before = Date.now();
 
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(1);
-		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}], tracker, 50000000);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50000000);
 		client.startConsumption();
 
 		client.setHandler(handler);
@@ -192,7 +193,7 @@ describe('eventstore Client', () => {
 		const before = Date.now();
 
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(1);
-		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}], tracker, 50000000);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50000000);
 		client.startConsumption();
 
 		client.setHandler(handler);
@@ -221,7 +222,7 @@ describe('eventstore Client', () => {
 		const before = Date.now();
 
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(1);
-		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, [{stream: 'a', subscription: 'a'}], tracker, 50);
+		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50);
 		client.startConsumption();
 
 		client.setHandler(handler);

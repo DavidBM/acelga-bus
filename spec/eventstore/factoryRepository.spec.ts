@@ -1,5 +1,6 @@
 import {EventFactoryRespository, EventNameCollision, FactoryNotFoundError, NotADecodedSerializedEventstoreEvent} from '@src/eventstore/factoryRepository';
 import {IEventstoreEvent} from '@src/eventstore/interfaces';
+import {isValidDecodedEventStore} from '@src/eventstore/utils';
 import {eventBuilderWithDefaults} from './utils';
 
 const EventA = 'EventA';
@@ -13,7 +14,7 @@ describe('factoryRepository', () => {
 	let repository: EventFactoryRespository<IEventstoreEvent>;
 
 	beforeEach(() => {
-		repository = new EventFactoryRespository();
+		repository = new EventFactoryRespository(isValidDecodedEventStore);
 	});
 
 	it('should store and return the correct factory', () => {

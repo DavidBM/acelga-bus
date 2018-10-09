@@ -77,7 +77,7 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 					const decodedEvent = await this.eventRepository.execute(event) as ReceivedEvents<T>;
 					decodedEvent[originalEventSymbol] = event;
 
-					eventInstances.push(decodedEvent); // T + IEventstoreEventReceived
+					eventInstances.push(decodedEvent); // The "as ReceivedEvents<T>" it is because we are adding a symbol in the object and we want to keep the correct Type notation, event with the symbol
 				} catch (error) {
 					this.logError(error);
 				}
@@ -112,7 +112,7 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 			await this.client[action](originalEvent[action])
 			.catch(error => this.logError(error));
 		} else {
-			this.logError(new EventWithoutACKLiks(event, originalEvent));
+			this.logError(new EventWithoutACKLinks(event, originalEvent));
 		}
 	}
 }
@@ -137,9 +137,9 @@ export class InternalErrorNOACKAll extends Error {
 	}
 }
 
-export class EventWithoutACKLiks<T> extends Error {
+export class EventWithoutACKLinks<T> extends Error {
 	event: T;
-	originalEvent: IDecodedSerializedEventstoreEvent
+	originalEvent: IDecodedSerializedEventstoreEvent;
 
 	constructor(event: T, originalEvent: IDecodedSerializedEventstoreEvent) {
 		super();

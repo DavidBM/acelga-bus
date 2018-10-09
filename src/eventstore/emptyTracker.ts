@@ -10,7 +10,7 @@ export class EmptyTracker extends EventEmitter implements IEmptyTracker{
 
 	forget(item: any) {
 		this.activeItems.delete(item);
-		if(this.activeItems.size === 0) {
+		if (this.activeItems.size === 0) {
 			this.emit('empty');
 		}
 	}
@@ -21,12 +21,12 @@ export class EmptyTracker extends EventEmitter implements IEmptyTracker{
 
 	waitUntilEmpty(timeout: number): Promise<void> {
 		return new Promise((succeed, reject) => {
-			if(this.isEmpty())
+			if (this.isEmpty())
 				return succeed();
 
 			this.on('empty', succeed);
-			if(Number.isFinite(timeout) && timeout >= 0)
-				setTimeout(reject, timeout)
+			if (Number.isFinite(timeout) && timeout >= 0)
+				setTimeout(reject, timeout);
 		});
 	}
 }

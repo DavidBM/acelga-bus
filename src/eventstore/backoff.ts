@@ -35,12 +35,12 @@ export let backoffFibonacci: Backoff = (options, createInstance?: (options: back
 		});
 
 		const computebackoff = () => {
-			if(!isReady) return;
-			if(backoffResult === BackoffAction.restart)
+			if (!isReady) return;
+			if (backoffResult === BackoffAction.restart)
 				backoffStrategy.reset();
-			if(backoffResult !== null)
+			if (backoffResult !== null)
 				backoffStrategy.backoff();
-		}
+		};
 
 		setTimeout(() => backoffStrategy.backoff(), 0);
 

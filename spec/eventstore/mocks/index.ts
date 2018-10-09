@@ -5,6 +5,7 @@ import {eventstoreResponse} from '../utils';
 import {SubscriptionDefinition, EventstoreClient} from '@src/eventstore/client';
 import {EmptyTracker} from '@src/eventstore/emptyTracker';
 import {EventstoreFeedbackHTTP} from '@src/eventstore/interfaces';
+import {decodeEventstoreResponse} from '@src/eventstore/utils';
 import {pipelineFactory} from '@src/corebus/pipeline/factory';
 import {Dispatcher} from '@src/corebus/dispatchers/single';
 import {IDispatcher, IPipeline} from '@src/corebus/interfaces';
@@ -52,14 +53,14 @@ export function createMockedSpiedEventstorelibWithNoEvents() {
 	return client;
 }
 
-export function createMockedSpiedEventstorelibWithCorrectEvents(times: number = 1) {
+export function createMockedSpiedEventstorelibWithCorrectEvents(times: number = 1, eventsToReturn: any = eventstoreResponse) {
 	const client = new HTTPClient({hostname: 'localhost', port: 2113, credentials: {username: 'admin', password: 'changeit'}});
 	let counter = 0;
 
 	jest.spyOn(client.persistentSubscriptions, 'getEvents').mockImplementation(() => {
 		if (counter >= times) return Promise.resolve({entries: []});
 		counter++;
-		return Promise.resolve(eventstoreResponse);
+		return Promise.resolve(eventsToReturn);
 	});
 
 	jest.spyOn(client, 'writeEvent').mockImplementation(() => Promise.resolve());
@@ -68,16 +69,17 @@ export function createMockedSpiedEventstorelibWithCorrectEvents(times: number = 
 	return client;
 }
 
-export function createSpiedMockedEventstoreClient(correctEventsIterations: number, subscritions: Array<SubscriptionDefinition> = []) {
+export function createSpiedMockedEventstoreClient(correctEventsIterations: number, subscritions: Array<SubscriptionDefinition> = [], eventsToReturn?: any, evDecoder: any = decodeEventstoreResponse) {
 
 	const {backoff, summary} = createSpiedBackoff(1, 10);
-	const client = createMockedSpiedEventstorelibWithCorrectEvents(correctEventsIterations);
+	const client = createMockedSpiedEventstorelibWithCorrectEvents(correctEventsIterations, eventsToReturn);
 	const errorLogger = jest.fn();
 	const eventstoreSignal: EventstoreFeedbackHTTP = jest.fn().mockImplementation(() => Promise.resolve());
 	const tracker = new EmptyTracker();
-	const esClient = new EventstoreClient(client, eventstoreSignal, errorLogger, backoff, subscritions, tracker, 25000);
+	const esClient = new EventstoreClient(client, eventstoreSignal, errorLogger, backoff, evDecoder, subscritions, tracker, 25000);
 
 	jest.spyOn(esClient, 'nack');
+	jest.spyOn(esClient, 'ack');
 
 	return {
 		client: esClient,
@@ -98,4 +100,41 @@ export function createBrokenPipelineFactory<T>() {
 
 		return pipeline;
 	};
+}
+
+export function noACKDecodedEventstoreResponse(response: any) {
+	const decodedResponse = {
+		aggregate: 'aggregate',
+		data: {},
+		metadata: {},
+		ack: '',
+		nack: 'http://localhost:2113/subscriptions/test/test-subs/nack/84741430-1430-1430-1430-153684741430',
+		eventType: 'EventA',
+		eventId: '84741430-1430-1430-1430-153684741430',
+	};
+
+	if (response && Array.isArray(response.entries)){
+		return response.entries.map(() => decodedResponse);
+	}
+
+	return [decodedResponse];
+}
+
+
+export function noNACKDecodedEventstoreResponse(response: any) {
+	const decodedResponse = {
+		aggregate: 'aggregate',
+		data: {},
+		metadata: {},
+		ack: '',
+		nack: 'http://localhost:2113/subscriptions/test/test-subs/nack/84741430-1430-1430-1430-153684741430',
+		eventType: 'EventA',
+		eventId: '84741430-1430-1430-1430-153684741430',
+	};
+
+	if (response && Array.isArray(response.entries)){
+		return response.entries.map(() => decodedResponse);
+	}
+
+	return [decodedResponse];
 }
