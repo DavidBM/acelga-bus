@@ -7,7 +7,7 @@ This bus enforces you to use the types and interfaces you define, avoiding error
 
 <!-- MarkdownTOC autolink="true" autoanchor="true" -->
 
-- [Simple eample](#simple-eample)
+- [Simple example](#simple-example)
 - [Eventstore](#eventstore)
 - [Structure of the Bus](#structure-of-the-bus)
 
@@ -17,8 +17,8 @@ This bus enforces you to use the types and interfaces you define, avoiding error
 
 Moreover, *it is not safe to publish primitives like numbers, null or strings* because their falsifiability property (0, NaN, "", null, undefined are false). Always send an object / class.
 
-<a id="simple-eample"></a>
-## Simple eample
+<a id="simple-example"></a>
+## Simple example
 
 ```typescript
 /* DEFINITIONS */
