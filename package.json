@@ -1,6 +1,6 @@
 {
   "name": "acelga-bus",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": " An extensible typescript message bus with support for middlewares ",
   "main": "src/index.ts",
   "scripts": {
@@ -27,10 +27,17 @@
     "kafka",
     "asyncrhonous",
     "ddd",
-    "event-sourcng",
+    "event-sourcing",
     "event",
     "eventstore",
-    "domain"
+    "domain",
+    "geteventstore",
+    "sourcing",
+    "DDD",
+    "aggregate",
+    "domain",
+    "pub-sub",
+    "pubsub"
   ],
   "author": "David Bonet Montes <webbonet@gmail.com>",
   "license": "Apache-2.0",
