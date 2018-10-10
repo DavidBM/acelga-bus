@@ -44,7 +44,7 @@ class UserCreated implements IMyEvent {
 
 /* HANDLER DEFINITIONS */
 
-import {Bus} from './src';
+import {Bus} from 'acelga-bus';
 // We set the correct type in the bus instance
 const bus = new Bus<IMyEvent>();
 
@@ -77,14 +77,14 @@ The connector works very similar to the base bus, but it requires some extra con
 
 ```typescript
 /* DEFINITIONS */
-import {IEventstoreEvent} from './src';
+import {IEventstoreEvent} from 'acelga-bus';
 // **NEW** Your interface must implement the IEventstoreEvent interface
 interface IMyEvent extends IEventstoreEvent {
     date: Date;
 }
 
 /* EVENTS IMPLEMENTATIONS */
-import {Bus, IEventFactory, IDecodedSerializedEventstoreEvent} from './src';
+import {Bus, IEventFactory, IDecodedSerializedEventstoreEvent} from 'acelga-bus';
 
 class UserCreated implements IMyEvent {
     date = new Date();
@@ -104,7 +104,7 @@ class UserCreatedFactory implements IEventFactory<IMyEvent> {
 
 /* HANDLER DEFINITIONS */
 
-import {Bus} from './src';
+import {Bus} from 'acelga-bus';
 // We set the correct type in the bus factory **NEW** for this use the factory function
 const bus = createEventstoreBus<IMyEvent>(/*connectionOptions, subscriptions*/);
 
