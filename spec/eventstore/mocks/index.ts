@@ -103,37 +103,34 @@ export function createBrokenPipelineFactory<T>() {
 }
 
 export function noACKDecodedEventstoreResponse(response: any) {
-	const decodedResponse = {
-		aggregate: 'aggregate',
-		data: {},
-		metadata: {},
-		ack: '',
-		nack: 'http://localhost:2113/subscriptions/test/test-subs/nack/84741430-1430-1430-1430-153684741430',
-		eventType: 'EventA',
-		eventId: '84741430-1430-1430-1430-153684741430',
-	};
+	const decodedResponse = generateNormalDecodedEventStoreResponse(response);
 
-	if (response && Array.isArray(response.entries)){
-		return response.entries.map(() => decodedResponse);
-	}
+	decodedResponse.forEach((item: any) => item.ack = '');
 
-	return [decodedResponse];
+	return decodedResponse;
 }
 
-
 export function noNACKDecodedEventstoreResponse(response: any) {
+	const decodedResponse = generateNormalDecodedEventStoreResponse(response);
+
+	decodedResponse.forEach((item: any) => item.nack = '');
+
+	return decodedResponse;
+}
+
+function generateNormalDecodedEventStoreResponse(response: any) {
 	const decodedResponse = {
 		aggregate: 'aggregate',
 		data: {},
 		metadata: {},
-		ack: '',
+		ack: 'http://localhost:2113/subscriptions/test/test-subs/ack/84741430-1430-1430-1430-153684741430',
 		nack: 'http://localhost:2113/subscriptions/test/test-subs/nack/84741430-1430-1430-1430-153684741430',
 		eventType: 'EventA',
 		eventId: '84741430-1430-1430-1430-153684741430',
 	};
 
 	if (response && Array.isArray(response.entries)){
-		return response.entries.map(() => decodedResponse);
+		return response.entries.map(() => Object.assign({}, decodedResponse));
 	}
 
 	return [decodedResponse];

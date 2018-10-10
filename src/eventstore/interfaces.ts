@@ -20,12 +20,12 @@ export type OriginalType = IEventstoreEvent & {
 	data: any;
 	metadata: any | void;
 	eventId: string;
-}
+};
 
 export interface IDecodedSerializedEventstoreEvent extends IEventstoreEvent, OriginalType {}
 
 export interface IEventstoreEventReceived extends IEventstoreEvent {
-	[originalEventSymbol]: OriginalType
+	[originalEventSymbol]: OriginalType;
 }
 
 export interface IFactory<T = {}> {

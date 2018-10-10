@@ -1,186 +1,164 @@
 # acelga-bus
-An extensible typescript message bus with support for middlewares
+An extensible typescript message bus with support for middlewares & eventstore (for event sourcing or similar patterns).
 
 <img src="img/acelga.png">
 
-This bus enforces you to use the types and interfaces you define, avoiding errors and problems. 
+This bus enforces you to use the types and interfaces you define, avoiding errors and problems in your code. 
 
 <!-- MarkdownTOC autolink="true" autoanchor="true" -->
 
-- [Simple example](#simple-example)
-- [Extended example](#extended-example)
-- [Middlewares!](#middlewares)
-    - [Why middlewares?](#why-middlewares)
-    - [Possibilities of the middlewares \(like connec to to eventstore, etc\)](#possibilities-of-the-middlewares-like-connec-to-to-eventstore-etc)
-    - [How to create](#how-to-create)
-    - [Code example](#code-example)
+- [Simple eample](#simple-eample)
+- [Eventstore](#eventstore)
+- [Structure of the Bus](#structure-of-the-bus)
 
 <!-- /MarkdownTOC -->
-
 
 **It filter by types instead of strings.** That means that you have compile time protection against misspellings. But it means that you need to encapsulate everything withing a class. 
 
 Moreover, *it is not safe to publish primitives like numbers, null or strings* because their falsifiability property (0, NaN, "", null, undefined are false). Always send an object / class.
 
-Lets see a simple example (you can check the full example, better for experienced programmers).
-
-<a id="simple-example"></a>
-## Simple example
+<a id="simple-eample"></a>
+## Simple eample
 
 ```typescript
-import {Bus} from 'acelga-bus';
+/* DEFINITIONS */
+// This interface must be implemented by all events
+interface IMyEvent {
+    date: Date;
+}
 
-//No constructor in order to keep the example short
-class RegisterEvent(){
-    time: new Date(),
-    name: "David"
-};
+/* EVENTS IMPLEMENTATIONS */
+// This events implements the interface of the bus
+class UserCreated implements IMyEvent {
+    date = new Date();
+    name: string;
 
-const bus = new Bus();
+    constructor(name: string) {
+        this.name = name;
+    }
 
-bus.on(RegisterEvent, (event) => console.log(event));
+    getName() {
+        return this.name;
+    }
+}
 
-bus.publish(new RegisterEvent()); //Return a promise when all handlers are finished.
+/* HANDLER DEFINITIONS */
+
+import {Bus} from './src';
+// We set the correct type in the bus instance
+const bus = new Bus<IMyEvent>();
+
+bus.on(UserCreated, (user) => {
+    // It will autocomplete the getName, regardless that it is not in the interface
+    console.log('user created: ', user.getName());
+});
+// The bus returns a promise that tells you if the event was published successfully
+await bus.publish(new UserCreated('Matias'));
+
+/* LETS CREATE ANOTHER CLASS THAT DOESN'T IMPLEMENT THE INTERFACE */
+class NotAnEvent {}
+/* TYPESCRIPT ERROR: typeof NotAnEvent is not assignable to Constructable<IMyEvent>*/
+bus.on(NotAnEvent, (notEvent) => {});
 ```
 
-Now lets see the full potential of the library
+<a id="eventstore"></a>
+## Eventstore
 
-<a id="extended-example"></a>
-## Extended example
+The bus implements a connector with [Eventstore](https://eventstore.org/) [persistent subscriptions/competing consumers](https://eventstore.org/docs/http-api/competing-consumers/index.html). It handles automatically:
 
-```typescript
-import {Bus, IEvent, IMiddleware} from 'acelga-bus';
+ - Bulk processing of events
+ - Ordering of depending events (it requires a implementation from the user)
+ - Handling errors and ACK or NACK them
+ - Avoid most bad pattern like:
+     + Multi subscription of the events (usually in event-store you want to process one time per bounded context)
+     + Non returning promises in handlers (the bus needs to know when you finished and if the operation was a success or not in order to ack or nack)
 
-//Lets define some basic interface for all our events. You can do with a class or abstract class too for enforcing inheritance.
-interface IBaseEvent {
-    id: string
-    getId(): IBaseEvent["id"]
-};
-
-class MyCustomEvent implements IBaseEvent {
-    id: string = Math.random().toString(36).substring(2);
-    getId(){
-        return this.id;
-    }
-    customMethod(){
-        return "I'm custom! :D"
-    }
-}
-
-class MyAnotherCustomEvent implements IBaseEvent {
-    id: string = Math.random().toString(36).substring(2);
-    name: "David";
-
-    getId(){
-        return this.id;
-    }
-}
-
-//If you don't provide any type, the bus uses a default empty interface.
-var bus = new Bus<IBaseEvent>();
-
-bus.on(MyCustomEvent, (event) => {
-    //You have auto completion here. Typescript will infer the correct types.
-    console.log(event.getId());
-    console.log(event.date);
-    //Including the methods of the subtype
-    console.log(event.customMethod());
-})
-
-//Will trigger the previous declared handler
-bus.publish(new MyCustomEvent()); 
-
-//This won't trigger any handler
-bus.publish(new MyAnotherCustomEvent());
-
-//Lets create a Event that doesn't implements the base interface
-class NonCompatibleEvent {}
-
-//Error! This won't compile
-bus.publish(new NonCompatibleEvent());
-```
-
-<a id="middlewares"></a>
-## Middlewares!
-
-<a id="why-middlewares"></a>
-### Why middlewares?
-
-Because they allow to extend the buss to almost anything. In some cases middlewares are a good tool for not repeating code.
-
-<a id="possibilities-of-the-middlewares-like-connec-to-to-eventstore-etc"></a>
-### Possibilities of the middlewares (like connec to to eventstore, etc)
-
-You can implement a connector to Kafka, RabbitMQ, Redis, etc. Middlewares can completely control the flow of the delivery saying when it fails or succeed and if to continue or to not. 
-
-<a id="how-to-create"></a>
-### How to create
-
-You just need to implement the following interface:
+The connector works very similar to the base bus, but it requires some extra configuration, lets see the previous example with the connected Bus:
 
 ```typescript
-export interface IMiddleware<T = IEvent> {
-    (event: T): Promise<T | void>;
+/* DEFINITIONS */
+import {IEventstoreEvent} from './src';
+// **NEW** Your interface must implement the IEventstoreEvent interface
+interface IMyEvent extends IEventstoreEvent {
+    date: Date;
 }
-```
 
-You can import it with `import {IMiddleware} from 'acelga-bus';`. 
+/* EVENTS IMPLEMENTATIONS */
+import {Bus, IEventFactory, IDecodedSerializedEventstoreEvent} from './src';
 
-- IEvent is the default interface that the Bus defaults if not generic type is provided, you can provide your own base type. **You should always define it as the same interface as the Bus.**
-- `Promise<T | void>`
-    - `T` if you return the Event, then the execution continues as expected.
-    - `void` if you don't return anything, then the execution is stopped and the promise that `bus.publish()` returns is fulfilled.
+class UserCreated implements IMyEvent {
+    date = new Date();
+    name: string;
+    aggregate: 'user';// **NEW** The same as the stream
+    ...
+}
+// **NEW** This is the factory that will be executed when the event is retrieved by Eventstore
+class UserCreatedFactory implements IEventFactory<IMyEvent> {
+    build(event: IDecodedSerializedEventstoreEvent) {
+        // Never trust what comes from eventstore. Acelga-bus guarantees some attributes, but not the data content
+        if (!event.data || event.data.name) throw new Error('Event without name');
 
-<a id="code-example"></a>
-### Code example
- 
-```typescript
-import {Bus, IMiddleware} from 'acelga-bus';
-
-class CustomEventNumber {
-    data: number;
-    constructor(data: number = 0) {
-        this.data = data;
+        return new UserCreated(event.data.name);
     }
 }
 
-enum Operation {Add, Substract};
+/* HANDLER DEFINITIONS */
 
-const CustomMiddleware: (number?: number, operation?: Operation) => IMiddleware<CustomEventNumber> = (number = 0, operation) => {
-    return (event) => {
-        switch (operation) {
-            case Operation.Add:
-                return Promise.resolve(new CustomEventNumber(event.data + number));
-            case Operation.Substract:
-                return Promise.resolve(new CustomEventNumber(event.data - number));
-            default:
-                //This one will stop the execution. No events will be dispatched and no more middlewares will be called. 
-                return Promise.resolve();
-        }
-    }
-}
+import {Bus} from './src';
+// We set the correct type in the bus factory **NEW** for this use the factory function
+const bus = createEventstoreBus<IMyEvent>(/*connectionOptions, subscriptions*/);
 
-//Lets create the bus and a event.
-const bus = new Bus<CustomEventNumber>();
-const event = new CustomEventNumber(25);
+// **NEW** You need to specify the correct factories for each event
+bus.addEventType(UserCreated, new UserCreatedFactory());
 
-//We can add at the beginning
-bus.pushMiddleware(CustomMiddleware(1, Operation.Substract));
-//And at the end
-bus.addStartMiddleware(CustomMiddleware(3, Operation.Add));
 
-bus.on(CustomEventNumber, (event) => {
-    console.log(event.data); //27
+bus.on(UserCreated, (user) => {
+    console.log('user created: ', user.getName());
 });
 
-//This will print 27 in the console
-bus.publish(event);
-
-//This middleware will return undefined
-bus.unshiftMiddleware(CapturingMiddleware(0, false));
-
-//This won't print anything because the last added middleware returns 
-//nothing and the dispatch & process of the event is stopped
-bus.publish(event);
+await bus.publish(new UserCreated('Matias'));
 ```
 
+<a id="structure-of-the-bus"></a>
+## Structure of the Bus
+
+The Bus is spitted in a lot of parts. The main advantage is that they can be reused in order to create a new bus adapted to a new system. That is how the Eventstore adapted bus was created. This is the structure:
+
+- Publisher: Having a handler, when the publish method is called, it executed a sequence of middlewares and calls the handler. It can be cloned in order to have a multi producer and one consumer.
+- Dispatcher (single): Given a key and a item, it executes the callbacks associates to that key in parallel over the item. It is like a router. It fails if any fails.
+- MiddlewareChain: executes a list of middlewares over a item.
+- Pipeline: Given an Dispatcher, triggers the dispatcher over a item in two modalities: StopOnError and ContinueOnError. It returns a list of errors and results after all the executions.
+    + executor: Simplified version of the pipeline, no dispatcher and only stopOnError mode.
+- Dispatcher (multi): Like the Dispatcher (single) but accepting an array of items. It makes an execution plan and uses pipelines to execute it with optimal parallelism. Returns the errors and success as array.
+- Schedulers: Creates an execution plan for a set of events. This allows to set dependent events like user **update** should be executed only if user **create** succeed.
+
+These pieces are organized in this way:
+
+```
++--------------------------------------------------------------------------------+
+|                                                                                |
+|                                                                                |
+|                                                        EventstoreBus           |
+|                                                                                |
+| +------------------------------------------------+  +------------------------+ |
+| |                                                |  |                        | |
+| |               Dispatcher (bulk)                |  | Eventstore  +--------+ | |
+| |                                                |  |   client    |        | | |
+| |                                                |  |             |getevent| | |
+| | +-----------------------+                      |  | +---------+ |store-  | | |
+| | |        Pipeline       |    +---------------+ |  | | Tracker | |promise | | |
+| | |   (Executed several   |    |               | |  | +---------+ |        | | |
+| | |      in parallel)     |    |   Scheduler   | |  | +---------+ |        | | |
+| | | +-------------------+ |    |               | |  | | Backoff | |        | | |
+| | | |Dispatcher (single)| |    |               | |  | +---------+ +--------+ | |
+| | | |                   | |    +---------------+ |  +------------------------+ |
+| | | |   +------------+  | |                      |                             |
+| | | |   |  Executor  |  | |                      |  +------------+ +---------+ |
+| | | |   +------------+  | |                      |  |            | |         | |
+| | | +-------------------+ |                      |  | Factory    | | Utils & | |
+| | +-----------------------+                      |  | repository | | mappers | |
+| |                                                |  |            | |         | |
+| +------------------------------------------------+  +------------+ +---------+ |
+|                                                                                |
++--------------------------------------------------------------------------------+
+```

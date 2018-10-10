@@ -280,7 +280,7 @@ describe('EventstoreBus', () => {
 		_bus.addEventType(EventA, {build: factoryA});
 		_bus.addEventType(EventB, {build: factoryB});
 
-		_bus.on(EventA, (event) => Promise.resolve());
+		_bus.on(EventA, (event) => Promise.reject());
 		_bus.on(EventB, (event) => Promise.resolve());
 
 		await _bus.startConsumption();
