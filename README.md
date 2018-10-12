@@ -1,7 +1,7 @@
 # acelga-bus
 An extensible typescript message bus with support for middlewares & eventstore (for event sourcing or similar patterns).
 
-[![codecov](https://codecov.io/gh/DavidBM/acelga-bus/branch/master/graph/badge.svg)](https://codecov.io/gh/DavidBM/acelga-bus)
+[![codecov](https://codecov.io/gh/DavidBM/acelga-bus/branch/master/graph/badge.svg)](https://codecov.io/gh/DavidBM/acelga-bus) [![Maintainability](https://api.codeclimate.com/v1/badges/7fc4998d666a07395802/maintainability)](https://codeclimate.com/github/DavidBM/acelga-bus/maintainability)
 
 <img src="img/acelga.png">
 
