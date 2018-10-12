@@ -64,6 +64,8 @@ bus.on(NotAnEvent, (notEvent) => {});
 <a id="eventstore"></a>
 ## Eventstore
 
+[![codecov](https://codecov.io/gh/DavidBM/acelga-bus/branch/master/graph/badge.svg)](https://codecov.io/gh/DavidBM/acelga-bus)
+
 The bus implements a connector with [Eventstore](https://eventstore.org/) [persistent subscriptions/competing consumers](https://eventstore.org/docs/http-api/competing-consumers/index.html). It handles automatically:
 
  - Bulk processing of events
