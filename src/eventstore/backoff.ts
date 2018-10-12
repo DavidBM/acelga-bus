@@ -2,51 +2,72 @@ import * as backoff from 'backoff';
 
 export enum BackoffAction {
 	restart,
-	continue
-};
+	continue,
+}
 
-export let backoffFibonacci: Backoff = (options, createInstance?: (options: backoff.ExponentialOptions) => backoff.Backoff): BackoffExecutor => {
+type BackoffFactory = (options: backoff.ExponentialOptions) => backoff.Backoff;
+
+class BackoffWrapper {
+	backoffStrategy: backoff.Backoff;
+	backoffResult: BackoffAction | null = null;
+	isReady: boolean = false;
+	callback: BackoffCallback;
+
+	constructor(callback: BackoffCallback, options: backoff.ExponentialOptions, factory?: BackoffFactory) {
+		this.callback = callback;
+		this.backoffStrategy = getBackoffInstance(options, factory);
+		this.backoffStrategy.on('backoff', (number: number, delay: number, error?: any) => this.onBackoff(number, delay, error));
+		this.backoffStrategy.on('ready', () => this.onReady());
+
+		this.backoffStrategy.backoff();
+	}
+
+	onBackoff(number: number, delay: number, error?: any) {
+		this.backoffResult = null;
+		this.isReady = false;
+		this.callback(() => this.continuing(), () => this.restarting(), number, delay, error);
+	}
+
+	onReady() {
+		this.isReady = true;
+		setTimeout(() => this.computebackoff(), 0);
+	}
+
+	continuing() {
+		this.backoffResult = BackoffAction.continue;
+		setTimeout(() => this.computebackoff(), 0);
+	}
+
+	restarting() {
+		this.backoffResult = BackoffAction.restart;
+		setTimeout(() => this.computebackoff(), 0);
+	}
+
+	computebackoff() {
+		if (!this.isReady) return;
+		if (this.backoffResult === BackoffAction.restart)
+			this.backoffStrategy.reset();
+		if (this.backoffResult !== null)
+			this.backoffStrategy.backoff();
+	}
+
+	reset() {
+		this.backoffStrategy.reset();
+	}
+}
+
+export let backoffFibonacci: Backoff = (options, factory?: BackoffFactory): BackoffExecutor => {
 
 	return (callback: BackoffCallback) => {
+		const backoffWrapper = new BackoffWrapper(callback, options, factory);
 
-		const backoffStrategy = createInstance ? createInstance(options) : backoff.fibonacci(options);
-
-		let backoffResult: BackoffAction | null = null;
-		const continuing = () => {
-			backoffResult = BackoffAction.continue;
-			setTimeout(computebackoff, 0);
-		};
-		const restarting = () => {
-			backoffResult = BackoffAction.restart;
-			setTimeout(computebackoff, 0);
-		};
-
-		let isReady = false;
-
-		backoffStrategy.on('backoff', (number, delay, error) => {
-			backoffResult = null;
-			isReady = false;
-			callback(continuing, restarting, number, delay, error);
-		});
-
-		backoffStrategy.on('ready', () => {
-			isReady = true;
-			setTimeout(computebackoff, 0);
-		});
-
-		const computebackoff = () => {
-			if (!isReady) return;
-			if (backoffResult === BackoffAction.restart)
-				backoffStrategy.reset();
-			if (backoffResult !== null)
-				backoffStrategy.backoff();
-		};
-
-		backoffStrategy.backoff();
-
-		return () => backoffStrategy.reset();
+		return () => backoffWrapper.reset();
 	};
 };
+
+function getBackoffInstance(options: backoff.ExponentialOptions, factory?: BackoffFactory): backoff.Backoff {
+	return factory ? factory(options) : backoff.fibonacci(options);
+}
 
 export type BackoffCallback = (continuing: () => void, restarting: () => void, number: number, delay: number, error?: any) => void;
 
