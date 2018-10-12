@@ -1,6 +1,8 @@
 # acelga-bus
 An extensible typescript message bus with support for middlewares & eventstore (for event sourcing or similar patterns).
 
+[![codecov](https://codecov.io/gh/DavidBM/acelga-bus/branch/master/graph/badge.svg)](https://codecov.io/gh/DavidBM/acelga-bus)
+
 <img src="img/acelga.png">
 
 This bus enforces you to use the types and interfaces you define, avoiding errors and problems in your code. 
@@ -63,8 +65,6 @@ bus.on(NotAnEvent, (notEvent) => {});
 
 <a id="eventstore"></a>
 ## Eventstore
-
-[![codecov](https://codecov.io/gh/DavidBM/acelga-bus/branch/master/graph/badge.svg)](https://codecov.io/gh/DavidBM/acelga-bus)
 
 The bus implements a connector with [Eventstore](https://eventstore.org/) [persistent subscriptions/competing consumers](https://eventstore.org/docs/http-api/competing-consumers/index.html). It handles automatically:
 
