@@ -77,6 +77,8 @@
       "<rootDir>/src/**/*",
       "!<rootDir>/src/**/*.d.ts"
     ],
+    "coverageDirectory": "./coverage/",
+    "collectCoverage": true,
     "moduleNameMapper": {
       "@src/(.*)": "<rootDir>/src/$1"
     },
