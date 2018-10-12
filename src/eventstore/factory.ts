@@ -8,7 +8,7 @@ import {EventFactoryRespository} from './factoryRepository';
 import {EventStoreConnectionOptions, IEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
 import {ErrorLogger, BulkDispatcher, Dispatcher, ParallelScheduler, pipelineFactory} from '../index';
 import {EventstoreClient, SubscriptionDefinition} from './client';
-import {eventstoreFeedbackHTTP} from '@src/eventstore/utils';
+import {eventstoreFeedbackHTTP, isValidDecodedEventStore, decodeEventstoreResponse} from '@src/eventstore/utils';
 import {EmptyTracker} from '@src/eventstore/emptyTracker';
 
 export function create< T extends IEventstoreEvent = IEventstoreEvent>(
@@ -21,8 +21,8 @@ export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	const tracker = new EmptyTracker();
 	const client = new HTTPClient(connectionOptions);
 	const backoffStrategy = createBackoff();
-	const eventFactory = new EventFactoryRespository<T>();
-	const eventstoreClient = new EventstoreClient(client, eventstoreFeedbackHTTP, logger, backoffStrategy, subscriptions, tracker, 25000);
+	const eventFactory = new EventFactoryRespository<T>(isValidDecodedEventStore);
+	const eventstoreClient = new EventstoreClient(client, eventstoreFeedbackHTTP, logger, backoffStrategy, decodeEventstoreResponse, subscriptions, tracker, 25000);
 	const dispatcher = createDispatcher<T>(logger);
 
 	return new EventStoreBus<T>(eventstoreClient, logger, eventFactory, dispatcher);
