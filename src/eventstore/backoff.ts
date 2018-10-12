@@ -42,11 +42,11 @@ export let backoffFibonacci: Backoff = (options, createInstance?: (options: back
 				backoffStrategy.backoff();
 		};
 
-		setTimeout(() => backoffStrategy.backoff(), 0);
+		backoffStrategy.backoff();
 
 		return () => backoffStrategy.reset();
 	};
-}
+};
 
 export type BackoffCallback = (continuing: () => void, restarting: () => void, number: number, delay: number, error?: any) => void;
 

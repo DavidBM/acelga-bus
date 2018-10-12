@@ -47,7 +47,7 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 		return this.dispatcher.on(eventType, callback as EventSubscriptionCallback<T1>);
 	}
 
-	public stop(): Promise<void> {
+	public async stop(): Promise<void> {
 		return this.client.stop();
 	}
 

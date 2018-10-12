@@ -61,6 +61,7 @@ export class EventstoreClient {
 
 	public stop(): Promise<void> {
 		this.tracker.forget('running');
+
 		this.subscriptionsCancellers.forEach(canceller => canceller());
 		this.subscriptionsCancellers.length = 0;
 

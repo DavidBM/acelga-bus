@@ -157,7 +157,7 @@ describe('EventstoreBus', () => {
 		}, 5);
 	});
 
-	it('should receive all events in the case of onAny', (done) => {
+	it('should receive all events in the case of onAny', async (done) => {
 		bus.startConsumption();
 
 		const factoryResult = {aggregate: Math.random() + ''};
@@ -169,12 +169,32 @@ describe('EventstoreBus', () => {
 
 		bus.onAny(handler);
 
-		setTimeout(() => {
-			expect(handler).toHaveBeenCalledTimes(1);
-			expect(handler).toHaveBeenCalledWith(factoryResult);
-			expect(factory).toHaveBeenCalledTimes(1);
-			done();
-		}, 5);
+		await bus.stop();
+
+		expect(handler).toHaveBeenCalledTimes(1);
+		expect(handler).toHaveBeenCalledWith(factoryResult);
+		expect(factory).toHaveBeenCalledTimes(1);
+		done();
+	});
+
+	it('should wait for events to start being consumed when stop', async (done) => {
+
+		const factoryResult = {aggregate: Math.random() + ''};
+
+		const handler = jest.fn().mockImplementation(() => Promise.resolve());
+		const factory = jest.fn().mockImplementation(() => factoryResult);
+
+		bus.addEventType(EventA, {build: factory});
+
+		bus.onAny(handler);
+
+		bus.startConsumption();
+		await bus.stop();
+
+		expect(handler).toHaveBeenCalledTimes(1);
+		expect(handler).toHaveBeenCalledWith(factoryResult);
+		expect(factory).toHaveBeenCalledTimes(1);
+		done();
 	});
 
 	it('should log an error if an event without factory is received', (done) => {
