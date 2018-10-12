@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "test:html-cov": "./node_modules/.bin/jest -w 10 --coverage --coverageReporters=html",
-    "test": "./node_modules/.bin/jest -w 10 --coverage --coverageReporters=text",
+    "test": "./node_modules/.bin/jest -w 10 --coverage --coverageReporters=json",
     "test:watch": "./node_modules/.bin/jest -w 10 --watchAll --coverage --coverageReporters=text",
     "test:coverage": "./node_modules/.bin/jest -w 10 --coverage",
     "build": "./node_modules/.bin/tsc",
@@ -47,6 +47,7 @@
   "homepage": "https://github.com/DavidBM/acelga-bus#readme",
   "devDependencies": {
     "@types/jest": "^22.2.3",
+    "codecov": "^3.1.0",
     "jest": "^23.6.0",
     "source-map-support": "^0.5.9",
     "ts-jest": "^23.10.2",
