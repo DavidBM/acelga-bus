@@ -42,7 +42,6 @@ export interface PipelinePlan<T> {
 
 export interface ScheduledPlan<T> {
 	plan: PipelinePlan<T>[];
-	rebuildOrder: (results: Array<any[]>) => any[];
 }
 
 export interface IScheduler<T> {
