@@ -1,4 +1,4 @@
-import {IScheduler, ScheduledPlan} from '@src/corebus/interfaces';
+import {IScheduler, ScheduledPlan} from '../interfaces';
 
 export default class ParallelScheduler<T> implements IScheduler<T> {
 	schedule(events: T[], maxConcurrency?: number): ScheduledPlan<T> {

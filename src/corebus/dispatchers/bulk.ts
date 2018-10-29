@@ -1,5 +1,5 @@
 import {Dispatcher} from './single';
-import {Pipeline} from '@src/corebus/pipeline';
+import {Pipeline} from '../pipeline';
 import {
 	Constructable,
 	EventSubscriptionCallback,
@@ -10,7 +10,7 @@ import {
 	ExecutionResult,
 	PipelineExecutionResult,
 	PipelineFactory,
-} from '@src/corebus/interfaces';
+} from '../interfaces';
 
 export default class BulkDispatcher<T> {
 	dispatcher: Dispatcher<T>;

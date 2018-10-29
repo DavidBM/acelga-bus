@@ -16,12 +16,3 @@ export {
 	ExecutionResult,
 } from './corebus/interfaces';
 export {create as createEventstoreBus, IEventFactory, IDecodedSerializedEventstoreEvent, IEventstoreEvent} from './eventstore';
-
-// tsconfig-paths: Adds the typescript modules resulution paths attribute to the normal node require.
-import tsConfig from '../tsconfig.json';
-import * as tsConfigPaths from 'tsconfig-paths';
-
-tsConfigPaths.register({
-	baseUrl: './',
-	paths: tsConfig.compilerOptions.paths,
-});

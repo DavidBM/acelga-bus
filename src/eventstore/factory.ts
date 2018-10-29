@@ -8,8 +8,8 @@ import {EventFactoryRespository} from './factoryRepository';
 import {EventStoreConnectionOptions, IEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
 import {ErrorLogger, BulkDispatcher, Dispatcher, ParallelScheduler, pipelineFactory} from '../index';
 import {EventstoreClient, SubscriptionDefinition} from './client';
-import {eventstoreFeedbackHTTP, isValidDecodedEventStore, decodeEventstoreResponse} from '@src/eventstore/utils';
-import {EmptyTracker} from '@src/eventstore/emptyTracker';
+import {eventstoreFeedbackHTTP, isValidDecodedEventStore, decodeEventstoreResponse} from './utils';
+import {EmptyTracker} from './emptyTracker';
 
 export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	connectionOptions: EventStoreConnectionOptions,

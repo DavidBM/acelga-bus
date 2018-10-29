@@ -1,9 +1,9 @@
-import {Executor} from '@src/corebus/executor';
+import {Executor} from '../executor';
 import {
 	Constructable,
 	EventSubscriptionCallback,
 	EventCallbacksSet,
-} from '@src/corebus/interfaces';
+} from '../interfaces';
 
 export class Dispatcher<T = {}> {
 

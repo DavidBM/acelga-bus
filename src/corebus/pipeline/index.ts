@@ -1,4 +1,4 @@
-import {Dispatcher} from '@src/corebus/dispatchers/single';
+import {Dispatcher} from '../dispatchers/single';
 import {IPipeline, PipelineExecutionResult, ExecutionResult, IDispatcher} from '@src/corebus/interfaces';
 
 export class Pipeline<T> implements IPipeline<T> {

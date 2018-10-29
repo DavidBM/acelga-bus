@@ -1,4 +1,4 @@
-import {IScheduler, ScheduledPlan} from '@src/corebus/interfaces';
+import {IScheduler, ScheduledPlan} from '../interfaces';
 
 export default class SequentialScheduler<T> implements IScheduler<T> {
 	preserveOrder: boolean;
