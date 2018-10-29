@@ -1,6 +1,6 @@
 import {HTTPClient} from 'geteventstore-promise';
 import {backoffFibonacci, BackoffExecutor} from './backoff';
-import * as debug from 'debug';
+import debug from 'debug';
 
 import {debugLogger} from '@src/corebus/logger';
 import {EventStoreBus} from './bus';

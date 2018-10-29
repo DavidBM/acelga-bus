@@ -10,6 +10,8 @@
     "declaration": true,
     "strictNullChecks": true,
     "noLib": false,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "target": "es6",

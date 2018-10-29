@@ -94,6 +94,7 @@
     "debug": "^3.1.0",
     "geteventstore-promise": "^3.0.1",
     "got": "^9.2.2",
-    "iterated-pipes": "^1.0.5"
+    "iterated-pipes": "^1.0.5",
+    "tsconfig-paths": "^3.6.0"
   }
 }

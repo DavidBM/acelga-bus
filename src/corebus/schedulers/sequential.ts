@@ -13,7 +13,6 @@ export default class SequentialScheduler<T> implements IScheduler<T> {
 				payloads: events,
 				preserveOrder: this.preserveOrder,
 			}],
-			rebuildOrder: (results: any) => results[0],
 		};
 	}
 }
