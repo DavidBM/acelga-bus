@@ -1,8 +1,8 @@
 {
   "name": "acelga-bus",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": " An extensible typescript message bus with support for middlewares ",
-  "main": "dist/src/index.ts",
+  "main": "dist/src/index.js",
   "scripts": {
     "test:html-cov": "./node_modules/.bin/jest -w 10 --coverage --coverageReporters=html",
     "test": "./node_modules/.bin/jest -w 10 --coverage --coverageReporters=text",
