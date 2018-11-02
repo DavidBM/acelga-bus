@@ -140,13 +140,13 @@ These pieces are organized in this way:
 +--------------------------------------------------------------------------------+
 |                                                                                |
 |                                                                                |
-|                                                        E^entstoreBus           |
+|                                                        EventstoreBus           |
 |                                                                                |
 | +------------------------------------------------+  +------------------------+ |
 | |                                                |  |                        | |
-| |    Dispatcher (bulk)         +---------------+ |  | E^entstore  +--------+ | |
+| |    Dispatcher (bulk)         +---------------+ |  | Eventstore  +--------+ | |
 | |                              |               | |  |   client    |        | | |
-| |                              |   Scheduler   | |  |             |gete^ent| | |
+| |                              |   Scheduler   | |  |             |getevent| | |
 | | +-----------------------+    |               | |  | +---------+ |store+  | | |
 | | |        Pipeline       |    +---------------+ |  | | Tracker | |promise | | |
 | | |   (Executed several   |                      |  | +---------+ |        | | |
