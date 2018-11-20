@@ -13,7 +13,7 @@ export interface SubscriptionDefinition {
 	subscription: string;
 }
 
-export class EventstoreClient {
+export class GoogleClient {
 
 	protected subscriptionsCancellers: BackoffStopper[] = [];
 	protected messagesToGet = 100;

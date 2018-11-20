@@ -72,17 +72,14 @@
       "^.+\\.(ts|tsx)$": "ts-jest"
     },
     "testMatch": [
-      "<rootDir>/spec/**/*.+(spec.)(ts|tsx|js)"
+      "<rootDir>/src/spec/**/*.+(spec.)(ts|tsx|js)"
     ],
     "collectCoverageFrom": [
       "<rootDir>/src/**/*",
-      "!<rootDir>/src/**/*.d.ts"
+      "!<rootDir>/src/spec/**/*"
     ],
     "coverageDirectory": "./coverage/",
     "collectCoverage": true,
-    "moduleNameMapper": {
-      "@src/(.*)": "<rootDir>/src/$1"
-    },
     "preset": "ts-jest"
   },
   "dependencies": {

@@ -19,12 +19,7 @@
     "sourceMap": true,
     "allowJs": false,
     "outDir": "./dist",
-    "baseUrl": "./",
-    "paths": {
-      "@src/*": [
-        "src/*"
-      ]
-    }
+    "baseUrl": "./"
   },
   "include": [
     "src/**/*"

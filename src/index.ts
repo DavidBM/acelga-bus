@@ -15,4 +15,9 @@ export {
 	ErrorLogger,
 	ExecutionResult,
 } from './corebus/interfaces';
-export {create as createEventstoreBus, IEventFactory, IDecodedSerializedEventstoreEvent, IEventstoreEvent} from './eventstore';
+
+import * as eventstore from './eventstore';
+
+import * as googlepubsub from './googlepubsub';
+
+export {eventstore, googlepubsub};
