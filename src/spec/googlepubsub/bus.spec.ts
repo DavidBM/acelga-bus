@@ -3,7 +3,7 @@ import {createSpiedMockedEventstoreClient, createBrokenPipelineFactory, noACKDec
 import {GoogleClient} from '../../googlepubsub/client';
 import {ErrorLogger} from '../../';
 import {BackoffExecutor} from '../../corebus/backoff';
-import {EventFactoryRespository, FactoryNotFoundError} from '../../googlepubsub/factoryRepository';
+import {GoogleEventFactoryRespository, GoogleEventFactoryNotFoundError} from '../../googlepubsub/googleEventFactoryRepository';
 import BulkDispatcher from '../../corebus/dispatchers/bulk';
 import {Dispatcher} from '../../corebus/dispatchers/single';
 import Scheduler from '../../corebus/schedulers/parallel';
@@ -38,7 +38,7 @@ function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToRetur
 	const scheduler = new Scheduler<IEventstoreEvent>();
 	const bulkDispatcher = new BulkDispatcher<IEventstoreEvent>(dispatcher, scheduler, pipelineFactoryToInject, errorLogger);
 	jest.spyOn(bulkDispatcher, 'on');
-	const eventFactoryRepository = new EventFactoryRespository(decodedEventValidator);
+	const eventFactoryRepository = new GoogleEventFactoryRespository(decodedEventValidator);
 	const bus = new GooglePubSub(client, errorLogger, eventFactoryRepository, bulkDispatcher);
 
 	return {
@@ -65,7 +65,7 @@ describe('GoogleBus', () => {
 		resetCalls: number,
 		backoffCalls: number,
 	};
-	let eventFactoryRepository: EventFactoryRespository<any>;
+	let eventFactoryRepository: GoogleEventFactoryRespository<any>;
 	let dispatcher: Dispatcher<any>;
 	let scheduler: IScheduler<any>;
 	let bulkDispatcher: BulkDispatcher<any>;
@@ -207,7 +207,7 @@ describe('GoogleBus', () => {
 
 		setTimeout(() => {
 			expect(errorLogger).toHaveBeenCalledTimes(1);
-			expect(errorLogger).toHaveBeenCalledWith(new FactoryNotFoundError());
+			expect(errorLogger).toHaveBeenCalledWith(new GoogleEventFactoryNotFoundError());
 			done();
 		}, 5);
 	});

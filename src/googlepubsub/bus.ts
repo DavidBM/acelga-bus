@@ -1,7 +1,7 @@
 import {IEventBus, EventSubscriptionCallback, Constructable, BulkDispatcher, ErrorLogger, ExecutionResult} from '../index';
 import {IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent, IEventstoreEventReceived, originalEventSymbol} from './interfaces';
-import {EventFactoryRespository} from './factoryRepository';
-import {EventstoreClient} from './client';
+import {GoogleEventFactoryRespository} from './googleEventFactoryRepository';
+import {GoogleClient} from './client';
 import {iterate} from 'iterated-pipes';
 
 const PARALLEL_FEEDBACK = 5;
@@ -22,10 +22,10 @@ export class GooglePubSub<T extends IEventstoreEvent = IEventstoreEvent> impleme
 	protected dispatcher: BulkDispatcher<T>;
 	protected logError: ErrorLogger;
 
-	protected eventRepository: EventFactoryRespository<T>;
-	protected client: EventstoreClient;
+	protected eventRepository: GoogleEventFactoryRespository<T>;
+	protected client: GoogleClient;
 
-	constructor(client: EventstoreClient, errorLogger: ErrorLogger, eventRepository: EventFactoryRespository<T>, dispatcher: BulkDispatcher<T>) {
+	constructor(client: GoogleClient, errorLogger: ErrorLogger, eventRepository: GoogleEventFactoryRespository<T>, dispatcher: BulkDispatcher<T>) {
 		this.client = client;
 		this.eventRepository = eventRepository;
 		this.logError = errorLogger;

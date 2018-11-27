@@ -1,6 +1,6 @@
-import {EventFactoryRespository, EventNameCollision, FactoryNotFoundError, NotADecodedSerializedEventstoreEvent} from '../..//googlepubsub/factoryRepository';
-import {IEventstoreEvent} from '../..//googlepubsub/interfaces';
-import {isValidDecodedEventStore} from '../..//googlepubsub/utils';
+import {GoogleEventFactoryRespository, GoogleEventNameCollision, GoogleEventFactoryNotFoundError, NotADecodedSerializedGoogleEvent} from '../../googlepubsub/googleEventFactoryRepository';
+import {IEventstoreEvent} from '../../googlepubsub/interfaces';
+import {isValidDecodedEventStore} from '../../googlepubsub/utils';
 import {eventBuilderWithDefaults} from './utils';
 
 const EventA = 'EventA';
@@ -10,11 +10,11 @@ class FactoryA { build(a: any) { return a; } }
 class FactoryB { build(a: any) { return a; } }
 class FactoryC { build(a: any) { return a; } }
 
-describe('GoogleBus', () => {
-	let repository: EventFactoryRespository<IEventstoreEvent>;
+describe('GoogleBus Factory Repository', () => {
+	let repository: GoogleEventFactoryRespository<IEventstoreEvent>;
 
 	beforeEach(() => {
-		repository = new EventFactoryRespository(isValidDecodedEventStore);
+		repository = new GoogleEventFactoryRespository(isValidDecodedEventStore);
 	});
 
 	it('should store and return the correct factory', () => {
@@ -29,8 +29,8 @@ describe('GoogleBus', () => {
 
 	it('should throw if two factories are added to the same event', () => {
 		repository.set(EventA, new FactoryA());
-		expect(() => repository.set(EventA, new FactoryB())).toThrowError(EventNameCollision);
-		expect(() => repository.set(EventA, new FactoryA())).toThrowError(EventNameCollision);
+		expect(() => repository.set(EventA, new FactoryB())).toThrowError(GoogleEventNameCollision);
+		expect(() => repository.set(EventA, new FactoryA())).toThrowError(GoogleEventNameCollision);
 	});
 
 	it('should execute the correct factory', () => {
@@ -64,7 +64,7 @@ describe('GoogleBus', () => {
 		// repository.set(EventB, factoryB);
 		repository.set(EventC, factoryC);
 
-		expect(() => repository.execute(eventBuilderWithDefaults(EventB))).toThrowError(FactoryNotFoundError);
+		expect(() => repository.execute(eventBuilderWithDefaults(EventB))).toThrowError(GoogleEventFactoryNotFoundError);
 
 		expect(factoryB.build).toHaveBeenCalledTimes(0);
 		expect(factoryA.build).toHaveBeenCalledTimes(0);
@@ -83,7 +83,7 @@ describe('GoogleBus', () => {
 		repository.set(EventB, factoryB);
 		repository.set(EventC, factoryC);
 
-		expect(() => repository.execute({eventTypo: ''} as any)).toThrowError(NotADecodedSerializedEventstoreEvent);
+		expect(() => repository.execute({eventTypo: ''} as any)).toThrowError(NotADecodedSerializedGoogleEvent);
 
 		expect(factoryB.build).toHaveBeenCalledTimes(0);
 		expect(factoryA.build).toHaveBeenCalledTimes(0);
@@ -104,7 +104,7 @@ describe('GoogleBus', () => {
 
 		const event = eventBuilderWithDefaults(EventB, 1 as any);
 
-		expect(() => repository.execute(event)).toThrowError(NotADecodedSerializedEventstoreEvent);
+		expect(() => repository.execute(event)).toThrowError(NotADecodedSerializedGoogleEvent);
 
 		expect(factoryB.build).toHaveBeenCalledTimes(0);
 		expect(factoryA.build).toHaveBeenCalledTimes(0);

@@ -4,7 +4,7 @@ import debug from 'debug';
 
 import {debugLogger} from '../corebus/logger';
 import {GooglePubSub} from './bus';
-import {EventFactoryRespository} from './factoryRepository';
+import {GoogleEventFactoryRespository} from './googleEventFactoryRepository';
 import {EventStoreConnectionOptions, IEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
 import {ErrorLogger, BulkDispatcher, Dispatcher, ParallelScheduler, pipelineFactory} from '../index';
 import {GoogleClient, SubscriptionDefinition} from './client';
@@ -21,7 +21,7 @@ export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	const tracker = new EmptyTracker();
 	const client = new HTTPClient(connectionOptions);
 	const backoffStrategy = createBackoff();
-	const eventFactory = new EventFactoryRespository<T>(isValidDecodedEventStore);
+	const eventFactory = new GoogleEventFactoryRespository<T>(isValidDecodedEventStore);
 	const googleClient = new GoogleClient(client, eventstoreFeedbackHTTP, logger, backoffStrategy, decodeEventstoreResponse, subscriptions, tracker, 25000);
 	const dispatcher = createDispatcher<T>(logger);
 

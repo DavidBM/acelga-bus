@@ -18,6 +18,6 @@ export {
 
 import * as eventstore from './eventstore';
 
-import * as googlepubsub from './googlepubsub';
+// import * as googlepubsub from './googlepubsub';
 
-export {eventstore, googlepubsub};
+export {eventstore/*, googlepubsub*/};

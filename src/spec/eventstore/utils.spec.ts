@@ -4,7 +4,7 @@ import {
 	UnrecognizedEventstoreEntry,
 	decodeEventstoreResponse,
 	UnrecognizedEventstoreResponse,
-	eventstoreFeedbackHTTP
+	eventstoreFeedbackHTTP,
 } from '../../eventstore/utils';
 import {eventBuilder, eventBuilderWithDefaults, eventstoreResponse, wrongEntries} from './utils';
 import {createServer} from 'http';

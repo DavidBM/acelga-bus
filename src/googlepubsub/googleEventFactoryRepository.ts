@@ -1,7 +1,7 @@
 import {IFactory, IDecodedSerializedEventstoreEvent, IEventstoreEvent, originalEventSymbol} from './interfaces';
 import {isValidDecodedEventStore} from './utils';
 
-export class EventFactoryRespository<T extends IEventstoreEvent> {
+export class GoogleEventFactoryRespository<T extends IEventstoreEvent> {
 	factories: Map<string, IFactory<T>> = new Map();
 	validator: (event: any) => event is IDecodedSerializedEventstoreEvent;
 
@@ -14,7 +14,7 @@ export class EventFactoryRespository<T extends IEventstoreEvent> {
 			// We throw here because this function is usually called in
 			// the instantiation of the application. We want to fail fast & hard
 			// in order to show the error to the developer.
-			throw new EventNameCollision(name, factory);
+			throw new GoogleEventNameCollision(name, factory);
 		}
 
 		this.factories.set(name, factory);
@@ -27,27 +27,27 @@ export class EventFactoryRespository<T extends IEventstoreEvent> {
 	execute(event: unknown) {
 
 		if (!this.validator(event)){
-			throw new NotADecodedSerializedEventstoreEvent(event);
+			throw new NotADecodedSerializedGoogleEvent(event);
 		}
 
 		const eventFactory = this.factories.get(event.eventType);
 
 		if (!eventFactory) {
-			throw new FactoryNotFoundError();
+			throw new GoogleEventFactoryNotFoundError();
 		}
 
 		return eventFactory.build(event);
 	}
 }
 
-export class FactoryNotFoundError extends Error {
+export class GoogleEventFactoryNotFoundError extends Error {
 	constructor() {
 		super();
 		this.message = 'Event Factory not found';
 	}
 }
 
-export class NotADecodedSerializedEventstoreEvent extends Error {
+export class NotADecodedSerializedGoogleEvent extends Error {
 	givenEvent: any;
 
 	constructor(givenEvent: any) {
@@ -57,7 +57,7 @@ export class NotADecodedSerializedEventstoreEvent extends Error {
 	}
 }
 
-export class EventNameCollision extends Error {
+export class GoogleEventNameCollision extends Error {
 	name: string;
 	factory: IFactory;
 
