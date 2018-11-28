@@ -6,7 +6,8 @@ import {
 	UnrecognizedEventstoreResponse,
 	eventstoreFeedbackHTTP,
 } from '../../eventstore/utils';
-import {eventBuilder, eventBuilderWithDefaults, eventstoreResponse, wrongEntries} from './utils';
+import {eventstoreResponse, wrongEntries} from './utils';
+import {eventBuilder, eventBuilderWithDefaults} from '../corebus/utils';
 import {createServer} from 'http';
 
 describe('eventstore Utils',  () => {

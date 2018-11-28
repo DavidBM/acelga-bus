@@ -1,39 +1,5 @@
 import {originalEventSymbol} from '../../eventstore/interfaces';
 
-export function eventBuilder(
-	eventType: string,
-	aggregate: string,
-	data: any,
-	eventId: string,
-	metadata: any,
-	ack: any,
-	nack: any,
-	) {
-
-	return {
-		data,
-		metadata,
-		ack,
-		nack,
-		eventType,
-		eventId,
-		aggregate,
-	};
-}
-
-export function eventBuilderWithDefaults(
-	eventType: string,
-	aggregate: string = 'test',
-	data: any = {},
-	eventId: string = 'randon',
-	metadata: any = '',
-	ack: any = 'invalidUrlForAck',
-	nack: any = 'invalidUrlForNAck',
-	) {
-
-	return eventBuilder(eventType, aggregate, data, eventId, metadata, ack, nack);
-}
-
 export const eventstoreResponse = {
 	entries: [{
 		event: {

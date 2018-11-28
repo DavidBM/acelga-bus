@@ -1,13 +1,13 @@
 import {BackoffExecutor, BackoffStopper} from '../corebus/backoff';
 import {IEmptyTracker} from '../corebus/emptyTracker';
 import {HTTPClient, EmbedType} from 'geteventstore-promise';
-import {IDecodedSerializedEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
+import {DecodedSerializedEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
 import {ErrorLogger} from '../index';
 import {decodeEventstoreResponse} from './utils';
 
 const NO_MESSAGES = Symbol('no messages');
 
-type Handler = (events: IDecodedSerializedEventstoreEvent[]) => Promise<void>;
+type Handler = (events: DecodedSerializedEventstoreEvent[]) => Promise<void>;
 export interface SubscriptionDefinition {
 	stream: string;
 	subscription: string;
@@ -24,7 +24,7 @@ export class EventstoreClient {
 		protected signal: EventstoreFeedbackHTTP,
 		protected logError: ErrorLogger,
 		protected backoffStrategy: BackoffExecutor,
-		protected eventstoreResponseDecoder: (response: any) => Array<IDecodedSerializedEventstoreEvent>,
+		protected eventstoreResponseDecoder: (response: any) => Array<DecodedSerializedEventstoreEvent>,
 		protected subscriptions: Array<SubscriptionDefinition>,
 		protected tracker: IEmptyTracker,
 		protected milisecondsToStop: number,
@@ -94,7 +94,7 @@ export class EventstoreClient {
 		await this.signal(url);
 	}
 
-	protected processConsumedAnswer(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
+	protected processConsumedAnswer(events: Array<DecodedSerializedEventstoreEvent>): Promise<void> {
 		if (!Array.isArray(events) || events.length === 0) {
 			return Promise.reject(NO_MESSAGES);
 		}
@@ -102,7 +102,7 @@ export class EventstoreClient {
 		return this.processEvents(events);
 	}
 
-	protected processEvents(events: Array<IDecodedSerializedEventstoreEvent>): Promise<void> {
+	protected processEvents(events: Array<DecodedSerializedEventstoreEvent>): Promise<void> {
 		if (!this.handler){
 			return this.logError(new NoHanlderToProcessEvents(events));
 		}

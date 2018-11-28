@@ -1,6 +1,6 @@
 import {IEventBus, EventSubscriptionCallback, Constructable, BulkDispatcher, ErrorLogger, ExecutionResult} from '../index';
-import {IDecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent, IEventstoreEventReceived, originalEventSymbol} from './interfaces';
-import {EventFactoryRespository} from './factoryRepository';
+import {DecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent, IEventstoreEventReceived, originalEventSymbol} from './interfaces';
+import {EventFactoryRespository} from '../corebus/eventFactoryRepository';
 import {EventstoreClient} from './client';
 import {iterate} from 'iterated-pipes';
 
@@ -11,21 +11,22 @@ enum FEEDBACK_ACTION {
 }
 
 type ReceivedEvents<T> = T & IEventstoreEventReceived;
+type EventRepository<T extends IEventstoreEvent> = EventFactoryRespository<T, DecodedSerializedEventstoreEvent>;
 
 /*
  - Reorganize the interfaces to be in the correct files. Parent files must reexport interfaces if required.
    Create a d.ts for files in order to have them in different files without importer the concrete implementation
- - Research about how to know if a message was no ack before
+ - Research about how to know if a msessage was no ack before
 */
 export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {
 
 	protected dispatcher: BulkDispatcher<T>;
 	protected logError: ErrorLogger;
 
-	protected eventRepository: EventFactoryRespository<T>;
+	protected eventRepository: EventRepository<T>;
 	protected client: EventstoreClient;
 
-	constructor(client: EventstoreClient, errorLogger: ErrorLogger, eventRepository: EventFactoryRespository<T>, dispatcher: BulkDispatcher<T>) {
+	constructor(client: EventstoreClient, errorLogger: ErrorLogger, eventRepository: EventRepository<T>, dispatcher: BulkDispatcher<T>) {
 		this.client = client;
 		this.eventRepository = eventRepository;
 		this.logError = errorLogger;
@@ -57,7 +58,7 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 
 	public async publish(event: T): Promise<void> {
 		const eventType = event.constructor.name;
-		return this.client.publish(event.aggregate, eventType, event);
+		return this.client.publish(event.origin, eventType, event);
 	}
 
 	public addEventType(event: Constructable<T>, factory: IEventFactory<T>): void {
@@ -67,7 +68,7 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 
 	// This is not a middleware because the type system would not allow that.
 	// We must ensure that everything in middlewares are events, nothing more.
-	protected async processEvents(events: IDecodedSerializedEventstoreEvent[]): Promise<void> {
+	protected async processEvents(events: DecodedSerializedEventstoreEvent[]): Promise<void> {
 		const eventInstances: Array<ReceivedEvents<T>> = [];
 
 		try {
@@ -139,9 +140,9 @@ export class InternalErrorNOACKAll extends Error {
 
 export class EventWithoutACKLinks<T> extends Error {
 	event: T;
-	originalEvent: IDecodedSerializedEventstoreEvent;
+	originalEvent: DecodedSerializedEventstoreEvent;
 
-	constructor(event: T, originalEvent: IDecodedSerializedEventstoreEvent) {
+	constructor(event: T, originalEvent: DecodedSerializedEventstoreEvent) {
 		super();
 		this.event = event;
 		this.originalEvent = originalEvent;

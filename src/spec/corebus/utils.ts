@@ -54,3 +54,37 @@ export const CustomEventOperationMiddleware: (number: number, operation: Operati
 };
 
 export class EmptyEvent {}
+
+export function eventBuilder(
+	eventType: string,
+	origin: string,
+	data: any,
+	eventId: string,
+	metadata: any,
+	ack: any,
+	nack: any,
+	) {
+
+	return {
+		data,
+		metadata,
+		ack,
+		nack,
+		eventType,
+		eventId,
+		origin,
+	};
+}
+
+export function eventBuilderWithDefaults(
+	eventType: string,
+	origin: string = 'test',
+	data: any = {},
+	eventId: string = 'randon',
+	metadata: any = '',
+	ack: any = 'invalidUrlForAck',
+	nack: any = 'invalidUrlForNAck',
+	) {
+
+	return eventBuilder(eventType, origin, data, eventId, metadata, ack, nack);
+}

@@ -1,11 +1,10 @@
-import {IFactory, IDecodedSerializedEventstoreEvent, IEventstoreEvent, originalEventSymbol} from './interfaces';
-import {isValidDecodedEventStore} from './utils';
+import {IFactory, TypedEvent} from './interfaces';
 
-export class GoogleEventFactoryRespository<T extends IEventstoreEvent> {
+export class EventFactoryRespository<T, D extends TypedEvent> {
 	factories: Map<string, IFactory<T>> = new Map();
-	validator: (event: any) => event is IDecodedSerializedEventstoreEvent;
+	validator: (event: any) => event is D;
 
-	constructor(validator: (event: any) => event is IDecodedSerializedEventstoreEvent) {
+	constructor(validator: (event: any) => event is D) {
 		this.validator = validator;
 	}
 
@@ -14,7 +13,7 @@ export class GoogleEventFactoryRespository<T extends IEventstoreEvent> {
 			// We throw here because this function is usually called in
 			// the instantiation of the application. We want to fail fast & hard
 			// in order to show the error to the developer.
-			throw new GoogleEventNameCollision(name, factory);
+			throw new EventNameCollision(name, factory);
 		}
 
 		this.factories.set(name, factory);
@@ -27,27 +26,27 @@ export class GoogleEventFactoryRespository<T extends IEventstoreEvent> {
 	execute(event: unknown) {
 
 		if (!this.validator(event)){
-			throw new NotADecodedSerializedGoogleEvent(event);
+			throw new NotADecodedSerializedEventstoreEvent(event);
 		}
 
 		const eventFactory = this.factories.get(event.eventType);
 
 		if (!eventFactory) {
-			throw new GoogleEventFactoryNotFoundError();
+			throw new FactoryNotFoundError();
 		}
 
 		return eventFactory.build(event);
 	}
 }
 
-export class GoogleEventFactoryNotFoundError extends Error {
+export class FactoryNotFoundError extends Error {
 	constructor() {
 		super();
 		this.message = 'Event Factory not found';
 	}
 }
 
-export class NotADecodedSerializedGoogleEvent extends Error {
+export class NotADecodedSerializedEventstoreEvent extends Error {
 	givenEvent: any;
 
 	constructor(givenEvent: any) {
@@ -57,7 +56,7 @@ export class NotADecodedSerializedGoogleEvent extends Error {
 	}
 }
 
-export class GoogleEventNameCollision extends Error {
+export class EventNameCollision extends Error {
 	name: string;
 	factory: IFactory;
 

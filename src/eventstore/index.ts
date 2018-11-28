@@ -1,2 +1,2 @@
 export {create} from './factory';
-export {IEventFactory, IDecodedSerializedEventstoreEvent, IEventstoreEvent} from './interfaces';
+export {IEventFactory, DecodedSerializedEventstoreEvent, IEventstoreEvent} from './interfaces';

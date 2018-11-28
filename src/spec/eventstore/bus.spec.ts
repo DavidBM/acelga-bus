@@ -3,18 +3,18 @@ import {createSpiedMockedEventstoreClient, createBrokenPipelineFactory, noACKDec
 import {EventstoreClient} from '../../eventstore/client';
 import {ErrorLogger} from '../../';
 import {BackoffExecutor} from '../../corebus/backoff';
-import {EventFactoryRespository, FactoryNotFoundError} from '../../eventstore/factoryRepository';
+import {EventFactoryRespository, FactoryNotFoundError} from '../../corebus/eventFactoryRepository';
 import BulkDispatcher from '../../corebus/dispatchers/bulk';
 import {Dispatcher} from '../../corebus/dispatchers/single';
 import Scheduler from '../../corebus/schedulers/parallel';
 import {IScheduler} from '../../corebus/interfaces';
-import {IEventstoreEvent} from '../../eventstore/interfaces';
+import {IEventstoreEvent, DecodedSerializedEventstoreEvent} from '../../eventstore/interfaces';
 import {isValidDecodedEventStore} from '../../eventstore/utils';
 import {pipelineFactory} from '../../corebus/pipeline/factory';
 import {HTTPClient} from 'geteventstore-promise';
 
 class EventA implements IEventstoreEvent {
-	aggregate = 'aggregateA';
+	origin = 'aggregateA';
 	Hola = 'data';
 	hola(): number {
 		return 2;
@@ -22,7 +22,7 @@ class EventA implements IEventstoreEvent {
 }
 
 class EventB implements IEventstoreEvent {
-	aggregate = 'aggregateB';
+	origin = 'aggregateB';
 }
 
 function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToReturn?: any, evDecoder?: any, decodedEventValidator: any = isValidDecodedEventStore){
@@ -38,7 +38,7 @@ function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToRetur
 	const scheduler = new Scheduler<IEventstoreEvent>();
 	const bulkDispatcher = new BulkDispatcher<IEventstoreEvent>(dispatcher, scheduler, pipelineFactoryToInject, errorLogger);
 	jest.spyOn(bulkDispatcher, 'on');
-	const eventFactoryRepository = new EventFactoryRespository(decodedEventValidator);
+	const eventFactoryRepository = new EventFactoryRespository<any, any>(decodedEventValidator);
 	const bus = new EventStoreBus(client, errorLogger, eventFactoryRepository, bulkDispatcher);
 
 	return {
@@ -65,7 +65,7 @@ describe('EventstoreBus', () => {
 		resetCalls: number,
 		backoffCalls: number,
 	};
-	let eventFactoryRepository: EventFactoryRespository<any>;
+	let eventFactoryRepository: EventFactoryRespository<any, any>;
 	let dispatcher: Dispatcher<any>;
 	let scheduler: IScheduler<any>;
 	let bulkDispatcher: BulkDispatcher<any>;
@@ -160,7 +160,7 @@ describe('EventstoreBus', () => {
 	it('should receive all events in the case of onAny', async (done) => {
 		bus.startConsumption();
 
-		const factoryResult = {aggregate: Math.random() + ''};
+		const factoryResult = {origin: Math.random() + ''};
 
 		const handler = jest.fn().mockImplementation(() => Promise.resolve());
 		const factory = jest.fn().mockImplementation(() => factoryResult);
@@ -179,7 +179,7 @@ describe('EventstoreBus', () => {
 
 	it('should wait for events to start being consumed when stop', async (done) => {
 
-		const factoryResult = {aggregate: Math.random() + ''};
+		const factoryResult = {origin: Math.random() + ''};
 
 		const handler = jest.fn().mockImplementation(() => Promise.resolve());
 		const factory = jest.fn().mockImplementation(() => factoryResult);
@@ -201,15 +201,17 @@ describe('EventstoreBus', () => {
 		bus.startConsumption();
 
 		const handler = jest.fn().mockImplementation(() => Promise.resolve());
-		const factory = jest.fn().mockImplementation(() => ({aggregate: ''}));
+		const factory = jest.fn().mockImplementation(() => ({origin: ''}));
 
 		bus.addEventType(EventA, {build: factory});
 
-		setTimeout(() => {
+		setTimeout(async () => {
+			await bus.stop();
+
 			expect(errorLogger).toHaveBeenCalledTimes(1);
 			expect(errorLogger).toHaveBeenCalledWith(new FactoryNotFoundError());
 			done();
-		}, 5);
+		}, 0);
 	});
 
 	it('should nack all messages when there is an internal error', async (done) => {
@@ -237,7 +239,7 @@ describe('EventstoreBus', () => {
 		bus.publish(event);
 
 		setTimeout(async () => {
-			expect(evClient.writeEvent).toHaveBeenCalledWith(event.aggregate, EventA.name, event);
+			expect(evClient.writeEvent).toHaveBeenCalledWith(event.origin, EventA.name, event);
 			done();
 		}, 0);
 	});

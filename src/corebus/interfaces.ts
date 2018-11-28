@@ -69,3 +69,15 @@ export interface IPipeline<T> {
 }
 
 export type PipelineFactory<T> = (scheduler: IDispatcher<T>) => IPipeline<T>;
+
+export interface IFactory<T = {}> {
+	build(serializedEvent: {}): T;
+}
+
+export interface IEventFactory<D extends TypedEvent, T = {}> extends IFactory {
+	build(serializedEvent: D): T;
+}
+
+export type TypedEvent = {
+	eventType: string,
+};

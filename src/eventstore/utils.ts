@@ -1,19 +1,19 @@
-import {IDecodedSerializedEventstoreEvent, originalEventSymbol, EventstoreFeedbackHTTP} from './interfaces';
+import {DecodedSerializedEventstoreEvent, originalEventSymbol, EventstoreFeedbackHTTP} from './interfaces';
 import * as got from 'got';
 
-export function decodeEventstoreResponse(response: any): Array<IDecodedSerializedEventstoreEvent> {
+export function decodeEventstoreResponse(response: any): Array<DecodedSerializedEventstoreEvent> {
 	if (!response || !Array.isArray(response.entries))
 		throw new UnrecognizedEventstoreResponse(response);
 
 	return response.entries.map((entry: any) => decodeEventstoreEntry(entry));
 }
 
-export function decodeEventstoreEntry(entry: any): IDecodedSerializedEventstoreEvent {
-	let event: IDecodedSerializedEventstoreEvent;
+export function decodeEventstoreEntry(entry: any): DecodedSerializedEventstoreEvent {
+	let event: DecodedSerializedEventstoreEvent;
 
 	try {
 		event = {
-			aggregate: entry.event.streamId,
+			origin: entry.event.streamId,
 			data: entry.event.data,
 			metadata: entry.event.metaData,
 			ack: entry.event.links.find((link: any) => link.relation === 'ack').uri,
@@ -34,14 +34,14 @@ export function decodeEventstoreEntry(entry: any): IDecodedSerializedEventstoreE
 
 // Cyclomatic complexity is failing. But I don't think that sppliting this in several function is good
 // tslint:disable-next-line
-export function isValidDecodedEventStore(event: any): event is IDecodedSerializedEventstoreEvent {
+export function isValidDecodedEventStore(event: any): event is DecodedSerializedEventstoreEvent {
 	return event
 	&& typeof event.data === 'object'
 	&& (typeof event.ack === 'string' && !!event.ack.length)
 	&& (typeof event.nack === 'string' && !!event.nack.length)
 	&& (typeof event.eventType === 'string' && !!event.eventType.length)
 	&& (typeof event.eventId === 'string' && !!event.eventId.length)
-	&& (typeof event.aggregate === 'string' && !!event.aggregate.length);
+	&& (typeof event.origin === 'string' && !!event.origin.length);
 }
 
 export class UnrecognizedEventstoreResponse extends Error {

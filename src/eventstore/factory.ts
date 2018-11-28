@@ -4,8 +4,8 @@ import debug from 'debug';
 
 import {debugLogger} from '../corebus/logger';
 import {EventStoreBus} from './bus';
-import {EventFactoryRespository} from './factoryRepository';
-import {EventStoreConnectionOptions, IEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
+import {EventFactoryRespository} from '../corebus/eventFactoryRepository';
+import {EventStoreConnectionOptions, IEventstoreEvent, EventstoreFeedbackHTTP, DecodedSerializedEventstoreEvent} from './interfaces';
 import {ErrorLogger, BulkDispatcher, Dispatcher, ParallelScheduler, pipelineFactory} from '../index';
 import {EventstoreClient, SubscriptionDefinition} from './client';
 import {eventstoreFeedbackHTTP, isValidDecodedEventStore, decodeEventstoreResponse} from './utils';
@@ -21,7 +21,7 @@ export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	const tracker = new EmptyTracker();
 	const client = new HTTPClient(connectionOptions);
 	const backoffStrategy = createBackoff();
-	const eventFactory = new EventFactoryRespository<T>(isValidDecodedEventStore);
+	const eventFactory = new EventFactoryRespository<T, DecodedSerializedEventstoreEvent>(isValidDecodedEventStore);
 	const eventstoreClient = new EventstoreClient(client, eventstoreFeedbackHTTP, logger, backoffStrategy, decodeEventstoreResponse, subscriptions, tracker, 25000);
 	const dispatcher = createDispatcher<T>(logger);
 
