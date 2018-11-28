@@ -1,13 +1,12 @@
 import {BackoffExecutor, BackoffStopper} from '../corebus/backoff';
 import {IEmptyTracker} from '../corebus/emptyTracker';
 import {HTTPClient, EmbedType} from 'geteventstore-promise';
-import {DecodedSerializedEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
+import {DecodedSerializedGoogleEvent, GoogleAcknowledger, OriginalType} from './interfaces';
 import {ErrorLogger} from '../index';
-import {decodeEventstoreResponse} from './utils';
 
 const NO_MESSAGES = Symbol('no messages');
 
-type Handler = (events: DecodedSerializedEventstoreEvent[]) => Promise<void>;
+type Handler = (events: DecodedSerializedGoogleEvent[]) => Promise<void>;
 export interface SubscriptionDefinition {
 	stream: string;
 	subscription: string;
@@ -21,10 +20,10 @@ export class EventstoreClient {
 
 	constructor(
 		protected client: HTTPClient,
-		protected signal: EventstoreFeedbackHTTP,
+		protected acknowledger: GoogleAcknowledger,
 		protected logError: ErrorLogger,
 		protected backoffStrategy: BackoffExecutor,
-		protected eventstoreResponseDecoder: (response: any) => Array<DecodedSerializedEventstoreEvent>,
+		protected eventstoreResponseDecoder: (response: any) => Array<DecodedSerializedGoogleEvent>,
 		protected subscriptions: Array<SubscriptionDefinition>,
 		protected tracker: IEmptyTracker,
 		protected milisecondsToStop: number,
@@ -86,15 +85,15 @@ export class EventstoreClient {
 		this.subscriptionsCancellers.push(backoffStopper);
 	}
 
-	async ack(url: string): Promise<void> {
-		await this.signal(url);
+	async ack(event: OriginalType): Promise<void> {
+		await this.acknowledger.ack(event.project, event.origin, [event.ackId]);
 	}
 
-	async nack(url: string): Promise<void> {
-		await this.signal(url);
+	async nack(event: OriginalType): Promise<void> {
+		await this.acknowledger.nack(event.project, event.origin, [event.ackId]);
 	}
 
-	protected processConsumedResponse(events: Array<DecodedSerializedEventstoreEvent>): Promise<void> {
+	protected processConsumedResponse(events: Array<DecodedSerializedGoogleEvent>): Promise<void> {
 		if (!Array.isArray(events) || events.length === 0) {
 			return Promise.reject(NO_MESSAGES);
 		}
@@ -102,7 +101,7 @@ export class EventstoreClient {
 		return this.processEvents(events);
 	}
 
-	protected processEvents(events: Array<DecodedSerializedEventstoreEvent>): Promise<void> {
+	protected processEvents(events: Array<DecodedSerializedGoogleEvent>): Promise<void> {
 		if (!this.handler){
 			return this.logError(new NoHanlderToProcessEvents(events));
 		}
