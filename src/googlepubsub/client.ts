@@ -1,8 +1,12 @@
 import {BackoffExecutor, BackoffStopper} from '../corebus/backoff';
 import {IEmptyTracker} from '../corebus/emptyTracker';
-import {HTTPClient, EmbedType} from 'geteventstore-promise';
-import {DecodedSerializedGoogleEvent, GoogleAcknowledger, OriginalType} from './interfaces';
+import * as Google from '@google-cloud/pubsub';
+import {DecodedSerializedGoogleEvent, GoogleAcknowledger, OriginalType, HTTPGoogleSynchronousSubscriptionClient, HTTPGoogleSynchronousPublisherClient} from './interfaces';
 import {ErrorLogger} from '../index';
+
+// as example
+// const client = new (pubsub as any).v1.SubscriberClient();
+// const client = new (pubsub as any).v1.PublisherClient();
 
 const NO_MESSAGES = Symbol('no messages');
 
@@ -19,7 +23,8 @@ export class EventstoreClient {
 	protected handler: null | Handler = null;
 
 	constructor(
-		protected client: HTTPClient,
+		protected pullClient: HTTPGoogleSynchronousSubscriptionClient,
+		protected pushClient: HTTPGoogleSynchronousPublisherClient,
 		protected acknowledger: GoogleAcknowledger,
 		protected logError: ErrorLogger,
 		protected backoffStrategy: BackoffExecutor,
@@ -27,6 +32,7 @@ export class EventstoreClient {
 		protected subscriptions: Array<SubscriptionDefinition>,
 		protected tracker: IEmptyTracker,
 		protected milisecondsToStop: number,
+		protected projectName: string,
 	) {	}
 
 	public setHandler(handler: Handler) {
@@ -35,11 +41,12 @@ export class EventstoreClient {
 
 	public startConsumption() {
 		this.tracker.remember('running');
-		this.subscriptions.forEach(config => this.declareConsumer(config.subscription, config.stream));
+		this.subscriptions.forEach(config => this.declareConsumer(config.stream));
 	}
 
 	public ping(): Promise<void> {
-		return this.client.ping();
+		return Promise.resolve();
+		// return this.client.ping();
 	}
 
 	public stop(): Promise<void> {
@@ -55,16 +62,19 @@ export class EventstoreClient {
 	}
 
 	public async publish(streamName: string, eventType: string, event: {}): Promise<void> {
-		return this.client.writeEvent(streamName, eventType, event); // Asuming good serialization
+		const subscriptionPath = this.pullClient.subscriptionPath(this.projectName, streamName);
+		await this.pushClient.publish({topic: streamName, messages: [{data: Buffer.from(JSON.stringify(event))}]});
 	}
 
-	private declareConsumer(subscriptionName: string, streamName: string): void {
+	private declareConsumer(subscriptionName: string): void {
+		const subscriptionPath = this.pullClient.subscriptionPath(this.projectName, subscriptionName);
+
 		const backoffStopper = this.backoffStrategy(async (continuing, restarting, number, delay) => {
-			const trackerId = streamName + number + Math.random();
+			const trackerId = subscriptionName + number + Math.random();
 			this.tracker.remember(trackerId);
 
 			try {
-				const response = await this.client.persistentSubscriptions.getEvents(subscriptionName, streamName, this.messagesToGet, 'body');
+				const response = await this.pullClient.pull({subscription: subscriptionPath, maxMessages: this.messagesToGet});
 				const events = this.eventstoreResponseDecoder(response);
 				await this.processConsumedResponse(events);
 				this.tracker.forget(trackerId);
