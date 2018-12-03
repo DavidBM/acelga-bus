@@ -1,5 +1,4 @@
 import {EventFactoryRespository, EventNameCollision, FactoryNotFoundError, NotADecodedSerializedEventstoreEvent} from '../../corebus/eventFactoryRepository';
-import {IEventstoreEvent} from '../../eventstore/interfaces';
 import {isValidDecodedEventStore} from '../../eventstore/utils';
 import {eventBuilderWithDefaults} from './utils';
 

@@ -1,5 +1,3 @@
-import {originalEventSymbol} from '../../eventstore/interfaces';
-
 export const eventstoreResponse = {
 	entries: [{
 		event: {

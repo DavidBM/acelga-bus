@@ -1,4 +1,4 @@
-import {DecodedSerializedEventstoreEvent, originalEventSymbol, EventstoreFeedbackHTTP} from './interfaces';
+import {DecodedSerializedEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
 import * as got from 'got';
 
 export function decodeEventstoreResponse(response: any): Array<DecodedSerializedEventstoreEvent> {

@@ -1,5 +1,4 @@
 import {TypedEvent} from '../corebus/interfaces';
-import * as Google from '@google-cloud/pubsub';
 
 export interface IGoogleEvent{
 	origin: string; // Events needs to be routed to a stream called with the name

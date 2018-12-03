@@ -1,14 +1,14 @@
-import {EventStoreBus, EventAlreadySubscribed, EventWithoutACKLinks} from '../../eventstore/bus';
+/* tslint:disable:no-unused-locals */
+import {EventStoreBus, EventAlreadySubscribed} from '../../eventstore/bus';
+import {EventWithoutACKLinks} from '../../eventstore/eventProcessor';
 import {createSpiedMockedEventstoreClient, createBrokenPipelineFactory, noACKDecodedEventstoreResponse, noNACKDecodedEventstoreResponse} from './mocks';
-import {EventstoreClient} from '../../eventstore/client';
 import {ErrorLogger} from '../../';
-import {BackoffExecutor} from '../../corebus/backoff';
 import {EventFactoryRespository, FactoryNotFoundError} from '../../corebus/eventFactoryRepository';
 import BulkDispatcher from '../../corebus/dispatchers/bulk';
 import {Dispatcher} from '../../corebus/dispatchers/single';
 import Scheduler from '../../corebus/schedulers/parallel';
-import {IScheduler} from '../../corebus/interfaces';
-import {IEventstoreEvent, DecodedSerializedEventstoreEvent} from '../../eventstore/interfaces';
+import {IEventstoreEvent} from '../../eventstore/interfaces';
+import {EventProcessor} from '../../eventstore/eventProcessor';
 import {isValidDecodedEventStore} from '../../eventstore/utils';
 import {pipelineFactory} from '../../corebus/pipeline/factory';
 import {HTTPClient} from 'geteventstore-promise';
@@ -39,7 +39,8 @@ function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToRetur
 	const bulkDispatcher = new BulkDispatcher<IEventstoreEvent>(dispatcher, scheduler, pipelineFactoryToInject, errorLogger);
 	jest.spyOn(bulkDispatcher, 'on');
 	const eventFactoryRepository = new EventFactoryRespository<any, any>(decodedEventValidator);
-	const bus = new EventStoreBus(client, errorLogger, eventFactoryRepository, bulkDispatcher);
+	const eventProcessor = new EventProcessor<any>(eventFactoryRepository, errorLogger, bulkDispatcher, client);
+	const bus = new EventStoreBus(client, eventProcessor, bulkDispatcher);
 
 	return {
 		client,
@@ -57,42 +58,21 @@ function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToRetur
 
 describe('EventstoreBus', () => {
 	let evClient: HTTPClient;
-	let client: EventstoreClient;
 	let bus: EventStoreBus;
 	let errorLogger: ErrorLogger;
-	let backoff: BackoffExecutor;
-	let backoffSummary: {
-		resetCalls: number,
-		backoffCalls: number,
-	};
-	let eventFactoryRepository: EventFactoryRespository<any, any>;
-	let dispatcher: Dispatcher<any>;
-	let scheduler: IScheduler<any>;
 	let bulkDispatcher: BulkDispatcher<any>;
 
 	beforeEach(() => {
 		const {
-			client: _client,
-			backoffSummary: _backoffSummary,
 			errorLogger: _errorLogger,
 			evClient: _evClient,
-			backoff: _backoff,
-			dispatcher: _dispatcher,
-			scheduler: _scheduler,
 			bulkDispatcher: _bulkDispatcher,
-			eventFactoryRepository: _eventFactoryRepository,
 			bus: _bus,
 		} = createBus();
 
-		client = _client;
-		backoffSummary = _backoffSummary;
 		errorLogger = _errorLogger;
 		evClient = _evClient;
-		backoff = _backoff;
-		dispatcher = _dispatcher;
-		scheduler = _scheduler;
 		bulkDispatcher = _bulkDispatcher;
-		eventFactoryRepository = _eventFactoryRepository;
 		bus = _bus;
 	});
 
@@ -126,7 +106,9 @@ describe('EventstoreBus', () => {
 		bus.on(EventA, handlerA);
 		expect(() => bus.on(EventA, handlerB)).toThrow(EventAlreadySubscribed);
 
-		setTimeout(() => {
+		setTimeout(async () => {
+			await bus.stop();
+
 			expect(handlerA).toHaveBeenCalledTimes(1);
 			expect(handlerB).toHaveBeenCalledTimes(0);
 			expect(factoryA).toHaveBeenCalledTimes(1);
@@ -200,7 +182,6 @@ describe('EventstoreBus', () => {
 	it('should log an error if an event without factory is received', (done) => {
 		bus.startConsumption();
 
-		const handler = jest.fn().mockImplementation(() => Promise.resolve());
 		const factory = jest.fn().mockImplementation(() => ({origin: ''}));
 
 		bus.addEventType(EventA, {build: factory});
@@ -320,7 +301,7 @@ describe('EventstoreBus', () => {
 	});
 
 	it('should log an error if ack call fails', async (done) => {
-		const {bus: _bus, client: _client, errorLogger: _errorLogger, evClient: _evClient} = createBus(pipelineFactory);
+		const {bus: _bus, client: _client, errorLogger: _errorLogger} = createBus(pipelineFactory);
 		const errorReturned = new Error('errorReturned');
 
 		jest.spyOn(_client, 'ack').mockImplementation(() => Promise.reject(errorReturned));
@@ -349,7 +330,7 @@ describe('EventstoreBus', () => {
 	});
 
 	it('should log an error if ack call fails', async (done) => {
-		const {bus: _bus, client: _client, errorLogger: _errorLogger, evClient: _evClient} = createBus(pipelineFactory);
+		const {bus: _bus, client: _client, errorLogger: _errorLogger} = createBus(pipelineFactory);
 		const errorReturned = new Error('errorReturned');
 
 		jest.spyOn(_client, 'nack').mockImplementation(() => Promise.reject(errorReturned));

@@ -4,7 +4,7 @@ import {Executor} from	'../../corebus/executor';
 describe('Executor', () => {
 	it('Should execute all functions and then finish', (done) => {
 		const ITEMS_QUANTITY = 3;
-		const {callbacks, item, executor} = createBaseExecutor(ITEMS_QUANTITY);
+		const {callbacks, executor} = createBaseExecutor(ITEMS_QUANTITY);
 
 		executor.execStopOnFail()
 		.then(() => {
@@ -74,7 +74,7 @@ describe('Executor', () => {
 
 	it('Should stop in case of error', (done) => {
 		const ITEMS_QUANTITY = 3;
-		const {callbacks, executor} = createBaseExecutor(ITEMS_QUANTITY, (item) => {throw new Error('artifical_error');});
+		const {callbacks, executor} = createBaseExecutor(ITEMS_QUANTITY, (item) => {throw new Error('artifical_error'); });
 
 		executor.execStopOnFail()
 		.catch((e) => {

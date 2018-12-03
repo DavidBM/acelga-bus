@@ -1,5 +1,4 @@
 import {EventSubscriptionCallback} from './interfaces';
-import {isPromise} from './utils';
 
 export class Executor<T> {
 	item: T;

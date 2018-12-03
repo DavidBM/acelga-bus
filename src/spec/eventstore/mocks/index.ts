@@ -1,5 +1,5 @@
 import * as BackoffOriginall from 'backoff';
-import {backoffFibonacci, BackoffCallback, BackoffExecutor, Backoff, BackoffAction} from '../../../corebus/backoff';
+import {backoffFibonacci} from '../../../corebus/backoff';
 import {HTTPClient} from 'geteventstore-promise';
 import {eventstoreResponse} from '../utils';
 import {SubscriptionDefinition, EventstoreClient} from '../../../eventstore/client';
@@ -7,7 +7,6 @@ import {EmptyTracker} from '../../../corebus/emptyTracker';
 import {EventstoreFeedbackHTTP} from '../../../eventstore/interfaces';
 import {decodeEventstoreResponse} from '../../../eventstore/utils';
 import {pipelineFactory} from '../../../corebus/pipeline/factory';
-import {Dispatcher} from '../../../corebus/dispatchers/single';
 import {IDispatcher, IPipeline} from '../../../corebus/interfaces';
 
 export function createSpiedBackoff(initialDelay: number = 1, maxDelay: number = 10) {
@@ -23,11 +22,9 @@ export function createSpiedBackoff(initialDelay: number = 1, maxDelay: number = 
 	}, (options) => {
 		const back = BackoffOriginall.fibonacci(options);
 
-		const originalOn = back.on;
 		const originalReset = back.reset;
 		const originalBackoff = back.backoff;
 
-		// jest.spyOn(back, 'on').mockImplementation(() => {originalOn.call(back);});
 		jest.spyOn(back, 'reset').mockImplementation(() => {
 			summary.resetCalls++;
 			originalReset.call(back);

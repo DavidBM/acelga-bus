@@ -16,6 +16,8 @@ export {
 	ExecutionResult,
 } from './corebus/interfaces';
 
+export {EventFactoryRespository} from './corebus/eventFactoryRepository';
+
 import * as eventstore from './eventstore';
 
 // import * as googlepubsub from './googlepubsub';

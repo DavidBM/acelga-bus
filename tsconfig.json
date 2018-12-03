@@ -8,6 +8,7 @@
     "inlineSources": true,
     "strictFunctionTypes": true,
     "declaration": true,
+    "noUnusedLocals": true,
     "strictNullChecks": true,
     "noLib": false,
     "esModuleInterop": true,

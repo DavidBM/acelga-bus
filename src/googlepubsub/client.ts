@@ -1,6 +1,6 @@
 import {BackoffExecutor, BackoffStopper} from '../corebus/backoff';
 import {IEmptyTracker} from '../corebus/emptyTracker';
-import * as Google from '@google-cloud/pubsub';
+// import * as Google from '@google-cloud/pubsub';
 import {DecodedSerializedGoogleEvent, GoogleAcknowledger, OriginalType, HTTPGoogleSynchronousSubscriptionClient, HTTPGoogleSynchronousPublisherClient} from './interfaces';
 import {ErrorLogger} from '../index';
 
@@ -12,11 +12,10 @@ const NO_MESSAGES = Symbol('no messages');
 
 type Handler = (events: DecodedSerializedGoogleEvent[]) => Promise<void>;
 export interface SubscriptionDefinition {
-	stream: string;
-	subscription: string;
-}
+	topic: string;
+	}
 
-export class EventstoreClient {
+export class GoogleClient {
 
 	protected subscriptionsCancellers: BackoffStopper[] = [];
 	protected messagesToGet = 100;
@@ -41,7 +40,7 @@ export class EventstoreClient {
 
 	public startConsumption() {
 		this.tracker.remember('running');
-		this.subscriptions.forEach(config => this.declareConsumer(config.stream));
+		this.subscriptions.forEach(config => this.declareConsumer(config.topic));
 	}
 
 	public ping(): Promise<void> {
@@ -61,16 +60,16 @@ export class EventstoreClient {
 		});
 	}
 
-	public async publish(streamName: string, eventType: string, event: {}): Promise<void> {
-		const subscriptionPath = this.pullClient.subscriptionPath(this.projectName, streamName);
-		await this.pushClient.publish({topic: streamName, messages: [{data: Buffer.from(JSON.stringify(event))}]});
+	public async publish(topic: string, eventType: string, event: {}): Promise<void> {
+		const subscriptionPath = this.pullClient.subscriptionPath(this.projectName, topic);
+		await this.pushClient.publish({topic: subscriptionPath, messages: [{data: Buffer.from(JSON.stringify(event))}]});
 	}
 
-	private declareConsumer(subscriptionName: string): void {
-		const subscriptionPath = this.pullClient.subscriptionPath(this.projectName, subscriptionName);
+	private declareConsumer(topic: string): void {
+		const subscriptionPath = this.pullClient.subscriptionPath(this.projectName, topic);
 
 		const backoffStopper = this.backoffStrategy(async (continuing, restarting, number, delay) => {
-			const trackerId = subscriptionName + number + Math.random();
+			const trackerId = topic + number + Math.random();
 			this.tracker.remember(trackerId);
 
 			try {

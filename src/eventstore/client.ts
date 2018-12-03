@@ -1,9 +1,8 @@
 import {BackoffExecutor, BackoffStopper} from '../corebus/backoff';
 import {IEmptyTracker} from '../corebus/emptyTracker';
-import {HTTPClient, EmbedType} from 'geteventstore-promise';
+import {HTTPClient} from 'geteventstore-promise';
 import {DecodedSerializedEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
 import {ErrorLogger} from '../index';
-import {decodeEventstoreResponse} from './utils';
 
 const NO_MESSAGES = Symbol('no messages');
 

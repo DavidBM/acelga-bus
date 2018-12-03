@@ -1,5 +1,4 @@
 import {Dispatcher} from './single';
-import {Pipeline} from '../pipeline';
 import {
 	Constructable,
 	EventSubscriptionCallback,

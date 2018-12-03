@@ -1,3 +1,4 @@
+/* tslint:disable:no-unused-locals */
 import {EventstoreClient, NoHanlderToProcessEvents} from '../../eventstore/client';
 import {
 	createSpiedBackoff,
@@ -10,7 +11,6 @@ import {backoffFibonacci, BackoffExecutor} from '../../corebus/backoff';
 import {EventstoreFeedbackHTTP} from '../../eventstore/interfaces';
 import {decodeEventstoreResponse} from '../../eventstore/utils';
 import {ErrorLogger} from '../../';
-import {HTTPClient} from 'geteventstore-promise';
 import {EmptyTracker} from '../../corebus/emptyTracker';
 
 describe('eventstore Client', () => {
@@ -98,7 +98,7 @@ describe('eventstore Client', () => {
 
 		setTimeout(() => {
 			expect(handler).toHaveBeenCalledTimes(1);
-			expect(errorLogger).toHaveBeenCalledWith(ERROR_TO_THROW)
+			expect(errorLogger).toHaveBeenCalledWith(ERROR_TO_THROW);
 			done();
 		}, 50);
 	});
@@ -109,7 +109,7 @@ describe('eventstore Client', () => {
 		client.startConsumption();
 
 		setTimeout(() => {
-			expect(errorLogger).toHaveBeenCalledWith(new NoHanlderToProcessEvents(eventstoreResponse))
+			expect(errorLogger).toHaveBeenCalledWith(new NoHanlderToProcessEvents(eventstoreResponse));
 			expect(errorLogger).toHaveBeenCalledTimes(2);
 			done();
 		}, 50);
@@ -120,10 +120,10 @@ describe('eventstore Client', () => {
 		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50);
 		client.startConsumption();
 
-		client.publish('test', 'test', {})
+		client.publish('test', 'test', {});
 
 		setTimeout(() => {
-			expect(mockedSpiedEventstore.writeEvent).toHaveBeenCalledWith('test', 'test', {})
+			expect(mockedSpiedEventstore.writeEvent).toHaveBeenCalledWith('test', 'test', {});
 			expect(mockedSpiedEventstore.writeEvent).toHaveBeenCalledTimes(1);
 			done();
 		}, 50);
@@ -146,7 +146,7 @@ describe('eventstore Client', () => {
 
 		setTimeout(() => {
 			// 5 times for: initial 20ms 20ms 40ms 50ms = 130ms (with the normal timeout exactitude, we can assume that we can have 5 calls in 150 ms)
-			expect(mockedSpiedEventstore.persistentSubscriptions.getEvents).toHaveBeenCalledTimes(5)
+			expect(mockedSpiedEventstore.persistentSubscriptions.getEvents).toHaveBeenCalledTimes(5);
 			done();
 		}, 150);
 	});
@@ -162,8 +162,6 @@ describe('eventstore Client', () => {
 			});
 		});
 
-		const before = Date.now();
-
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(1);
 		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50000000);
 		client.startConsumption();
@@ -176,7 +174,7 @@ describe('eventstore Client', () => {
 				expect(handler).toHaveBeenCalledTimes(1);
 				expect(handlerTimeout).toHaveBeenCalledTimes(1);
 				done();
-			});			
+			});
 		}, 10);
 	});
 
@@ -191,8 +189,6 @@ describe('eventstore Client', () => {
 			});
 		});
 
-		const before = Date.now();
-
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(1);
 		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50000000);
 		client.startConsumption();
@@ -205,7 +201,7 @@ describe('eventstore Client', () => {
 				expect(handler).toHaveBeenCalledTimes(1);
 				expect(handlerTimeout).toHaveBeenCalledTimes(1);
 				done();
-			});			
+			});
 		}, 10);
 	});
 
@@ -220,8 +216,6 @@ describe('eventstore Client', () => {
 			});
 		});
 
-		const before = Date.now();
-
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithCorrectEvents(1);
 		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50);
 		client.startConsumption();
@@ -234,7 +228,7 @@ describe('eventstore Client', () => {
 				expect(handler).toHaveBeenCalled();
 				expect(handlerTimeout).not.toHaveBeenCalled();
 				done();
-			});			
+			});
 		}, 10);
 	});
 });

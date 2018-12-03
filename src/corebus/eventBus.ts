@@ -3,7 +3,6 @@ import {
 	EventSubscriptionCallback,
 	IEventBus,
 	IMiddleware,
-	EventCallbacksSet,
 } from './interfaces';
 
 import {Publisher} from './publisher';

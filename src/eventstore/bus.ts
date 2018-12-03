@@ -1,17 +1,7 @@
-import {IEventBus, EventSubscriptionCallback, Constructable, BulkDispatcher, ErrorLogger, ExecutionResult} from '../index';
-import {DecodedSerializedEventstoreEvent, IEventFactory, IEventstoreEvent, IEventstoreEventReceived, originalEventSymbol} from './interfaces';
-import {EventFactoryRespository} from '../corebus/eventFactoryRepository';
+import {IEventBus, EventSubscriptionCallback, Constructable, BulkDispatcher} from '../index';
+import {IEventFactory, IEventstoreEvent, IEventstoreEventReceived} from './interfaces';
+import {EventProcessor} from './eventProcessor';
 import {EventstoreClient} from './client';
-import {iterate} from 'iterated-pipes';
-
-const PARALLEL_FEEDBACK = 5;
-enum FEEDBACK_ACTION {
-	nack = 'nack',
-	ack = 'ack',
-}
-
-type ReceivedEvents<T> = T & IEventstoreEventReceived;
-type EventRepository<T extends IEventstoreEvent> = EventFactoryRespository<T, DecodedSerializedEventstoreEvent>;
 
 /*
  - Reorganize the interfaces to be in the correct files. Parent files must reexport interfaces if required.
@@ -20,20 +10,11 @@ type EventRepository<T extends IEventstoreEvent> = EventFactoryRespository<T, De
 */
 export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {
 
-	protected dispatcher: BulkDispatcher<T>;
-	protected logError: ErrorLogger;
-
-	protected eventRepository: EventRepository<T>;
-	protected client: EventstoreClient;
-
-	constructor(client: EventstoreClient, errorLogger: ErrorLogger, eventRepository: EventRepository<T>, dispatcher: BulkDispatcher<T>) {
-		this.client = client;
-		this.eventRepository = eventRepository;
-		this.logError = errorLogger;
-		this.dispatcher = dispatcher;
-
-		this.client.setHandler((events) => this.processEvents(events));
-	}
+	constructor(
+		private client: EventstoreClient,
+		private eventProcessor: EventProcessor<T>,
+		private dispatcher: BulkDispatcher<T>,
+	) {	}
 
 	public startConsumption() {
 		return this.client.ping()
@@ -62,59 +43,7 @@ export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implem
 	}
 
 	public addEventType(event: Constructable<T>, factory: IEventFactory<T>): void {
-		const eventType = event.name;
-		this.eventRepository.set(eventType, factory);
-	}
-
-	// This is not a middleware because the type system would not allow that.
-	// We must ensure that everything in middlewares are events, nothing more.
-	protected async processEvents(events: DecodedSerializedEventstoreEvent[]): Promise<void> {
-		const eventInstances: Array<ReceivedEvents<T>> = [];
-
-		try {
-
-			for (const event of events){
-				try {
-					const decodedEvent = await this.eventRepository.execute(event) as ReceivedEvents<T>;
-					decodedEvent[originalEventSymbol] = event;
-
-					eventInstances.push(decodedEvent); // The "as ReceivedEvents<T>" it is because we are adding a symbol in the object and we want to keep the correct Type notation, event with the symbol
-				} catch (error) {
-					this.logError(error);
-				}
-			}
-
-			const errors = await this.dispatcher.trigger(eventInstances);
-			await this.processErrors(errors);
-		} catch (error) {
-			this.logError(new InternalErrorNOACKAll(error));
-
-			return iterate(eventInstances)
-			.parallel(PARALLEL_FEEDBACK, event => this.giveEventFeedback(event, FEEDBACK_ACTION.nack));
-		}
-	}
-
-	protected async processErrors(results: ExecutionResult<ReceivedEvents<T>>[]): Promise<void> {
-		return iterate(results)
-		.parallel(PARALLEL_FEEDBACK, result => {
-
-			let action = FEEDBACK_ACTION.ack;
-			if (result.isError)
-				action = FEEDBACK_ACTION.nack;
-
-			return this.giveEventFeedback(result.event, action);
-		});
-	}
-
-	protected async giveEventFeedback(event: IEventstoreEventReceived, action: FEEDBACK_ACTION): Promise<void> {
-		const originalEvent = event[originalEventSymbol];
-
-		if (originalEvent && originalEvent[action]){
-			await this.client[action](originalEvent[action])
-			.catch(error => this.logError(error));
-		} else {
-			this.logError(new EventWithoutACKLinks(event, originalEvent));
-		}
+		this.eventProcessor.addEventType(event, factory);
 	}
 }
 
@@ -125,27 +54,5 @@ export class EventAlreadySubscribed<T> extends Error {
 		super();
 		this.eventType = eventType;
 		this.message = 'The Event you want to subscribe already has one subscription. Only one subscription is allowed in order to keep processing simple to reason about. If you want to do that for sure, please, create a new Bus instance.';
-	}
-}
-
-export class InternalErrorNOACKAll extends Error {
-	originalError: any;
-
-	constructor(originalError: any) {
-		super();
-		this.originalError = originalError;
-		this.message = 'There was an internal error in the library. All event are going to be nack. The original error is attached in the "originalError" attribute in this error.';
-	}
-}
-
-export class EventWithoutACKLinks<T> extends Error {
-	event: T;
-	originalEvent: DecodedSerializedEventstoreEvent;
-
-	constructor(event: T, originalEvent: DecodedSerializedEventstoreEvent) {
-		super();
-		this.event = event;
-		this.originalEvent = originalEvent;
-		this.message = 'The nack or ack links in the event were not found. event & originalDecodedEvent are attached in this error.';
 	}
 }

@@ -1,4 +1,4 @@
-import {Bus, IMiddleware, Publisher} from '../../index'; 
+import {Bus, IMiddleware} from '../../index';
 import {Operation, CustomEventNumber, CustomEventOperationMiddleware, EmptyEvent} from './utils';
 
 describe('Bus', () => {
@@ -93,7 +93,6 @@ describe('Bus', () => {
 		class Event2 {}
 		class Event3 {}
 		const event2 = new Event2();
-		const event3 = new Event3();
 
 		const fn = jest.fn();
 

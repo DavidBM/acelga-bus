@@ -19,12 +19,12 @@ describe('eventstore Utils',  () => {
 
 		it('should return false if any parameter is not valid', () => {
 			const nonValidArguments = [undefined, 0, null, NaN, ''];
-			const validArguments = ['evetType', 'stream', {}, 'uuid', {}, 'urlA', 'urlB'];
+			const validArguments: [string, string, any, string, any, any, any] = ['evetType', 'stream', {}, 'uuid', {}, 'urlA', 'urlB'];
 
 			validArguments.forEach((_, index) => {
 				if (index === 4 || index === 2) return; // We don't check metadata & data
 
-				const eventArgs = Array.from(validArguments);
+				const eventArgs: [string, string, any, string, any, any, any] = Array.from(validArguments) as any;
 
 				nonValidArguments.forEach(arg => {
 
@@ -91,15 +91,15 @@ describe('eventstore Utils',  () => {
 	describe('eventstoreFeedbackHTTP', () => {
 		it('call the endpoint with got', (done) => {
 			const PORT = 61029;
-			
-			const server = createServer((request,response)=>{
-			    response.writeHead(200,{'Content-Type':'text/plain'});
+
+			const server = createServer((request, response) => {
+			    response.writeHead(200, {'Content-Type': 'text/plain'});
 			    response.write('Hello world');
 			    response.end();
 			    expect(request.url).toBe('/hola');
 			});
 
-			server.listen(PORT, (error:any) => {
+			server.listen(PORT, (error: any) => {
 				eventstoreFeedbackHTTP(`http://localhost:${PORT}/hola`)
 				.then((data) => {
 					expect(data).toBeUndefined();

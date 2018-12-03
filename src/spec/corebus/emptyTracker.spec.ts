@@ -5,7 +5,7 @@ describe('EmptyTracker', () => {
 
 	beforeEach(() => {
 		tracker = new EmptyTracker();
-	})
+	});
 
 	it('should send the "empty" event when it is empty', () => {
 		const handler = jest.fn();
@@ -48,7 +48,7 @@ describe('EmptyTracker', () => {
 	});
 
 	it('should fail the promise if there is a timeout', (done) => {
-		const timeout = jest.fn().mockImplementation(() => tracker.forget(1));
+		jest.fn().mockImplementation(() => tracker.forget(1));
 
 		tracker.remember(1);
 
@@ -59,7 +59,7 @@ describe('EmptyTracker', () => {
 	});
 
 	it('should apply timeout only if it is a positive number', (done) => {
-		const timeout = jest.fn().mockImplementation(() => tracker.forget(1));
+		jest.fn().mockImplementation(() => tracker.forget(1));
 
 		tracker.remember(1);
 
@@ -77,7 +77,7 @@ describe('EmptyTracker', () => {
 	});
 
 	it('should succeed the promise if it is empty', (done) => {
-		const timeout = jest.fn().mockImplementation(() => tracker.forget(1));
+		jest.fn().mockImplementation(() => tracker.forget(1));
 
 		tracker.waitUntilEmpty(100)
 		.then(() => {
