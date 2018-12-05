@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-locals */
-import {Facade, EventAlreadySubscribed} from '../../eventstore/facade';
-import {EventWithoutACKLinks} from '../../eventstore/eventProcessor';
+import {EventstoreFacade} from '../../eventstore/facade';
+import {EventAlreadySubscribed} from '../../corebus/commonErrors';
 import {createSpiedMockedEventstoreClient, createBrokenPipelineFactory, noACKDecodedEventstoreResponse, noNACKDecodedEventstoreResponse} from './mocks';
 import {ErrorLogger} from '../../';
 import {EventFactoryRespository, FactoryNotFoundError} from '../../corebus/eventFactoryRepository';
@@ -8,9 +8,10 @@ import BulkDispatcher from '../../corebus/dispatchers/bulk';
 import {Dispatcher} from '../../corebus/dispatchers/single';
 import Scheduler from '../../corebus/schedulers/parallel';
 import {IEventstoreEvent} from '../../eventstore/interfaces';
-import {EventProcessor} from '../../eventstore/eventProcessor';
+import {EventProcessor, EventWithoutOriginalEvent} from '../../corebus/eventProcessor';
 import {isValidDecodedEventStore} from '../../eventstore/utils';
 import {pipelineFactory} from '../../corebus/pipeline/factory';
+import {originalEventSymbol} from '../../corebus/interfaces';
 import {HTTPClient} from 'geteventstore-promise';
 
 class EventA implements IEventstoreEvent {
@@ -39,8 +40,10 @@ function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToRetur
 	const bulkDispatcher = new BulkDispatcher<IEventstoreEvent>(dispatcher, scheduler, pipelineFactoryToInject, errorLogger);
 	jest.spyOn(bulkDispatcher, 'on');
 	const eventFactoryRepository = new EventFactoryRespository<any, any>(decodedEventValidator);
-	const eventProcessor = new EventProcessor<any>(eventFactoryRepository, errorLogger, bulkDispatcher, client);
-	const bus = new Facade(client, eventProcessor, bulkDispatcher);
+	const eventProcessor = new EventProcessor<any, any>(eventFactoryRepository, errorLogger, bulkDispatcher, client);
+	const bus = new EventstoreFacade(client, eventProcessor, bulkDispatcher);
+
+	client.setHandler(events => eventProcessor.processEvents(events));
 
 	return {
 		client,
@@ -53,12 +56,13 @@ function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToRetur
 		bulkDispatcher,
 		eventFactoryRepository,
 		bus,
+		eventProcessor,
 	};
 }
 
-describe('Facade', () => {
+describe('EventstoreFacade', () => {
 	let evClient: HTTPClient;
-	let bus: Facade;
+	let bus: EventstoreFacade;
 	let errorLogger: ErrorLogger;
 	let bulkDispatcher: BulkDispatcher<any>;
 
@@ -248,7 +252,7 @@ describe('Facade', () => {
 		}, 0);
 	});
 
-	it('should log an error when there is no ack link', async (done) => {
+	it('should log an error when there is no original event', async (done) => {
 		const {bus: _bus, client: _client, errorLogger: _errorLogger} = createBus(pipelineFactory, undefined, noACKDecodedEventstoreResponse, () => true);
 
 		const factoryA = jest.fn().mockImplementation(() => new EventA());
@@ -257,18 +261,19 @@ describe('Facade', () => {
 		_bus.addEventType(EventA, {build: factoryA});
 		_bus.addEventType(EventB, {build: factoryB});
 
-		_bus.on(EventA, (event) => Promise.resolve());
-		_bus.on(EventB, (event) => Promise.resolve());
+		_bus.on(EventA, (event) => { delete event[originalEventSymbol]; Promise.resolve(); });
+		_bus.on(EventB, (event) => { delete event[originalEventSymbol]; Promise.resolve(); });
 
 		await _bus.startConsumption();
 
 		setTimeout(async () => {
 			await _bus.stop();
 
+			expect(_client.ack).toHaveBeenCalledTimes(0);
 			expect(_client.nack).toHaveBeenCalledTimes(0);
 			expect(_errorLogger).toHaveBeenCalledTimes(2);
-			expect(_errorLogger.mock.calls[0][0]).toBeInstanceOf(EventWithoutACKLinks);
-			expect(_errorLogger.mock.calls[1][0]).toBeInstanceOf(EventWithoutACKLinks);
+			expect(_errorLogger.mock.calls[0][0]).toBeInstanceOf(EventWithoutOriginalEvent);
+			expect(_errorLogger.mock.calls[1][0]).toBeInstanceOf(EventWithoutOriginalEvent);
 
 			done();
 		}, 0);
@@ -283,8 +288,8 @@ describe('Facade', () => {
 		_bus.addEventType(EventA, {build: factoryA});
 		_bus.addEventType(EventB, {build: factoryB});
 
-		_bus.on(EventA, (event) => Promise.reject());
-		_bus.on(EventB, (event) => Promise.resolve());
+		_bus.on(EventA, (event) => { delete event[originalEventSymbol]; return Promise.reject(); });
+		_bus.on(EventB, (event) => { delete event[originalEventSymbol]; return Promise.resolve(); });
 
 		await _bus.startConsumption();
 
@@ -292,9 +297,10 @@ describe('Facade', () => {
 			await _bus.stop();
 
 			expect(_client.nack).toHaveBeenCalledTimes(0);
+			expect(_client.ack).toHaveBeenCalledTimes(0);
 			expect(_errorLogger).toHaveBeenCalledTimes(2);
-			expect(_errorLogger.mock.calls[0][0]).toBeInstanceOf(EventWithoutACKLinks);
-			expect(_errorLogger.mock.calls[1][0]).toBeInstanceOf(EventWithoutACKLinks);
+			expect(_errorLogger.mock.calls[0][0]).toBeInstanceOf(EventWithoutOriginalEvent);
+			expect(_errorLogger.mock.calls[1][0]).toBeInstanceOf(EventWithoutOriginalEvent);
 
 			done();
 		}, 0);

@@ -45,23 +45,15 @@ export function isValidDecodedEventStore(event: any): event is DecodedSerialized
 }
 
 export class UnrecognizedEventstoreResponse extends Error {
-	response: any;
-
-	constructor(response: any) {
+	constructor(public response: any) {
 		super();
-		this.response = response;
 		this.message = 'The response from event store is not a recognized response. The original response is attached in the "response" attribute of this error';
 	}
 }
 
 export class UnrecognizedEventstoreEntry extends Error {
-	entry: any;
-	originalError: any;
-
-	constructor(entry: any, originalError?: any) {
+	constructor(public entry: any, public originalError?: any) {
 		super();
-		this.entry = entry;
-		this.originalError = originalError;
 		this.message = 'The entry from the response from event store is not a recognized entry. The original entry is attached in the "entry" attribute of this error. In case of exception there is an attribute "originalError".';
 	}
 }

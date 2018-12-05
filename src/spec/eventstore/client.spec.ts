@@ -54,7 +54,7 @@ describe('eventstore Client', () => {
 	it('should call the getEvents from the eventstore library', () => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
 		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50);
-		client.ack('hola');
+		client.ack({ack: 'hola'} as any);
 
 		expect(eventstoreSignal).toHaveBeenCalledWith('hola');
 	});
@@ -62,7 +62,7 @@ describe('eventstore Client', () => {
 	it('should call the getEvents from the eventstore library', () => {
 		const mockedSpiedEventstore = createMockedSpiedEventstorelibWithNoEvents();
 		const client = new EventstoreClient(mockedSpiedEventstore, eventstoreSignal, errorLogger, spiedBackoff, decodeEventstoreResponse, [{stream: 'a', subscription: 'a'}], tracker, 50);
-		client.nack('hola');
+		client.nack({nack: 'hola'} as any);
 
 		expect(eventstoreSignal).toHaveBeenCalledWith('hola');
 	});

@@ -1,7 +1,8 @@
 import {BackoffExecutor, BackoffStopper} from '../corebus/backoff';
 import {IEmptyTracker} from '../corebus/emptyTracker';
 import {HTTPClient} from 'geteventstore-promise';
-import {DecodedSerializedEventstoreEvent, EventstoreFeedbackHTTP} from './interfaces';
+import {DecodedSerializedEventstoreEvent, EventstoreDecodedContract, EventstoreFeedbackHTTP} from './interfaces';
+import {AcknowledgeableClient} from '../corebus/interfaces';
 import {ErrorLogger} from '../index';
 
 const NO_MESSAGES = Symbol('no messages');
@@ -12,7 +13,7 @@ export interface SubscriptionDefinition {
 	subscription: string;
 }
 
-export class EventstoreClient {
+export class EventstoreClient implements AcknowledgeableClient<EventstoreDecodedContract>{
 
 	protected subscriptionsCancellers: BackoffStopper[] = [];
 	protected messagesToGet = 100;
@@ -85,12 +86,12 @@ export class EventstoreClient {
 		this.subscriptionsCancellers.push(backoffStopper);
 	}
 
-	async ack(url: string): Promise<void> {
-		await this.signal(url);
+	async ack(event: DecodedSerializedEventstoreEvent): Promise<void> {
+		await this.signal(event.ack);
 	}
 
-	async nack(url: string): Promise<void> {
-		await this.signal(url);
+	async nack(event: DecodedSerializedEventstoreEvent): Promise<void> {
+		await this.signal(event.nack);
 	}
 
 	protected processConsumedResponse(events: Array<DecodedSerializedEventstoreEvent>): Promise<void> {
@@ -111,11 +112,8 @@ export class EventstoreClient {
 }
 
 export class NoHanlderToProcessEvents extends Error {
-	events: any;
-
-	constructor(events: any) {
+	constructor(public events: any) {
 		super();
-		this.events = events;
 		this.message = 'The handler for processing events is still not set. The non-processed events are stored in attribute "events" of this error object';
 	}
 }
@@ -123,6 +121,6 @@ export class NoHanlderToProcessEvents extends Error {
 export class TooLongToStop extends Error {
 	constructor() {
 		super();
-		this.message = 'Stopping the server took too much time. Stopping anyway, events may be still in process';
+		this.message = 'Stopping the server took too much time. Stopping anyway, events may still be processing';
 	}
 }

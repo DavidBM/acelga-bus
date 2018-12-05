@@ -70,14 +70,25 @@ export interface IPipeline<T> {
 
 export type PipelineFactory<T> = (scheduler: IDispatcher<T>) => IPipeline<T>;
 
-export interface IFactory<T = {}> {
-	build(serializedEvent: {}): T;
-}
-
-export interface IEventFactory<D extends TypedEvent, T = {}> extends IFactory {
-	build(serializedEvent: D): T;
+export interface EventFactory<T, J> {
+	build(serializedEvent: DecodedEvent<J>): Event<T>;
 }
 
 export type TypedEvent = {
 	eventType: string,
 };
+
+export const originalEventSymbol: unique symbol = Symbol('originalEvent');
+
+export type Event<T> = T;
+
+export type DecodedEvent<J> = TypedEvent & J;
+
+export type ReceivedEvent<T, J> = Event<T> & {
+	[originalEventSymbol]: DecodedEvent<J>;
+};
+
+export interface AcknowledgeableClient<J> {
+	ack(event: DecodedEvent<J>): Promise<void>;
+	nack(event: DecodedEvent<J>): Promise<void>;
+}

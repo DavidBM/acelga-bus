@@ -1,17 +1,22 @@
-import {TypedEvent} from '../corebus/interfaces';
+import {Event, DecodedEvent, ReceivedEvent} from '../corebus/interfaces';
 
-export interface IGoogleEvent{
-	origin: string; // Events needs to be routed to a stream called with the name
-}
+export type EventInstanceContract = {
+	origin: string;
+};
 
-export type OriginalType = IGoogleEvent & TypedEvent & {
+export type GoogleDecodedContract = {
+	origin: string;
 	data: any;
 	eventId: string;
 	ackId: string;
 	project: string;
 };
 
-export type DecodedSerializedGoogleEvent = IGoogleEvent & OriginalType;
+export type GoogleEvent = Event<EventInstanceContract>;
+
+export type DecodedGoogleEvent = DecodedEvent<GoogleDecodedContract>;
+
+export type ReceivedGoogleEvent = ReceivedEvent<EventInstanceContract, GoogleDecodedContract>;
 
 export type GoogleAcknowledger = {
 	ack: (project: string, subscription: string, ids: string[]) => Promise<void>,

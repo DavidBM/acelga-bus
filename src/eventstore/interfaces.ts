@@ -1,4 +1,4 @@
-import {TypedEvent} from '../corebus/interfaces';
+import {Event, DecodedEvent, ReceivedEvent} from '../corebus/interfaces';
 
 export interface EventStoreConnectionOptions {
 	hostname: string;
@@ -9,32 +9,23 @@ export interface EventStoreConnectionOptions {
 	};
 }
 
-export interface IEventstoreEvent{
-	origin: string; // Events needs to be routed to a stream called with the name
-}
+export type EventstoreFeedbackHTTP = (url: string) => Promise<void>;
 
-export const originalEventSymbol: unique symbol = Symbol('originalEvent');
+export type EventInstanceContract = {
+	origin: string;
+};
 
-export type OriginalType = IEventstoreEvent & TypedEvent & {
+export type EventstoreDecodedContract = {
 	ack: string;
 	nack: string;
 	data: any;
 	metadata: any | void;
 	eventId: string;
+	origin: string;
 };
 
-export type DecodedSerializedEventstoreEvent = IEventstoreEvent & OriginalType;
+export type IEventstoreEvent = Event<EventInstanceContract>;
 
-export interface IEventstoreEventReceived extends IEventstoreEvent {
-	[originalEventSymbol]: OriginalType;
-}
+export type DecodedSerializedEventstoreEvent = DecodedEvent<EventstoreDecodedContract>;
 
-export interface IFactory<T = {}> {
-	build(serializedEvent: {}): T;
-}
-
-export interface IEventFactory<T = {}> extends IFactory {
-	build(serializedEvent: DecodedSerializedEventstoreEvent): T;
-}
-
-export type EventstoreFeedbackHTTP = (url: string) => Promise<void>;
+export type IEventstoreEventReceived = ReceivedEvent<EventInstanceContract, EventstoreDecodedContract>;

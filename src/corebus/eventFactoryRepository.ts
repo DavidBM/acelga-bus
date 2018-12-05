@@ -1,14 +1,13 @@
-import {IFactory, TypedEvent} from './interfaces';
+import {EventFactory, DecodedEvent} from './interfaces';
 
-export class EventFactoryRespository<T, D extends TypedEvent> {
-	factories: Map<string, IFactory<T>> = new Map();
-	validator: (event: any) => event is D;
+type Validator<E> = (event: any) => event is DecodedEvent<E>;
 
-	constructor(validator: (event: any) => event is D) {
-		this.validator = validator;
-	}
+export class EventFactoryRespository<T, D> {
+	factories: Map<string, EventFactory<T, D>> = new Map();
 
-	set(name: string, factory: IFactory<T>): void {
+	constructor(private validator: Validator<D>) {}
+
+	set(name: string, factory: EventFactory<T, D>): void {
 		if (this.factories.get(name)) {
 			// We throw here because this function is usually called in
 			// the instantiation of the application. We want to fail fast & hard
@@ -47,23 +46,15 @@ export class FactoryNotFoundError extends Error {
 }
 
 export class NotADecodedSerializedEventstoreEvent extends Error {
-	givenEvent: any;
-
-	constructor(givenEvent: any) {
+	constructor(public givenEvent: any) {
 		super();
-		this.givenEvent = givenEvent;
 		this.message = 'The middleware for passing from a raw eventstore JSON object to a Event class has found that the data given is not an event. The original data is in the attribute "givenEvent" of this Error object';
 	}
 }
 
-export class EventNameCollision extends Error {
-	name: string;
-	factory: IFactory;
-
-	constructor(name: string, factory: IFactory) {
+export class EventNameCollision<E, R> extends Error {
+	constructor(public name: string, public factory: EventFactory<E, R>) {
 		super();
-		this.name = name;
-		this.factory = factory;
 		this.message = 'The event you are trying to register seem to be registered previously. Maybe you are registerint it 2 times or you have 2 classes with the same name. You can find the eventName and the factory in the "event" and "factory" attributes int his error';
 	}
 }

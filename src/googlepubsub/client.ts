@@ -1,7 +1,7 @@
 import {BackoffExecutor, BackoffStopper} from '../corebus/backoff';
 import {IEmptyTracker} from '../corebus/emptyTracker';
 // import * as Google from '@google-cloud/pubsub';
-import {DecodedSerializedGoogleEvent, GoogleAcknowledger, OriginalType, HTTPGoogleSynchronousSubscriptionClient, HTTPGoogleSynchronousPublisherClient} from './interfaces';
+import {ReceivedGoogleEvent, GoogleAcknowledger, DecodedGoogleEvent, HTTPGoogleSynchronousSubscriptionClient, HTTPGoogleSynchronousPublisherClient} from './interfaces';
 import {ErrorLogger} from '../index';
 
 // as example
@@ -10,7 +10,7 @@ import {ErrorLogger} from '../index';
 
 const NO_MESSAGES = Symbol('no messages');
 
-type Handler = (events: DecodedSerializedGoogleEvent[]) => Promise<void>;
+type Handler = (events: ReceivedGoogleEvent[]) => Promise<void>;
 export interface SubscriptionDefinition {
 	topic: string;
 	}
@@ -27,7 +27,7 @@ export class GoogleClient {
 		protected acknowledger: GoogleAcknowledger,
 		protected logError: ErrorLogger,
 		protected backoffStrategy: BackoffExecutor,
-		protected eventstoreResponseDecoder: (response: any) => Array<DecodedSerializedGoogleEvent>,
+		protected responseDecoder: (response: any) => Array<ReceivedGoogleEvent>,
 		protected subscriptions: Array<SubscriptionDefinition>,
 		protected tracker: IEmptyTracker,
 		protected milisecondsToStop: number,
@@ -74,7 +74,7 @@ export class GoogleClient {
 
 			try {
 				const response = await this.pullClient.pull({subscription: subscriptionPath, maxMessages: this.messagesToGet});
-				const events = this.eventstoreResponseDecoder(response);
+				const events = this.responseDecoder(response);
 				await this.processConsumedResponse(events);
 				this.tracker.forget(trackerId);
 				restarting();
@@ -94,15 +94,15 @@ export class GoogleClient {
 		this.subscriptionsCancellers.push(backoffStopper);
 	}
 
-	async ack(event: OriginalType): Promise<void> {
+	async ack(event: DecodedGoogleEvent): Promise<void> {
 		await this.acknowledger.ack(event.project, event.origin, [event.ackId]);
 	}
 
-	async nack(event: OriginalType): Promise<void> {
+	async nack(event: DecodedGoogleEvent): Promise<void> {
 		await this.acknowledger.nack(event.project, event.origin, [event.ackId]);
 	}
 
-	protected processConsumedResponse(events: Array<DecodedSerializedGoogleEvent>): Promise<void> {
+	protected processConsumedResponse(events: Array<ReceivedGoogleEvent>): Promise<void> {
 		if (!Array.isArray(events) || events.length === 0) {
 			return Promise.reject(NO_MESSAGES);
 		}
@@ -110,7 +110,7 @@ export class GoogleClient {
 		return this.processEvents(events);
 	}
 
-	protected processEvents(events: Array<DecodedSerializedGoogleEvent>): Promise<void> {
+	protected processEvents(events: Array<ReceivedGoogleEvent>): Promise<void> {
 		if (!this.handler){
 			return this.logError(new NoHanlderToProcessEvents(events));
 		}
