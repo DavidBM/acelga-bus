@@ -1,5 +1,5 @@
 /* tslint:disable:no-unused-locals */
-import {EventStoreBus, EventAlreadySubscribed} from '../../eventstore/bus';
+import {Facade, EventAlreadySubscribed} from '../../eventstore/facade';
 import {EventWithoutACKLinks} from '../../eventstore/eventProcessor';
 import {createSpiedMockedEventstoreClient, createBrokenPipelineFactory, noACKDecodedEventstoreResponse, noNACKDecodedEventstoreResponse} from './mocks';
 import {ErrorLogger} from '../../';
@@ -40,7 +40,7 @@ function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToRetur
 	jest.spyOn(bulkDispatcher, 'on');
 	const eventFactoryRepository = new EventFactoryRespository<any, any>(decodedEventValidator);
 	const eventProcessor = new EventProcessor<any>(eventFactoryRepository, errorLogger, bulkDispatcher, client);
-	const bus = new EventStoreBus(client, eventProcessor, bulkDispatcher);
+	const bus = new Facade(client, eventProcessor, bulkDispatcher);
 
 	return {
 		client,
@@ -56,9 +56,9 @@ function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToRetur
 	};
 }
 
-describe('EventstoreBus', () => {
+describe('Facade', () => {
 	let evClient: HTTPClient;
-	let bus: EventStoreBus;
+	let bus: Facade;
 	let errorLogger: ErrorLogger;
 	let bulkDispatcher: BulkDispatcher<any>;
 

@@ -8,7 +8,7 @@ import {EventstoreClient} from './client';
    Create a d.ts for files in order to have them in different files without importer the concrete implementation
  - Research about how to know if a msessage was no ack before
 */
-export class EventStoreBus<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {
+export class Facade<T extends IEventstoreEvent = IEventstoreEvent> implements IEventBus<T> {
 
 	constructor(
 		private client: EventstoreClient,

@@ -3,7 +3,7 @@ import {backoffFibonacci, BackoffExecutor} from '../corebus/backoff';
 import debug from 'debug';
 
 import {debugLogger} from '../corebus/logger';
-import {EventStoreBus} from './bus';
+import {Facade} from './facade';
 import {EventFactoryRespository} from '../corebus/eventFactoryRepository';
 import {EventStoreConnectionOptions, IEventstoreEvent, DecodedSerializedEventstoreEvent} from './interfaces';
 import {ErrorLogger, BulkDispatcher, Dispatcher, ParallelScheduler, pipelineFactory} from '../index';
@@ -16,7 +16,7 @@ export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	connectionOptions: EventStoreConnectionOptions,
 	subscriptions: Array<SubscriptionDefinition>,
 	errorLogger?: ErrorLogger,
-	): EventStoreBus<T> {
+	): Facade<T> {
 
 	const logger = errorLogger || debugLogger(debug('EventStoryBus:error'));
 	const tracker = new EmptyTracker();
@@ -27,7 +27,7 @@ export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	const dispatcher = createDispatcher<T>(logger);
 	const eventProcessor = new EventProcessor<T>(eventFactory, logger, dispatcher, eventstoreClient);
 
-	return new EventStoreBus<T>(eventstoreClient, eventProcessor, dispatcher);
+	return new Facade<T>(eventstoreClient, eventProcessor, dispatcher);
 }
 
 function createBackoff(): BackoffExecutor {
