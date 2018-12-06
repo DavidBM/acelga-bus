@@ -9,10 +9,12 @@ import {Dispatcher} from '../../corebus/dispatchers/single';
 import Scheduler from '../../corebus/schedulers/parallel';
 import {IEventstoreEvent} from '../../eventstore/interfaces';
 import {EventProcessor, EventWithoutOriginalEvent} from '../../corebus/eventProcessor';
-import {isValidDecodedEventStore} from '../../eventstore/utils';
+import {isValidDecodedEventStore, decodeEventstoreResponse} from '../../eventstore/utils';
 import {pipelineFactory} from '../../corebus/pipeline/factory';
 import {originalEventSymbol} from '../../corebus/interfaces';
+import {EmptyTracker} from '../../corebus/emptyTracker';
 import {HTTPClient} from 'geteventstore-promise';
+import {SynchronousClientProcessor} from '../../corebus/synchronousClientProcessor';
 
 class EventA implements IEventstoreEvent {
 	origin = 'aggregateA';
@@ -27,13 +29,15 @@ class EventB implements IEventstoreEvent {
 }
 
 function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToReturn?: any, evDecoder?: any, decodedEventValidator: any = isValidDecodedEventStore){
+	const subscriptions = [{stream: 'a', subscription: 'a'}];
+
 	const {
 		client: client,
 		backoffSummary: backoffSummary,
 		errorLogger: errorLogger,
 		evClient: evClient,
 		backoff: backoff,
-	} = createSpiedMockedEventstoreClient(1, [{stream: 'a', subscription: 'a'}], eventsToReturn, evDecoder);
+	} = createSpiedMockedEventstoreClient(1, subscriptions, eventsToReturn, evDecoder);
 
 	const dispatcher = new Dispatcher<IEventstoreEvent>();
 	const scheduler = new Scheduler<IEventstoreEvent>();
@@ -41,9 +45,13 @@ function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToRetur
 	jest.spyOn(bulkDispatcher, 'on');
 	const eventFactoryRepository = new EventFactoryRespository<any, any>(decodedEventValidator);
 	const eventProcessor = new EventProcessor<any, any>(eventFactoryRepository, errorLogger, bulkDispatcher, client);
-	const bus = new EventstoreFacade(client, eventProcessor, bulkDispatcher);
+	const tracker = new EmptyTracker();
 
-	client.setHandler(events => eventProcessor.processEvents(events));
+	const synchronousClientProcessor = new SynchronousClientProcessor<any, any, any>(client, eventProcessor, errorLogger, backoff, decodeEventstoreResponse, subscriptions, tracker, 25000);
+
+	const bus = new EventstoreFacade(synchronousClientProcessor, client, eventProcessor, bulkDispatcher);
+
+	synchronousClientProcessor.setHandler(events => eventProcessor.processEvents(events));
 
 	return {
 		client,
@@ -62,7 +70,7 @@ function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToRetur
 
 describe('EventstoreFacade', () => {
 	let evClient: HTTPClient;
-	let bus: EventstoreFacade;
+	let bus: EventstoreFacade<any>;
 	let errorLogger: ErrorLogger;
 	let bulkDispatcher: BulkDispatcher<any>;
 
@@ -223,10 +231,8 @@ describe('EventstoreFacade', () => {
 
 		bus.publish(event);
 
-		setTimeout(async () => {
-			expect(evClient.writeEvent).toHaveBeenCalledWith(event.origin, EventA.name, event);
-			done();
-		}, 0);
+		expect(evClient.writeEvent).toHaveBeenCalledWith(event.origin, EventA.name, event);
+		done();
 	});
 
 	it('should nack the mesages that got an error', async (done) => {

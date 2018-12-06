@@ -92,3 +92,13 @@ export interface AcknowledgeableClient<J> {
 	ack(event: DecodedEvent<J>): Promise<void>;
 	nack(event: DecodedEvent<J>): Promise<void>;
 }
+
+export interface PullBasicClient<C> {
+	getEvents(config: C): Promise<any>;
+}
+
+export interface PushBasicClient<E, J> {
+	publish(event: ReceivedEvent<E, J>): Promise<void>;
+}
+
+export interface FullSyncronousClient<E, J, C> extends AcknowledgeableClient<J>, PullBasicClient<C>, PushBasicClient<E, J> {}

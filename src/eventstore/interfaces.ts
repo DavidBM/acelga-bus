@@ -29,3 +29,8 @@ export type IEventstoreEvent = Event<EventInstanceContract>;
 export type DecodedSerializedEventstoreEvent = DecodedEvent<EventstoreDecodedContract>;
 
 export type IEventstoreEventReceived = ReceivedEvent<EventInstanceContract, EventstoreDecodedContract>;
+
+export type SubscriptionDefinition = {
+	stream: string;
+	subscription: string;
+};

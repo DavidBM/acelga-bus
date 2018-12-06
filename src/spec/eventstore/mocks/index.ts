@@ -2,9 +2,8 @@ import * as BackoffOriginall from 'backoff';
 import {backoffFibonacci} from '../../../corebus/backoff';
 import {HTTPClient} from 'geteventstore-promise';
 import {eventstoreResponse} from '../utils';
-import {SubscriptionDefinition, EventstoreClient} from '../../../eventstore/client';
-import {EmptyTracker} from '../../../corebus/emptyTracker';
-import {EventstoreFeedbackHTTP} from '../../../eventstore/interfaces';
+import {EventstoreClient} from '../../../eventstore/client';
+import {EventstoreFeedbackHTTP, SubscriptionDefinition} from '../../../eventstore/interfaces';
 import {decodeEventstoreResponse} from '../../../eventstore/utils';
 import {pipelineFactory} from '../../../corebus/pipeline/factory';
 import {IDispatcher, IPipeline} from '../../../corebus/interfaces';
@@ -72,8 +71,7 @@ export function createSpiedMockedEventstoreClient(correctEventsIterations: numbe
 	const client = createMockedSpiedEventstorelibWithCorrectEvents(correctEventsIterations, eventsToReturn);
 	const errorLogger = jest.fn();
 	const eventstoreSignal: EventstoreFeedbackHTTP = jest.fn().mockImplementation(() => Promise.resolve());
-	const tracker = new EmptyTracker();
-	const esClient = new EventstoreClient(client, eventstoreSignal, errorLogger, backoff, evDecoder, subscritions, tracker, 25000);
+	const esClient = new EventstoreClient(client, eventstoreSignal);
 
 	jest.spyOn(esClient, 'nack');
 	jest.spyOn(esClient, 'ack');

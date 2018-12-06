@@ -5,14 +5,15 @@ import debug from 'debug';
 import {debugLogger} from '../corebus/logger';
 import {EventstoreFacade} from './facade';
 import {EventFactoryRespository} from '../corebus/eventFactoryRepository';
-import {EventStoreConnectionOptions, IEventstoreEvent, DecodedSerializedEventstoreEvent} from './interfaces';
+import {SynchronousClientProcessor} from '../corebus/synchronousClientProcessor';
+import {EventStoreConnectionOptions, DecodedSerializedEventstoreEvent, SubscriptionDefinition, EventInstanceContract, EventstoreDecodedContract} from './interfaces';
 import {ErrorLogger, BulkDispatcher, Dispatcher, ParallelScheduler, pipelineFactory} from '../index';
-import {EventstoreClient, SubscriptionDefinition} from './client';
+import {EventstoreClient} from './client';
 import {EventProcessor} from '../corebus/eventProcessor';
 import {eventstoreFeedbackHTTP, isValidDecodedEventStore, decodeEventstoreResponse} from './utils';
 import {EmptyTracker} from '../corebus/emptyTracker';
 
-export function create< T extends IEventstoreEvent = IEventstoreEvent>(
+export function create< T extends EventInstanceContract = EventInstanceContract>(
 	connectionOptions: EventStoreConnectionOptions,
 	subscriptions: Array<SubscriptionDefinition>,
 	errorLogger?: ErrorLogger,
@@ -23,14 +24,17 @@ export function create< T extends IEventstoreEvent = IEventstoreEvent>(
 	const client = new HTTPClient(connectionOptions);
 	const backoffStrategy = createBackoff();
 	const eventFactory = new EventFactoryRespository<T, DecodedSerializedEventstoreEvent>(isValidDecodedEventStore);
-	const eventstoreClient = new EventstoreClient(client, eventstoreFeedbackHTTP, logger, backoffStrategy, decodeEventstoreResponse, subscriptions, tracker, 25000);
+
+	const eventstoreClient = new EventstoreClient(client, eventstoreFeedbackHTTP);
 	const dispatcher = createDispatcher<T>(logger);
-	const eventProcessor = new EventProcessor<T, DecodedSerializedEventstoreEvent>(eventFactory, logger, dispatcher, eventstoreClient);
+	const eventProcessor = new EventProcessor<T, EventstoreDecodedContract>(eventFactory, logger, dispatcher, eventstoreClient);
+
+	const synchronousClientProcessor = new SynchronousClientProcessor<T, SubscriptionDefinition, EventstoreDecodedContract>(eventstoreClient, eventProcessor, logger, backoffStrategy, decodeEventstoreResponse, subscriptions, tracker, 25000);
 
 	/* istanbul ignore next */ // We ignore this line because for testing this callback we would need a DI (or to give factories for each instance) and there is no reason for only one line that cannot be tested when we already have the types.
-	eventstoreClient.setHandler(events => eventProcessor.processEvents(events));
+	synchronousClientProcessor.setHandler(events => eventProcessor.processEvents(events));
 
-	return new EventstoreFacade<T>(eventstoreClient, eventProcessor, dispatcher);
+	return new EventstoreFacade<T>(synchronousClientProcessor, eventstoreClient, eventProcessor, dispatcher);
 }
 
 function createBackoff(): BackoffExecutor {
