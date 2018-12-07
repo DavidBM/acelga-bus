@@ -39,12 +39,12 @@ export class EventProcessor<E, R> { // E = Event data, R = Decoded original even
 
 					eventInstances.push(decodedEvent);
 				} catch (error) {
-					this.logError(error);
+					this.logError(new ErrorOnEventReconstruction(event, error));
 				}
 			}
 
 			const errors = await this.dispatcher.trigger(eventInstances);
-			await this.processErrors(errors);
+			return await this.processErrors(errors);
 		} catch (error) {
 			this.logError(new InternalErrorNOACKAll(error));
 
@@ -69,7 +69,7 @@ export class EventProcessor<E, R> { // E = Event data, R = Decoded original even
 		const originalEvent = event[originalEventSymbol];
 
 		if (originalEvent){
-			await this.client[action](originalEvent)
+			return await this.client[action](originalEvent)
 			.catch(error => this.logError(error));
 		} else {
 			this.logError(new EventWithoutOriginalEvent(event, originalEvent));
@@ -88,5 +88,13 @@ export class EventWithoutOriginalEvent<E, R> extends Error {
 	constructor(public event: E, public originalEvent: DecodedEvent<R>) {
 		super();
 		this.message = 'The provided event had no original event inside. The library inject a attribute with a symbol in orer to keep track of the original event data. If the event is rebuild by the user, the library won\'t be able to getthe required original data for operation like ack & nack. Please, make sure that the original event is the one you are providing to the library and not a copy done by a library or the user.';
+	}
+}
+
+export class ErrorOnEventReconstruction<E> extends Error{
+
+	constructor(public originalEvent: E, public error: any) {
+		super();
+		this.message = 'There was an error when calling the user factoy for an event. You can find the event in the attribute "originalEvent" and the error in the attribute "error"';
 	}
 }

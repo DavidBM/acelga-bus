@@ -24,11 +24,11 @@ export type EventstoreDecodedContract = {
 	origin: string;
 };
 
-export type IEventstoreEvent = Event<EventInstanceContract>;
+export type IEventstoreEvent<T extends EventInstanceContract = EventInstanceContract> = Event<T>;
 
 export type DecodedSerializedEventstoreEvent = DecodedEvent<EventstoreDecodedContract>;
 
-export type IEventstoreEventReceived = ReceivedEvent<EventInstanceContract, EventstoreDecodedContract>;
+export type IEventstoreEventReceived<T extends EventInstanceContract = EventInstanceContract> = ReceivedEvent<T, EventstoreDecodedContract>;
 
 export type SubscriptionDefinition = {
 	stream: string;

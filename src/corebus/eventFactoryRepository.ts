@@ -23,7 +23,6 @@ export class EventFactoryRespository<T, D> {
 	}
 
 	execute(event: unknown) {
-
 		if (!this.validator(event)){
 			throw new NotADecodedSerializedEventstoreEvent(event);
 		}

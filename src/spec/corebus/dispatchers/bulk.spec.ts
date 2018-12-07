@@ -116,7 +116,7 @@ describe('BulkDispatcher', () => {
 				{error: new Error('hola'), event: new CustomEvent(), isError: true},
 				{error: null, event: new CustomEvent(), isError: false},
 				{error: new Error('hola'), event: new CustomEvent(), isError: true},
-				{error: null, event: new CustomEvent(), isError: false}
+				{error: null, event: new CustomEvent(), isError: false},
 			]);
 			expect(okHandler.mock.calls.length).toBe(2);
 			expect(rejecHandler.mock.calls.length).toBe(2);
@@ -150,7 +150,7 @@ describe('BulkDispatcher', () => {
 
 		const handler1 = jest.fn((event) => {
 			expect(event).toBeInstanceOf(OtherEvent);
-			return Promise.reject(new Error("Hola"));
+			return Promise.reject(new Error('Hola'));
 		});
 		const handler2 = jest.fn((event) => {
 			expect(event).toBeInstanceOf(CustomEvent);

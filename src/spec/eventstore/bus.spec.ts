@@ -8,7 +8,7 @@ import BulkDispatcher from '../../corebus/dispatchers/bulk';
 import {Dispatcher} from '../../corebus/dispatchers/single';
 import Scheduler from '../../corebus/schedulers/parallel';
 import {IEventstoreEvent} from '../../eventstore/interfaces';
-import {EventProcessor, EventWithoutOriginalEvent} from '../../corebus/eventProcessor';
+import {EventProcessor, EventWithoutOriginalEvent, ErrorOnEventReconstruction} from '../../corebus/eventProcessor';
 import {isValidDecodedEventStore, decodeEventstoreResponse} from '../../eventstore/utils';
 import {pipelineFactory} from '../../corebus/pipeline/factory';
 import {originalEventSymbol} from '../../corebus/interfaces';
@@ -200,9 +200,8 @@ describe('EventstoreFacade', () => {
 
 		setTimeout(async () => {
 			await bus.stop();
-
 			expect(errorLogger).toHaveBeenCalledTimes(1);
-			expect(errorLogger).toHaveBeenCalledWith(new FactoryNotFoundError());
+			expect(errorLogger).toHaveBeenCalledWith(new ErrorOnEventReconstruction(undefined, new FactoryNotFoundError())); // we add undefined because seems that Jest uses string comparation for comparing nested structures
 			done();
 		}, 0);
 	});
