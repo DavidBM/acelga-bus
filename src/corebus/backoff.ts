@@ -7,7 +7,7 @@ export enum BackoffAction {
 
 type BackoffFactory = (options: backoff.ExponentialOptions) => backoff.Backoff;
 
-class BackoffWrapper {
+export class BackoffWrapper {
 	backoffStrategy: backoff.Backoff;
 	backoffResult: BackoffAction | null = null;
 	isReady: boolean = false;
@@ -44,9 +44,12 @@ class BackoffWrapper {
 	}
 
 	computebackoff() {
+		// If it is not ready, then it will be schedules when continuing/restarting are called
 		if (!this.isReady) return;
+		// If the action is restart we restart the time counter
 		if (this.backoffResult === BackoffAction.restart)
 			this.backoffStrategy.reset();
+		// If the result is null it means a backoff was already executed, we want to avoid to call it two times
 		if (this.backoffResult !== null)
 			this.backoffStrategy.backoff();
 	}

@@ -11,10 +11,6 @@ export class EventstoreClient<T extends EventInstanceContract> implements FullSy
 		protected signal: EventstoreFeedbackHTTP,
 	) {	}
 
-	public ping(): Promise<void> {
-		return this.client.ping();
-	}
-
 	public publish(event: Event<T>): Promise<void> {
 		return this.client.writeEvent(event.origin, event.constructor.name, event); // Asuming good serialization
 	}

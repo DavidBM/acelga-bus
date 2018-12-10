@@ -51,8 +51,6 @@ function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToRetur
 
 	const bus = new EventstoreFacade(synchronousClientProcessor, client, eventProcessor, bulkDispatcher);
 
-	synchronousClientProcessor.setHandler(events => eventProcessor.processEvents(events));
-
 	return {
 		client,
 		backoffSummary,

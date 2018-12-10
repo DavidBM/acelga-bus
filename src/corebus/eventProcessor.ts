@@ -1,5 +1,5 @@
 import {Constructable, BulkDispatcher, ErrorLogger, ExecutionResult, EventFactoryRespository} from '../index';
-import {DecodedEvent, ReceivedEvent, originalEventSymbol, EventFactory, AcknowledgeableClient, Event} from '../corebus/interfaces';
+import {DecodedEvent, ReceivedEvent, originalEventSymbol, EventFactory, AcknowledgeableClient, Event, EventProcessingLogic} from '../corebus/interfaces';
 import {iterate} from 'iterated-pipes';
 
 const PARALLEL_FEEDBACK = 5;
@@ -11,7 +11,7 @@ enum FEEDBACK_ACTION {
 type ReceivedEvents<E, R> = E & ReceivedEvent<E, R>;
 type EventRepository<E, R> = EventFactoryRespository<Event<E>, DecodedEvent<R>>;
 
-export class EventProcessor<E, R> { // E = Event data, R = Decoded original event data
+export class EventProcessor<E, R> implements EventProcessingLogic<E, R>{ // E = Event data, R = Decoded original event data
 
 	constructor(
 		private eventRepository: EventRepository<E, R>,

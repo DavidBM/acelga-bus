@@ -31,9 +31,6 @@ export function create< T extends EventInstanceContract = EventInstanceContract>
 
 	const synchronousClientProcessor = new SynchronousClientProcessor<T, SubscriptionDefinition, EventstoreDecodedContract>(eventstoreClient, eventProcessor, logger, backoffStrategy, decodeEventstoreResponse, subscriptions, tracker, 25000);
 
-	/* istanbul ignore next */ // We ignore this line because for testing this callback we would need a DI (or to give factories for each instance) and there is no reason for only one line that cannot be tested when we already have the types.
-	synchronousClientProcessor.setHandler(events => eventProcessor.processEvents(events));
-
 	return new EventstoreFacade<T>(synchronousClientProcessor, eventstoreClient, eventProcessor, dispatcher);
 }
 

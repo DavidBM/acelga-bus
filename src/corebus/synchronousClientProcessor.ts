@@ -1,21 +1,17 @@
-import {DecodedEvent, PullBasicClient} from '../corebus/interfaces';
-import {EventProcessor} from '../corebus/eventProcessor';
+import {DecodedEvent, PullBasicClient, EventProcessingLogic} from '../corebus/interfaces';
 import {BackoffExecutor, BackoffStopper} from '../corebus/backoff';
 import {IEmptyTracker} from '../corebus/emptyTracker';
 import {ErrorLogger} from '../index';
-
-type Handler<J> = (events: DecodedEvent<J>[]) => Promise<void>;
 
 const NO_MESSAGES = Symbol('no messages');
 // E: Event contract,  SC: Subcription config (accepted as array for multiple subscriptions, DC: DecodedEvent subtype
 export class SynchronousClientProcessor<E, SC, DE>{
 	protected subscriptionsCancellers: BackoffStopper[] = [];
 	protected messagesToGet = 100;
-	protected handler: null | Handler<DecodedEvent<DE>> = null;
 
 	constructor(
 		protected client: PullBasicClient<SC>,
-		protected eventProcessor: EventProcessor<E, DE>,
+		protected eventProcessor: EventProcessingLogic<E, DE>,
 		protected logError: ErrorLogger,
 		protected backoffStrategy: BackoffExecutor,
 		protected eventstoreResponseDecoder: (response: any) => Array<DecodedEvent<DE>>,
@@ -23,10 +19,6 @@ export class SynchronousClientProcessor<E, SC, DE>{
 		protected tracker: IEmptyTracker,
 		protected milisecondsToStop: number,
 	) {	}
-
-	public setHandler(handler: Handler<DE>) {
-		this.handler = handler;
-	}
 
 	public startConsumption() {
 		this.tracker.remember('running');
@@ -77,22 +69,7 @@ export class SynchronousClientProcessor<E, SC, DE>{
 			return Promise.reject(NO_MESSAGES);
 		}
 
-		return this.processEvents(events);
-	}
-
-	protected processEvents(events: Array<DecodedEvent<DE>>): Promise<void> {
-		if (!this.handler){
-			return this.logError(new NoHanlderToProcessEvents(events));
-		}
-
 		return this.eventProcessor.processEvents(events);
-	}
-}
-
-export class NoHanlderToProcessEvents extends Error {
-	constructor(public events: any) {
-		super();
-		this.message = 'The handler for processing events is still not set. The non-processed events are stored in attribute "events" of this error object';
 	}
 }
 
