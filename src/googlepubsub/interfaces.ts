@@ -1,5 +1,9 @@
 import {Event, DecodedEvent, ReceivedEvent} from '../corebus/interfaces';
 
+export type SubscriptionConfig = {
+	topic: string,
+};
+
 export type EventInstanceContract = {
 	origin: string;
 };
