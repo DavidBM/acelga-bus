@@ -1,23 +1,23 @@
-import {DecodedGoogleEvent} from './interfaces';
+import {DecodedGoogleEvent, SubscriptionConfig, GoogleMessage} from './interfaces';
 
-export function decodeEventstoreResponse(response: any, project: string): Array<DecodedGoogleEvent> {
-	if (!response || !Array.isArray(response.entries))
+export function decodeEventstoreResponse(response: any, config: SubscriptionConfig): Array<DecodedGoogleEvent> {
+	if (!response || !Array.isArray(response.receivedMessages))
 		throw new UnrecognizedGoogleResponse(response);
 
-	return response.entries.map((entry: any) => decodeEventstoreEntry(entry, project));
+	return response.receivedMessages.map((entry: any) => decodeEventstoreEntry(entry, config));
 }
 
-export function decodeEventstoreEntry(entry: any, project: string): DecodedGoogleEvent {
+export function decodeEventstoreEntry(entry: GoogleMessage, subscriptionConfig: SubscriptionConfig): DecodedGoogleEvent {
 	let event: DecodedGoogleEvent;
 
 	try {
-		event = { // TODO: finish mapping & adapt isValidDecodedEventStore function
-			origin: entry.event.streamId,
-			data: entry.event.data,
+		event = {
+			eventType: 'Google',
+			data: Buffer.from(entry.message.data, 'base64').toString(),
 			ackId: entry.ackId,
-			project,
-			eventType: entry.event.eventType,
-			eventId: entry.event.eventId,
+			project: subscriptionConfig.projectName,
+			eventId: entry.message.messageId,
+			subscription: subscriptionConfig.subscriptionName,
 		};
 	} catch (e) {
 		throw new UnrecognizedGoogleEntry(entry, e);
@@ -54,3 +54,21 @@ export class UnrecognizedGoogleEntry extends Error {
 		this.message = 'The entry from the response from Google is not a recognized entry. The original entry is attached in the "entry" attribute of this error. In case of exception there is an attribute "originalError".';
 	}
 }
+
+/* Example of response
+{
+  "receivedMessages": [
+    {
+      "ackId": "QV5AEkw2BURJUytDCypYEU4EISE-MD5FU0RQBhYsXUZIUTcZCGhRDk9eIz81IChFEwtTE1Fcdg5BEGkzXHUHUQ0YdHpoIT8LFwNURVl-VVsJPGh-Y3QOVg8Zc3Voc2hbEgkCRXvwlZLpxtVLZhg9XBJLLD5-PTBF",
+      "message": {
+        "data": "eyJob2xhIjogdHJ1ZX0=", // Base64, decoded: {"hola": true}
+        "attributes": {
+          "some": "other"
+        },
+        "messageId": "197201896211800",
+        "publishTime": "2018-12-11T15:37:14.844Z"
+      }
+    }
+  ]
+}
+*/

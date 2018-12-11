@@ -105,8 +105,7 @@ describe('eventstore Utils',  () => {
 					expect(data).toBeUndefined();
 					server.close();
 					done();
-				}).catch((error) => {
-					console.log(error);
+				}).catch(() => {
 					server.close();
 					done.fail();
 				});

@@ -14,7 +14,7 @@ export class SynchronousClientProcessor<E, SC, DE>{
 		protected eventProcessor: EventProcessingLogic<E, DE>,
 		protected logError: ErrorLogger,
 		protected backoffStrategy: BackoffExecutor,
-		protected eventstoreResponseDecoder: (response: any) => Array<DecodedEvent<DE>>,
+		protected eventstoreResponseDecoder: (response: any, subscriptionConfig: SC) => Array<DecodedEvent<DE>>,
 		protected subscriptions: Array<SC>,
 		protected tracker: IEmptyTracker,
 		protected milisecondsToStop: number,
@@ -44,7 +44,7 @@ export class SynchronousClientProcessor<E, SC, DE>{
 
 			try {
 				const response = await this.client.getEvents(config);
-				const events = this.eventstoreResponseDecoder(response);
+				const events = this.eventstoreResponseDecoder(response, config);
 				await this.processConsumedResponse(events);
 				this.tracker.forget(trackerId);
 				restarting();

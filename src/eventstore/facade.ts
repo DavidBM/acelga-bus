@@ -43,7 +43,7 @@ export class EventstoreFacade<T extends EventInstanceContract> {
 		return this.publisher.publish(event);
 	}
 
-	public addEventType(event: Constructable<T>, factory: EventFactory<T, EventstoreDecodedContract>): void {
+	public addEventType<T1 extends T>(event: Constructable<T1>, factory: EventFactory<T1, EventstoreDecodedContract>): void {
 		this.eventProcessor.addEventType(event, factory);
 	}
 }

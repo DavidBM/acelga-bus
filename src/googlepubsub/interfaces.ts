@@ -1,31 +1,36 @@
-import {Event, DecodedEvent, ReceivedEvent} from '../corebus/interfaces';
+import {DecodedEvent, ReceivedEvent} from '../corebus/interfaces';
 
-export type SubscriptionConfig = {
-	topic: string,
-};
+export interface SubscriptionConfig {
+	subscriptionName: string;
+	projectName: string;
+	topicName: string;
+}
 
-export type EventInstanceContract = {
+export interface EventInstanceContract {
 	origin: string;
-};
+}
 
-export type GoogleDecodedContract = {
-	origin: string;
+export interface GoogleDecodedContract {
 	data: any;
-	eventId: string;
 	ackId: string;
 	project: string;
-};
+	eventId: string;
+	subscription: string;
+}
 
-export type GoogleEvent = Event<EventInstanceContract>;
+export interface GoogleEvent extends EventInstanceContract{}
 
-export type DecodedGoogleEvent = DecodedEvent<GoogleDecodedContract>;
+export interface DecodedGoogleEvent extends DecodedEvent<GoogleDecodedContract> {}
 
-export type ReceivedGoogleEvent = ReceivedEvent<EventInstanceContract, GoogleDecodedContract>;
+export interface ReceivedGoogleEvent extends ReceivedEvent<EventInstanceContract, GoogleDecodedContract> {}
 
 export type GoogleMessage = {
+	ackId: string,
 	message: {
 		data: string,
+		messageId: string,
 	},
+	attributes: Array<{[key: string]: any}>,
 };
 
 export type GoogleFormatedSubscription = string;

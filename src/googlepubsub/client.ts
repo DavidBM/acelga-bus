@@ -18,22 +18,22 @@ export class GoogleClient <T extends EventInstanceContract> implements FullSyncr
 	}
 
 	public async publish(event: Event<T>): Promise<void> {
-		const subscriptionPath = this.pushClient.topicPath(this.projectName, event.constructor.name);
+		const subscriptionPath = this.pushClient.topicPath(this.projectName, event.origin);
 		await this.pushClient.publish({topic: subscriptionPath, messages: [{data: Buffer.from(JSON.stringify(event))}]});
 	}
 
 	public getEvents(config: SubscriptionConfig) {
-		const subscriptionPath = this.pullClient.subscriptionPath(this.projectName, config.topic);
+		const subscriptionPath = this.pullClient.subscriptionPath(this.projectName, config.subscriptionName);
 		return this.pullClient.pull({subscription: subscriptionPath, maxMessages: this.messagesToGet});
 	}
 
 	public ack(event: DecodedEvent<GoogleDecodedContract>): Promise<void> {
-		const subscriptionPath = this.pullClient.subscriptionPath(this.projectName, event.origin);
+		const subscriptionPath = this.pullClient.subscriptionPath(this.projectName, event.subscription);
 		return this.pullClient.acknowledge({subscription: subscriptionPath, ackIds: [event.ackId]});
 	}
 
 	public nack(event: DecodedEvent<GoogleDecodedContract>): Promise<void> {
-		const subscriptionPath = this.pullClient.subscriptionPath(this.projectName, event.origin);
+		const subscriptionPath = this.pullClient.subscriptionPath(this.projectName, event.subscription);
 		return this.pullClient.modifyAckDeadline({subscription: subscriptionPath, ackIds: [event.ackId], ackDeadlineSeconds: 0});
 	}
 }

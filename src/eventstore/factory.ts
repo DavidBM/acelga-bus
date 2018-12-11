@@ -6,7 +6,7 @@ import {debugLogger} from '../corebus/logger';
 import {EventstoreFacade} from './facade';
 import {EventFactoryRespository} from '../corebus/eventFactoryRepository';
 import {SynchronousClientProcessor} from '../corebus/synchronousClientProcessor';
-import {EventStoreConnectionOptions, DecodedSerializedEventstoreEvent, SubscriptionDefinition, EventInstanceContract, EventstoreDecodedContract} from './interfaces';
+import {EventStoreConnectionOptions, SubscriptionDefinition, EventInstanceContract, EventstoreDecodedContract} from './interfaces';
 import {ErrorLogger, BulkDispatcher, Dispatcher, ParallelScheduler, pipelineFactory} from '../index';
 import {EventstoreClient} from './client';
 import {EventProcessor} from '../corebus/eventProcessor';
@@ -23,7 +23,7 @@ export function create< T extends EventInstanceContract = EventInstanceContract>
 	const tracker = new EmptyTracker();
 	const client = new HTTPClient(connectionOptions);
 	const backoffStrategy = createBackoff();
-	const eventFactory = new EventFactoryRespository<T, DecodedSerializedEventstoreEvent>(isValidDecodedEventStore);
+	const eventFactory = new EventFactoryRespository<T, EventstoreDecodedContract>(isValidDecodedEventStore);
 
 	const eventstoreClient = new EventstoreClient(client, eventstoreFeedbackHTTP);
 	const dispatcher = createDispatcher<T>(logger);

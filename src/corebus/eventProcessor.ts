@@ -9,7 +9,7 @@ enum FEEDBACK_ACTION {
 }
 
 type ReceivedEvents<E, R> = E & ReceivedEvent<E, R>;
-type EventRepository<E, R> = EventFactoryRespository<Event<E>, DecodedEvent<R>>;
+type EventRepository<E, R> = EventFactoryRespository<E, R>;
 
 export class EventProcessor<E, R> implements EventProcessingLogic<E, R>{ // E = Event data, R = Decoded original event data
 
@@ -20,7 +20,7 @@ export class EventProcessor<E, R> implements EventProcessingLogic<E, R>{ // E = 
 		private client: AcknowledgeableClient<R>,
 	) { }
 
-	public addEventType(event: Constructable<Event<E>>, factory: EventFactory<E, R>): void {
+	public addEventType<E1 extends E>(event: Constructable<Event<E1>>, factory: EventFactory<E1, R>): void {
 		const eventType = event.name;
 		this.eventRepository.set(eventType, factory);
 	}
