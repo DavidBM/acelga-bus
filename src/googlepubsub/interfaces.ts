@@ -22,11 +22,6 @@ export type DecodedGoogleEvent = DecodedEvent<GoogleDecodedContract>;
 
 export type ReceivedGoogleEvent = ReceivedEvent<EventInstanceContract, GoogleDecodedContract>;
 
-export type GoogleAcknowledger = {
-	ack: (project: string, subscription: string, ids: string[]) => Promise<void>,
-	nack: (project: string, subscription: string, ids: string[]) => Promise<void>,
-};
-
 export type GoogleMessage = {
 	message: {
 		data: string,
@@ -56,7 +51,7 @@ export enum GoogleRetryIdempotent {
 }
 
 export interface HTTPGoogleSynchronousPublisherClient {
-	topicPath: () => GoogleFormatedTopic;
+	topicPath: (projectId: string, topicName: string) => GoogleFormatedTopic;
 	publish: (
 		request: {
 			topic: GoogleFormatedTopic,
