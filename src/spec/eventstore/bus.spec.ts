@@ -44,12 +44,13 @@ function createBus(pipelineFactoryToInject: any = pipelineFactory, eventsToRetur
 	const bulkDispatcher = new BulkDispatcher<IEventstoreEvent>(dispatcher, scheduler, pipelineFactoryToInject, errorLogger);
 	jest.spyOn(bulkDispatcher, 'on');
 	const eventFactoryRepository = new EventFactoryRespository<any, any>(decodedEventValidator);
-	const eventProcessor = new EventProcessor<any, any>(eventFactoryRepository, errorLogger, bulkDispatcher, client);
+	const recreateEvent = (event: unknown): any => eventFactoryRepository.execute(event);
+	const eventProcessor = new EventProcessor<any, any>(recreateEvent, errorLogger, bulkDispatcher, client);
 	const tracker = new EmptyTracker();
+	const onEvent = (events: any[]) => eventProcessor.processEvents(events);
+	const synchronousClientProcessor = new SynchronousClientProcessor<any, any, any>(client, onEvent, errorLogger, backoff, decodeEventstoreResponse, subscriptions, tracker, 25000);
 
-	const synchronousClientProcessor = new SynchronousClientProcessor<any, any, any>(client, eventProcessor, errorLogger, backoff, decodeEventstoreResponse, subscriptions, tracker, 25000);
-
-	const bus = new EventstoreFacade(synchronousClientProcessor, client, eventProcessor, bulkDispatcher);
+	const bus = new EventstoreFacade(synchronousClientProcessor, client, eventFactoryRepository, bulkDispatcher);
 
 	return {
 		client,

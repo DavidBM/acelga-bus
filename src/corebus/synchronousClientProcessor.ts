@@ -1,4 +1,4 @@
-import {DecodedEvent, PullBasicClient, EventProcessingLogic} from '../corebus/interfaces';
+import {DecodedEvent, PullBasicClient} from '../corebus/interfaces';
 import {BackoffExecutor, BackoffStopper} from '../corebus/backoff';
 import {IEmptyTracker} from '../corebus/emptyTracker';
 import {ErrorLogger} from '../index';
@@ -11,7 +11,7 @@ export class SynchronousClientProcessor<E, SC, DE>{
 
 	constructor(
 		protected client: PullBasicClient<SC>,
-		protected eventProcessor: EventProcessingLogic<E, DE>,
+		protected onEvent: (events: DecodedEvent<DE>[]) => Promise<void>,
 		protected logError: ErrorLogger,
 		protected backoffStrategy: BackoffExecutor,
 		protected eventstoreResponseDecoder: (response: any, subscriptionConfig: SC) => Array<DecodedEvent<DE>>,
@@ -69,7 +69,7 @@ export class SynchronousClientProcessor<E, SC, DE>{
 			return Promise.reject(NO_MESSAGES);
 		}
 
-		return this.eventProcessor.processEvents(events);
+		return this.onEvent(events);
 	}
 }
 

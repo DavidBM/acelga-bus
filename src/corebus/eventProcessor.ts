@@ -1,5 +1,5 @@
-import {Constructable, BulkDispatcher, ErrorLogger, ExecutionResult, EventFactoryRespository} from '../index';
-import {DecodedEvent, ReceivedEvent, originalEventSymbol, EventFactory, AcknowledgeableClient, Event, EventProcessingLogic} from '../corebus/interfaces';
+import {BulkDispatcher, ErrorLogger, ExecutionResult} from '../index';
+import {DecodedEvent, ReceivedEvent, originalEventSymbol, AcknowledgeableClient, Event, EventProcessingLogic} from '../corebus/interfaces';
 import {iterate} from 'iterated-pipes';
 
 const PARALLEL_FEEDBACK = 5;
@@ -9,21 +9,15 @@ enum FEEDBACK_ACTION {
 }
 
 type ReceivedEvents<E, R> = E & ReceivedEvent<E, R>;
-type EventRepository<E, R> = EventFactoryRespository<E, R>;
 
 export class EventProcessor<E, R> implements EventProcessingLogic<E, R>{ // E = Event data, R = Decoded original event data
 
 	constructor(
-		private eventRepository: EventRepository<E, R>,
+		private recreateEvent: (event: unknown) => E,
 		private logError: ErrorLogger,
 		private dispatcher: BulkDispatcher<Event<E>>,
 		private client: AcknowledgeableClient<R>,
 	) { }
-
-	public addEventType<E1 extends E>(event: Constructable<Event<E1>>, factory: EventFactory<E1, R>): void {
-		const eventType = event.name;
-		this.eventRepository.set(eventType, factory);
-	}
 
 	// This is not a middleware because the type system would not allow that.
 	// We must ensure that everything in middlewares are events, nothing more.
@@ -34,7 +28,7 @@ export class EventProcessor<E, R> implements EventProcessingLogic<E, R>{ // E = 
 
 			for (const event of events){
 				try {
-					const decodedEvent = await this.eventRepository.execute(event) as ReceivedEvents<E, R>;
+					const decodedEvent = this.recreateEvent(event) as ReceivedEvents<E, R>;
 					decodedEvent[originalEventSymbol] = event;
 
 					eventInstances.push(decodedEvent);

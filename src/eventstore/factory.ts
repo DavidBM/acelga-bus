@@ -10,6 +10,7 @@ import {EventStoreConnectionOptions, SubscriptionDefinition, EventInstanceContra
 import {ErrorLogger, BulkDispatcher, Dispatcher, ParallelScheduler, pipelineFactory} from '../index';
 import {EventstoreClient} from './client';
 import {EventProcessor} from '../corebus/eventProcessor';
+import {DecodedEvent} from '../corebus/interfaces';
 import {eventstoreFeedbackHTTP, isValidDecodedEventStore, decodeEventstoreResponse} from './utils';
 import {EmptyTracker} from '../corebus/emptyTracker';
 
@@ -27,11 +28,16 @@ export function create< T extends EventInstanceContract = EventInstanceContract>
 
 	const eventstoreClient = new EventstoreClient(client, eventstoreFeedbackHTTP);
 	const dispatcher = createDispatcher<T>(logger);
-	const eventProcessor = new EventProcessor<T, EventstoreDecodedContract>(eventFactory, logger, dispatcher, eventstoreClient);
+	/* istanbul ignore next */ // Added because we have our own factories in the tests and these are the connectors. Maybe... should they go in the facade?
+	const recreateEvent = (event: unknown): T => eventFactory.execute(event);
 
-	const synchronousClientProcessor = new SynchronousClientProcessor<T, SubscriptionDefinition, EventstoreDecodedContract>(eventstoreClient, eventProcessor, logger, backoffStrategy, decodeEventstoreResponse, subscriptions, tracker, 25000);
+	const eventProcessor = new EventProcessor<T, EventstoreDecodedContract>(recreateEvent, logger, dispatcher, eventstoreClient);
+	/* istanbul ignore next */ // Added because we have our own factories in the tests and these are the connectors. Maybe... should they go in the facade?
+	const onEvent = (events: DecodedEvent<EventstoreDecodedContract>[]) => eventProcessor.processEvents(events);
 
-	return new EventstoreFacade<T>(synchronousClientProcessor, eventstoreClient, eventProcessor, dispatcher);
+	const synchronousClientProcessor = new SynchronousClientProcessor<T, SubscriptionDefinition, EventstoreDecodedContract>(eventstoreClient, onEvent, logger, backoffStrategy, decodeEventstoreResponse, subscriptions, tracker, 25000);
+
+	return new EventstoreFacade<T>(synchronousClientProcessor, eventstoreClient, eventFactory, dispatcher);
 }
 
 function createBackoff(): BackoffExecutor {

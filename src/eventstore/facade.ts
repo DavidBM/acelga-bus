@@ -1,7 +1,7 @@
 import {EventSubscriptionCallback, Constructable, BulkDispatcher} from '../index';
 import {EventInstanceContract, IEventstoreEventReceived, EventstoreDecodedContract, SubscriptionDefinition} from './interfaces';
 import {EventFactory, FullSyncronousClient, ReceivedEvent} from '../corebus/interfaces';
-import {EventProcessor} from '../corebus/eventProcessor';
+import {EventFactoryRespository} from '../corebus/eventFactoryRepository';
 import {EventAlreadySubscribed} from '../corebus/commonErrors';
 import {SynchronousClientProcessor} from '../corebus/synchronousClientProcessor';
 
@@ -15,7 +15,7 @@ export class EventstoreFacade<T extends EventInstanceContract> {
 	constructor(
 		private client: SynchronousClientProcessor<T, SubscriptionDefinition, EventstoreDecodedContract>,
 		private publisher: FullSyncronousClient<T, EventstoreDecodedContract, SubscriptionDefinition>,
-		private eventProcessor: EventProcessor<T, EventstoreDecodedContract>,
+		private eventFactory: EventFactoryRespository<T, EventstoreDecodedContract>,
 		private dispatcher: BulkDispatcher<T>,
 	) {	}
 
@@ -44,6 +44,6 @@ export class EventstoreFacade<T extends EventInstanceContract> {
 	}
 
 	public addEventType<T1 extends T>(event: Constructable<T1>, factory: EventFactory<T1, EventstoreDecodedContract>): void {
-		this.eventProcessor.addEventType(event, factory);
+		this.eventFactory.set(event.name, factory);
 	}
 }

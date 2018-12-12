@@ -104,6 +104,5 @@ export interface PushBasicClient<E, J> {
 export interface FullSyncronousClient<E, J, C> extends AcknowledgeableClient<J>, PullBasicClient<C>, PushBasicClient<E, J> {}
 
 export interface EventProcessingLogic<E, R> {
-	addEventType(event: Constructable<Event<E>>, factory: EventFactory<E, R>): void;
 	processEvents(events: DecodedEvent<R>[]): Promise<void>;
 }

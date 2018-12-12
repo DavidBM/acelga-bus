@@ -28,7 +28,7 @@ describe('SynchronousClientProcessor', () => {
 		eventstoreResponseDecoder = (response: any) => response;
 		tracker = new EmptyTracker();
 
-		synchronousClientProcessor = new SynchronousClientProcessor(client, eventProcessor as any, logError, backoffStrategy, eventstoreResponseDecoder, [{}], tracker, 20);
+		synchronousClientProcessor = new SynchronousClientProcessor(client, (e: any[]) => eventProcessor.processEvents(e), logError, backoffStrategy, eventstoreResponseDecoder, [{}], tracker, 20);
 	});
 
 	it('should log "TooLongToStop" error if it takes more than the timeout', async (done) => {
