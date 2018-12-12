@@ -1,6 +1,6 @@
 import {backoffFibonacci, BackoffExecutor} from '../corebus/backoff';
 import debug from 'debug';
-
+import * as Google from '@google-cloud/pubsub';
 import {debugLogger} from '../corebus/logger';
 import {GoogleFacade} from './facade';
 import {SynchronousClientProcessor} from '../corebus/synchronousClientProcessor';
@@ -24,7 +24,10 @@ export function create(
 	const tracker = new EmptyTracker();
 	const backoffStrategy = createBackoff();
 
-	const googleClient = new GoogleClient(projectName, filePath);
+	const subscriber = new (Google as any).v1.SubscriberClient({filePath});
+	const publisher = new (Google as any).v1.PublisherClient({filePath});
+
+	const googleClient = new GoogleClient(projectName, filePath, subscriber, publisher);
 	const dispatcher = createDispatcher<GoogleInstance>(logger);
 
 	const googleFactory = new GoogleEventFactory();

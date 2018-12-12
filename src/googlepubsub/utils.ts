@@ -33,7 +33,7 @@ export function decodeEventstoreEntry(entry: GoogleMessage, subscriptionConfig: 
 // tslint:disable-next-line
 export function isValidDecodedEventStore(event: any): event is DecodedGoogleEvent {
 	return event
-	&&  typeof event.origin === 'object'
+	&& (typeof event.subscription === 'string' && !!event.data.length)
 	&& (typeof event.data === 'string' && !!event.data.length)
 	&& (typeof event.ackId === 'string' && !!event.ackId.length)
 	&& (typeof event.project === 'string' && !!event.project.length)

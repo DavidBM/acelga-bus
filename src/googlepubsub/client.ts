@@ -1,4 +1,3 @@
-import * as Google from '@google-cloud/pubsub';
 import {HTTPGoogleSynchronousSubscriptionClient, HTTPGoogleSynchronousPublisherClient} from './interfaces';
 import {EventInstanceContract, GoogleDecodedContract, SubscriptionConfig} from './interfaces';
 import {FullSyncronousClient, DecodedEvent, Event} from '../corebus/interfaces';
@@ -6,16 +5,13 @@ import {FullSyncronousClient, DecodedEvent, Event} from '../corebus/interfaces';
 export class GoogleClient <T extends EventInstanceContract> implements FullSyncronousClient<T, GoogleDecodedContract, SubscriptionConfig>{
 
 	protected messagesToGet = 100;
-	protected pullClient: HTTPGoogleSynchronousSubscriptionClient;
-	protected pushClient: HTTPGoogleSynchronousPublisherClient;
 
 	constructor(
 		private projectName: string,
 		keyFileName: string,
-	) {
-		this.pullClient = new (Google as any).v1.SubscriberClient({keyFileName});
-		this.pushClient = new (Google as any).v1.PublisherClient({keyFileName});
-	}
+		protected pullClient: HTTPGoogleSynchronousSubscriptionClient,
+		protected pushClient: HTTPGoogleSynchronousPublisherClient,
+	) {	}
 
 	public async publish(event: Event<T>): Promise<void> {
 		const subscriptionPath = this.pushClient.topicPath(this.projectName, event.origin);
