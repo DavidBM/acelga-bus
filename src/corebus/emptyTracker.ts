@@ -3,7 +3,7 @@ import {EventEmitter} from 'events';
 export interface IEmptyTracker {
 	remember(item: any): void;
 	forget(item: any): void;
-	on(type: 'empty', callback: Function): void;
+	on(type: 'empty', callback: (...args: any[]) => any ): void;
 	isEmpty(): boolean;
 	waitUntilEmpty(timeout: number): Promise<void>;
 }
@@ -17,7 +17,7 @@ export class EmptyTracker extends EventEmitter implements IEmptyTracker{
 
 	forget(item: any) {
 		this.activeItems.delete(item);
-		if (this.activeItems.size === 0) {
+		if (this.isEmpty()) {
 			this.emit('empty');
 		}
 	}
