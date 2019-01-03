@@ -1,4 +1,4 @@
-import {GoogleClient} from '../../googlepubsub/client';
+import {GoogleClient} from '../../simplegooglepubsub/client';
 
 describe('Googlepubsub client', () => {
 

@@ -24,18 +24,18 @@ export function create(
 	const tracker = new EmptyTracker();
 	const backoffStrategy = createBackoff();
 
-	const subscriber = new (Google as any).v1.SubscriberClient({filePath});
-	const publisher = new (Google as any).v1.PublisherClient({filePath});
+	const subscriber = new (Google as any).v1.SubscriberClient({keyFilename: filePath});
+	const publisher = new (Google as any).v1.PublisherClient({keyFilename: filePath});
 
 	const googleClient = new GoogleClient(projectName, filePath, subscriber, publisher);
 	const dispatcher = createDispatcher<GoogleInstance>(logger);
 
 	const googleFactory = new GoogleEventFactory();
-
+	/* istanbul ignore next */ // And that is why you should never import classes but to use a DI :D
 	const recreateEvent = (event: unknown): GoogleInstance => googleFactory.build(event as DecodedEvent<GoogleDecodedContract>);
 
 	const eventProcessor = new EventProcessor<GoogleInstance, GoogleDecodedContract>(recreateEvent, logger, dispatcher, googleClient);
-
+	/* istanbul ignore next */ // And that is why you should never import classes but to use a DI :D
 	const onEvent = (events: DecodedEvent<GoogleDecodedContract>[]) => eventProcessor.processEvents(events);
 
 	const synchronousClientProcessor = new SynchronousClientProcessor<GoogleInstance, SubscriptionConfig, GoogleDecodedContract>(googleClient, onEvent, logger, backoffStrategy, decodeEventstoreResponse, subscriptions, tracker, 25000);
