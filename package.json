@@ -5,7 +5,7 @@
   "main": "dist/src/index.js",
   "scripts": {
     "test:html-cov": "./node_modules/.bin/jest --clearCache && ./node_modules/.bin/jest --coverage --no-cache --coverageReporters=html",
-    "test": "./node_modules/.bin/jest --clearCache && ./node_modules/.bin/jest --coverage --no-cache --coverageReporters=text",
+    "test": "./node_modules/.bin/jest --clearCache && ./node_modules/.bin/jest --coverage -w 1 --no-cache --coverageReporters=text",
     "test:codecov": "./node_modules/.bin/jest --clearCache && ./node_modules/.bin/jest --coverage --no-cache",
     "test:watch": "./node_modules/.bin/jest --clearCache && ./node_modules/.bin/jest --watchAll --coverage --no-cache --coverageReporters=text",
     "test:coverage": "./node_modules/.bin/jest --clearCache && ./node_modules/.bin/jest --coverage --no-cache",
