@@ -1,6 +1,6 @@
 {
   "name": "acelga-bus",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": " An extensible typescript message bus with support for middlewares ",
   "main": "dist/src/index.js",
   "scripts": {
