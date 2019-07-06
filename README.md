@@ -1,7 +1,9 @@
 # acelga-bus
-An extensible typescript message bus with support for middlewares & eventstore (for event sourcing or similar patterns).
+An typed and extensible typescript message bus with support for network adaptors, middlewares and events stores like [Eventstore](https://eventstore.org/) (for event sourcing or similar patterns).
 
 [![codecov](https://codecov.io/gh/DavidBM/acelga-bus/branch/master/graph/badge.svg)](https://codecov.io/gh/DavidBM/acelga-bus) [![Maintainability](https://api.codeclimate.com/v1/badges/7fc4998d666a07395802/maintainability)](https://codeclimate.com/github/DavidBM/acelga-bus/maintainability)
+
+*This code is kind of deprecated. I'm leaving it here because is good for me as reference and I may reuse some of it in the future. Still seems we won't use this project in my company. Feel free to look, I think there are a few interesting things there and the code is fully tested (100% coverage)*
 
 <img src="img/acelga.png">
 
@@ -15,7 +17,7 @@ This bus enforces you to use the types and interfaces you define, avoiding error
 
 <!-- /MarkdownTOC -->
 
-**It filter by types instead of strings.** That means that you have compile time protection against misspellings. But it means that you need to encapsulate everything withing a class. 
+**It filter by types instead of strings.** That means that you have compile-time protection against misspellings. But it means that you need to encapsulate everything withing a class. 
 
 Moreover, *it is not safe to publish primitives like numbers, null or strings* because their falsifiability property (0, NaN, "", null, undefined are false). Always send an object / class.
 
@@ -69,9 +71,9 @@ bus.on(NotAnEvent, (notEvent) => {});
 The bus implements a connector with [Eventstore](https://eventstore.org/) [persistent subscriptions/competing consumers](https://eventstore.org/docs/http-api/competing-consumers/index.html). It handles automatically:
 
  - Bulk processing of events
- - Ordering of depending events (it requires a implementation from the user)
+ - Ordering of dependent events like two events of the same aggregate (it requires a implementation from the user)
  - Handling errors and ACK or NACK them
- - Avoid most bad pattern like:
+ - Avoid most dangerous pattern like:
      + Multi subscription of the events (usually in event-store you want to process one time per bounded context)
      + Non returning promises in handlers (the bus needs to know when you finished and if the operation was a success or not in order to ack or nack)
 
@@ -124,7 +126,7 @@ await bus.publish(new UserCreated('Matias'));
 <a id="structure-of-the-bus"></a>
 ## Structure of the Bus
 
-The Bus is spitted in a lot of parts. The main advantage is that they can be reused in order to create a new bus adapted to a new system. That is how the Eventstore adapted bus was created. This is the structure:
+The Bus is spitted in several parts. The main advantage is that they can be reused in order to create a new adapter for a new system. That is how the Eventstore adapted bus was created. This is the structure:
 
 - Publisher: Having a handler, when the publish method is called, it executed a sequence of middlewares and calls the handler. It can be cloned in order to have a multi producer and one consumer.
 - Dispatcher (single): Given a key and a item, it executes the callbacks associates to that key in parallel over the item. It is like a router. It fails if any fails.
@@ -134,6 +136,6 @@ The Bus is spitted in a lot of parts. The main advantage is that they can be reu
 - Dispatcher (multi): Like the Dispatcher (single) but accepting an array of items. It makes an execution plan and uses pipelines to execute it with optimal parallelism. Returns the errors and success as array.
 - Schedulers: Creates an execution plan for a set of events. This allows to set dependent events like user **update** should be executed only if user **create** succeed.
 
-These pieces are organized in this way:
+If you want to see how the code is structured internally in deep the best way to start looking at the "src/eventstore/factory.ts". That file is the one that build the whole bus for Eventstore. There you will see what pieces go together. The files inside of the "src/eventsore" folder are the ones that connect the abstracted code with the Eventstore. In "src/corebus" folder you have the abstracted code that provides the guarantees. It can be reused for making connector with, for example, kafka very easily.
 
-<img src="img/Untitled Diagram.svg">
+Let me know any question you have. And pull request are welcome.

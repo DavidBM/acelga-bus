@@ -49,9 +49,9 @@
   "devDependencies": {
     "@types/jest": "^22.2.3",
     "codecov": "^3.1.0",
-    "jest": "^23.6.0",
+    "jest": "^24",
     "source-map-support": "^0.5.9",
-    "ts-jest": "^23.10.2",
+    "ts-jest": "^24",
     "typescript": "^3.2.1"
   },
   "jest": {
