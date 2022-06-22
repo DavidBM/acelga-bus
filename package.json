@@ -92,7 +92,7 @@
     "backoff": "^2.5.0",
     "debug": "^3.1.0",
     "geteventstore-promise": "^3.0.1",
-    "got": "^9.2.2",
+    "got": "^11.8.5",
     "iterated-pipes": "^1.0.5"
   }
 }
